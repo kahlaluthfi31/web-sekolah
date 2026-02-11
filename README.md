@@ -1,4 +1,4 @@
-# 🎓 Website Sekolah - Next.js
+# Website Sekolah - Next.js
 
 Website sekolah modern yang dibangun dengan **Next.js 13+**, **React**, **TypeScript**, dan **Tailwind CSS**.
 
@@ -9,7 +9,7 @@ Website sekolah modern yang dibangun dengan **Next.js 13+**, **React**, **TypeSc
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -21,7 +21,7 @@ Website sekolah modern yang dibangun dengan **Next.js 13+**, **React**, **TypeSc
 
 ---
 
-## 🔧 Prerequisites
+## Prerequisites
 
 Sebelum memulai, pastikan Anda sudah menginstall:
 
@@ -38,7 +38,7 @@ npm --version    # Harus v9.x atau lebih
 
 ---
 
-## 📥 Installation
+## Installation
 
 ### 1. Clone Repository
 
@@ -72,16 +72,16 @@ npm list --depth=0
 ```
 
 Anda harus melihat:
-- ✅ `next@16.1.6`
-- ✅ `react@19.2.3`
-- ✅ `react-dom@19.2.3`
-- ✅ `lucide-react` (untuk icons)
-- ✅ `tailwindcss@4.x`
-- ✅ `typescript@5.x`
+- `next@16.1.6`
+- `react@19.2.3`
+- `react-dom@19.2.3`
+- `lucide-react` (untuk icons)
+- `tailwindcss@4.x`
+- `typescript@5.x`
 
 ---
 
-## 🚀 Running the Project
+## Running the Project
 
 ### Development Mode
 
@@ -120,7 +120,7 @@ npm run lint
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 website-sekolah-nextjs/
@@ -165,7 +165,7 @@ website-sekolah-nextjs/
 
 ---
 
-## 📜 Available Scripts
+## Available Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -176,9 +176,9 @@ website-sekolah-nextjs/
 
 ---
 
-## ✨ Features
+## Features
 
-### 🏠 Homepage
+### Homepage
 - Hero section dengan call-to-action
 - Quick statistics
 - About section
@@ -188,13 +188,13 @@ website-sekolah-nextjs/
 - Recent news
 - Upcoming events
 
-### 📄 Pages
+### Pages
 - **About** - Informasi tentang sekolah, visi, misi, leadership
 - **Admissions** - Proses pendaftaran, requirements, key dates
 - **Contact** - Form kontak dan informasi kontak
 - **News** - Berita dan artikel terbaru
 
-### 🎨 Design Features
+### Design Features
 - ✅ Responsive design (mobile, tablet, desktop)
 - ✅ Modern UI dengan Tailwind CSS
 - ✅ Smooth animations dan transitions
@@ -203,7 +203,7 @@ website-sekolah-nextjs/
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: Module not found
 
@@ -277,7 +277,7 @@ npm run dev
 
 ---
 
-## 📚 Documentation Links
+## Documentation Links
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [React Documentation](https://react.dev)
@@ -287,18 +287,18 @@ npm run dev
 
 ---
 
-## 📝 Additional Documentation
+## Additional Documentation
 
 Project ini memiliki dokumentasi tambahan:
 
-- 📖 `MIGRATION_GUIDE.md` - Panduan migrasi struktur project
-- 📊 `STRUKTUR_COMPARISON.md` - Perbandingan struktur lama vs baru
-- 🚀 `NEXT_STEPS.md` - Langkah-langkah development
-- 🏠 `SETUP_HOMEPAGE.md` - Setup homepage configuration
+-  `MIGRATION_GUIDE.md` - Panduan migrasi struktur project
+-  `STRUKTUR_COMPARISON.md` - Perbandingan struktur lama vs baru
+-  `NEXT_STEPS.md` - Langkah-langkah development
+-  `SETUP_HOMEPAGE.md` - Setup homepage configuration
 
 ---
 
-## 🎉 Quick Start Summary
+## Quick Start Summary
 
 ```bash
 # 1. Clone repository
@@ -315,8 +315,8 @@ npm run dev
 # Navigate to http://localhost:3000
 ```
 
-**That's it! Selamat coding! 🚀**
+**That's it! Selamat coding!**
 
 ---
 
-Made with ❤️ using Next.js, React, and Tailwind CSS
+Made with using Next.js, React, and Tailwind CSS
