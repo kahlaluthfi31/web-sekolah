@@ -25,7 +25,7 @@ const FacultyPage: React.FC = () => {
     <div className="pt-20">
       <section className="bg-[#0092DD] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">Faculty Staff</h1>
+          <h1 className="text-4xl font-bold mb-4">Struktur Sekolah</h1>
           <p className="max-w-2xl mx-auto text-white/80 text-sm leading-relaxed">
             Odio et unde deleniti. Deserunt numquam exercitationem. Officiis quo odio sint voluptas consequatur ut a odio voluptatem.
           </p>
@@ -34,7 +34,7 @@ const FacultyPage: React.FC = () => {
 
       <div className="bg-gray-100 py-4 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> Faculty Staff
+          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> Struktur Sekolah
         </div>
       </div>
 

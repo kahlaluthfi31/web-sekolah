@@ -1,415 +1,827 @@
-# 🔧 Development Setup & Environment
+# 🔧 Development Setup — Website Sekolah (Next.js)# 🔧 Development Setup & Environment
 
-Panduan teknis untuk mengatur environment development.
 
----
 
-## 💻 System Requirements
+Panduan lengkap untuk **clone dan menjalankan** project dari awal. Bagikan ke teman yang baru bergabung.Panduan teknis untuk mengatur environment development.
 
-### Minimum Requirements
+
+
+------
+
+
+
+## 📋 Prasyarat (Wajib Install Dulu)## 💻 System Requirements
+
+
+
+### 1. Node.js (v18 atau lebih baru)### Minimum Requirements
+
 - **OS:** Windows 10/11, macOS 10.15+, atau Linux (Ubuntu 20.04+)
-- **RAM:** 4GB (8GB recommended)
-- **Storage:** 500MB free space
-- **Internet:** Required for initial setup
 
-### Required Software
+| OS | Cara Install |- **RAM:** 4GB (8GB recommended)
 
-#### 1. Node.js & npm
+|---|---|- **Storage:** 500MB free space
 
-**Recommended Version:** Node.js 18.x LTS atau lebih baru
+| **Windows** | Download dari [nodejs.org](https://nodejs.org/) → pilih **LTS** |- **Internet:** Required for initial setup
 
-**Download & Install:**
-- Windows/Mac: [nodejs.org](https://nodejs.org/)
-- Linux (Ubuntu/Debian):
-  ```bash
-  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-  sudo apt-get install -y nodejs
-  ```
+| **Mac** | `brew install node` atau download dari [nodejs.org](https://nodejs.org/) |
 
-**Verify Installation:**
+| **Linux** | `sudo apt install nodejs npm` atau pakai [nvm](https://github.com/nvm-sh/nvm) |### Required Software
+
+
+
+Verifikasi:#### 1. Node.js & npm
+
 ```bash
-node --version   # Should show v18.x.x or higher
-npm --version    # Should show v9.x.x or higher
+
+node --version   # minimal v18.x.x**Recommended Version:** Node.js 18.x LTS atau lebih baru
+
+npm --version    # minimal v9.x.x
+
+```**Download & Install:**
+
+- Windows/Mac: [nodejs.org](https://nodejs.org/)
+
+### 2. MySQL Server- Linux (Ubuntu/Debian):
+
+  ```bash
+
+Project ini menggunakan **MySQL** sebagai database. Pilih salah satu:  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+
+  sudo apt-get install -y nodejs
+
+| Opsi | Download |  ```
+
+|---|---|
+
+| **XAMPP** (Recommended untuk Windows) | [apachefriends.org](https://www.apachefriends.org/) |**Verify Installation:**
+
+| **Laragon** | [laragon.org](https://laragon.org/) |```bash
+
+| **MySQL Community Server** | [dev.mysql.com](https://dev.mysql.com/downloads/) |node --version   # Should show v18.x.x or higher
+
+| **Docker MySQL** | `docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8` |npm --version    # Should show v9.x.x or higher
+
 ```
+
+> ⚠️ **Pastikan MySQL berjalan** di `localhost:3306` sebelum menjalankan project.
 
 #### 2. Git
 
+### 3. Git
+
 **Download & Install:**
-- Windows: [git-scm.com](https://git-scm.com/)
-- Mac: `brew install git`
-- Linux: `sudo apt-get install git`
+
+```bash- Windows: [git-scm.com](https://git-scm.com/)
+
+# Verifikasi- Mac: `brew install git`
+
+git --version- Linux: `sudo apt-get install git`
+
+```
 
 **Verify:**
-```bash
+
+Download: [git-scm.com](https://git-scm.com/)```bash
+
 git --version
-```
 
-#### 3. Code Editor (Recommended: VS Code)
+### 4. Code Editor```
 
-**Download:** [code.visualstudio.com](https://code.visualstudio.com/)
 
-**Recommended Extensions:**
-- ESLint
+
+Rekomendasi: **Visual Studio Code** — [code.visualstudio.com](https://code.visualstudio.com/)#### 3. Code Editor (Recommended: VS Code)
+
+
+
+Extension yang disarankan:**Download:** [code.visualstudio.com](https://code.visualstudio.com/)
+
+- ESLint (`dbaeumer.vscode-eslint`)
+
+- Tailwind CSS IntelliSense (`bradlc.vscode-tailwindcss`)**Recommended Extensions:**
+
+- Prisma (`Prisma.prisma`)- ESLint
+
 - Prettier - Code formatter
-- Tailwind CSS IntelliSense
+
+---- Tailwind CSS IntelliSense
+
 - ES7+ React/Redux/React-Native snippets
-- Auto Rename Tag
+
+## 📦 Tech Stack & Library yang Digunakan- Auto Rename Tag
+
 - Path Intellisense
 
+### Production Dependencies
+
 **Install Extensions (VS Code):**
-```bash
-code --install-extension dbaeumer.vscode-eslint
-code --install-extension esbenp.prettier-vscode
-code --install-extension bradlc.vscode-tailwindcss
-code --install-extension dsznajder.es7-react-js-snippets
-```
 
----
+| Package | Versi | Fungsi |```bash
 
-## 📥 Project Setup
+|---|---|---|code --install-extension dbaeumer.vscode-eslint
 
-### Step 1: Clone Repository
+| `next` | 16.1.6 | Framework React fullstack (App Router + Turbopack) |code --install-extension esbenp.prettier-vscode
 
-```bash
+| `react` | 19.2.3 | UI library |code --install-extension bradlc.vscode-tailwindcss
+
+| `react-dom` | 19.2.3 | React DOM renderer |code --install-extension dsznajder.es7-react-js-snippets
+
+| `@prisma/client` | ^5.22.0 | ORM client untuk query database MySQL |```
+
+| `prisma` | ^5.22.0 | ORM toolkit (schema, migration, seeding) |
+
+| `mysql2` | ^3.17.1 | MySQL driver untuk Node.js |---
+
+| `bcryptjs` | ^3.0.3 | Hashing password (untuk auth login) |
+
+| `zod` | ^4.3.6 | Validasi data / schema request body API |## 📥 Project Setup
+
+| `lucide-react` | ^0.563.0 | Icon library (SVG icons) |
+
+| `next-auth` | ^5.0.0-beta.30 | Auth helper (tersedia, belum full digunakan) |### Step 1: Clone Repository
+
+
+
+### Dev Dependencies```bash
+
 # HTTPS
-git clone https://github.com/yourusername/website-sekolah-nextjs.git
 
-# SSH (if configured)
-git clone git@github.com:yourusername/website-sekolah-nextjs.git
+| Package | Versi | Fungsi |git clone https://github.com/yourusername/website-sekolah-nextjs.git
 
-# Navigate to project
-cd website-sekolah-nextjs
-```
+|---|---|---|
 
-### Step 2: Install Dependencies
+| `typescript` | ^5 | TypeScript compiler |# SSH (if configured)
 
-```bash
+| `tailwindcss` | ^4 | CSS utility framework |git clone git@github.com:yourusername/website-sekolah-nextjs.git
+
+| `@tailwindcss/postcss` | ^4 | PostCSS plugin untuk Tailwind |
+
+| `eslint` | ^9 | Linter JavaScript/TypeScript |# Navigate to project
+
+| `eslint-config-next` | 16.1.6 | ESLint rules khusus Next.js |cd website-sekolah-nextjs
+
+| `tsx` | ^4.21.0 | Menjalankan file `.ts` langsung (untuk seeding) |```
+
+| `@types/node` | ^20 | TypeScript types untuk Node.js |
+
+| `@types/react` | ^19 | TypeScript types untuk React |### Step 2: Install Dependencies
+
+| `@types/react-dom` | ^19 | TypeScript types untuk React DOM |
+
+| `@types/bcryptjs` | ^2.4.6 | TypeScript types untuk bcryptjs |```bash
+
 npm install
-```
 
-**What gets installed:**
+---```
+
+
+
+## 🚀 Langkah-Langkah Setup (Setelah Clone)**What gets installed:**
+
 - Production dependencies (in `dependencies`)
-- Development dependencies (in `devDependencies`)
+
+### Step 1: Clone Repository- Development dependencies (in `devDependencies`)
+
 - Type definitions (@types/*)
 
-**Package Lock:**
-`package-lock.json` akan dibuat/diupdate untuk lock versi dependencies.
+```bash
+
+git clone https://github.com/kahlaluthfi31/web-sekolah.git**Package Lock:**
+
+cd web-sekolah`package-lock.json` akan dibuat/diupdate untuk lock versi dependencies.
+
+```
 
 ### Step 3: Environment Variables (Optional)
 
+### Step 2: Install Dependencies
+
 Jika project menggunakan environment variables:
 
-**Create `.env.local` file:**
 ```bash
+
+npm install**Create `.env.local` file:**
+
+``````bash
+
 # Windows PowerShell
-New-Item .env.local
 
-# Mac/Linux
+> Ini akan otomatis install **semua** package di atas berdasarkan `package.json`.New-Item .env.local
+
+
+
+### Step 3: Buat Database MySQL# Mac/Linux
+
 touch .env.local
-```
 
-**Add variables:**
-```env
-# Public (accessible in client)
+Buka **MySQL** (via phpMyAdmin, MySQL Workbench, atau terminal):```
+
+
+
+```sql**Add variables:**
+
+CREATE DATABASE sekolah_db;```env
+
+```# Public (accessible in client)
+
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=https://api.example.com
 
-# Private (server-only)
+### Step 4: Konfigurasi EnvironmentNEXT_PUBLIC_API_URL=https://api.example.com
+
+
+
+Buat file `.env` di root project:# Private (server-only)
+
 DATABASE_URL=postgresql://localhost:5432/dbname
-API_SECRET_KEY=your_secret_here
-```
 
-**Important:**
-- ✅ `.env.local` is gitignored (not committed)
-- ✅ Use `NEXT_PUBLIC_` prefix for client-side variables
-- ❌ Never commit secrets to Git
+```envAPI_SECRET_KEY=your_secret_here
 
----
+# ==================================================```
 
-## 🚀 Running the Project
+# DATABASE CONFIGURATION - MySQL
 
-### Development Mode
+# ==================================================**Important:**
 
-```bash
-npm run dev
-```
+# Sesuaikan dengan setup MySQL kamu:- ✅ `.env.local` is gitignored (not committed)
 
-**What happens:**
+#- ✅ Use `NEXT_PUBLIC_` prefix for client-side variables
+
+# XAMPP (tanpa password):- ❌ Never commit secrets to Git
+
+# DATABASE_URL="mysql://root:@localhost:3306/sekolah_db"
+
+#---
+
+# XAMPP/MySQL (dengan password):
+
+# DATABASE_URL="mysql://root:passwordkamu@localhost:3306/sekolah_db"## 🚀 Running the Project
+
+
+
+DATABASE_URL="mysql://root:@localhost:3306/sekolah_db"### Development Mode
+
+
+
+# ==================================================```bash
+
+# APP CONFIGnpm run dev
+
+# ==================================================```
+
+NEXTAUTH_URL="http://localhost:3000"
+
+NEXTAUTH_SECRET="ganti-dengan-random-string-32-karakter"**What happens:**
+
 - Next.js dev server starts on `http://localhost:3000`
-- Hot Module Replacement (HMR) enabled
-- Error overlay for debugging
-- Fast refresh for instant updates
 
-**Options:**
-```bash
+# ==================================================- Hot Module Replacement (HMR) enabled
+
+# FILE UPLOAD (Opsional)- Error overlay for debugging
+
+# ==================================================- Fast refresh for instant updates
+
+UPLOAD_DIR="./public/uploads"
+
+MAX_FILE_SIZE=5242880**Options:**
+
+``````bash
+
 # Run on different port
-npm run dev -- -p 3001
 
-# Run on specific host
+> ⚠️ **PENTING**: Ganti `DATABASE_URL` sesuai user/password MySQL kamu!npm run dev -- -p 3001
+
+
+
+### Step 5: Push Schema ke Database# Run on specific host
+
 npm run dev -- -H 0.0.0.0
 
-# Turbopack (experimental, faster)
-npm run dev -- --turbo
+```bash
+
+npx prisma db push# Turbopack (experimental, faster)
+
+```npm run dev -- --turbo
+
 ```
+
+Ini akan membuat semua tabel (28+ tabel) di database `sekolah_db` berdasarkan file `prisma/schema.prisma`.
 
 ### Production Mode
 
-**Build:**
-```bash
-npm run build
-```
+### Step 6: Generate Prisma Client
 
-**What happens:**
+**Build:**
+
+```bash```bash
+
+npx prisma generatenpm run build
+
+``````
+
+
+
+### Step 7: Seed Data Awal**What happens:**
+
 - TypeScript compilation
-- Code optimization & minification
-- Static page generation
-- Image optimization
+
+```bash- Code optimization & minification
+
+npx prisma db seed- Static page generation
+
+```- Image optimization
+
 - Bundle analysis
 
+Ini akan membuat:
+
 **Start production server:**
+
+| User | Email | Password | Role |```bash
+
+|---|---|---|---|npm start
+
+| Super Admin | `admin@sekolah.com` | `admin123` | superadmin |```
+
+| Admin Medsos | `medsos@sekolah.com` | `admin123` | admin |
+
+| Budi (user biasa) | `budi@gmail.com` | `admin123` | user |**Access:** `http://localhost:3000`
+
+
+
+Plus beberapa data sampel (berita, prestasi, agenda, dll).### Lint & Type Check
+
+
+
+### Step 8: Jalankan Dev Server**ESLint:**
+
 ```bash
-npm start
-```
 
-**Access:** `http://localhost:3000`
+```bashnpm run lint
 
-### Lint & Type Check
+npx next dev --port 3000```
 
-**ESLint:**
-```bash
-npm run lint
 ```
 
 **TypeScript check (if needed):**
-```bash
+
+Atau pakai npm script:```bash
+
 npx tsc --noEmit
-```
 
----
+```bash```
 
-## 🔧 VS Code Configuration
+npm run dev
 
-### Settings (.vscode/settings.json)
+```---
 
-Create `.vscode/settings.json`:
 
-```json
-{
-  "editor.formatOnSave": true,
+
+> Pertama kali jalan, Turbopack akan compile (~10-20 detik). Setelahnya cepat (~2-3 detik).## 🔧 VS Code Configuration
+
+
+
+### Step 9: Buka di Browser### Settings (.vscode/settings.json)
+
+
+
+| Halaman | URL |Create `.vscode/settings.json`:
+
+|---|---|
+
+| 🏠 Homepage | [http://localhost:3000](http://localhost:3000) |```json
+
+| 🔐 Login Admin | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) |{
+
+| 📊 Dashboard | [http://localhost:3000/admin/dashboard](http://localhost:3000/admin/dashboard) |  "editor.formatOnSave": true,
+
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": {
+
+---  "editor.codeActionsOnSave": {
+
     "source.fixAll.eslint": true
-  },
+
+## 📝 NPM Scripts yang Tersedia  },
+
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "files.associations": {
-    "*.css": "tailwindcss"
-  },
-  "tailwindCSS.experimental.classRegex": [
+
+```bash  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+npm run dev          # Jalankan dev server (development mode)  "files.associations": {
+
+npm run build        # Build untuk production    "*.css": "tailwindcss"
+
+npm run start        # Jalankan production server (setelah build)  },
+
+npm run lint         # Cek lint errors  "tailwindCSS.experimental.classRegex": [
+
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
-  ]
-}
-```
 
-### Launch Configuration (.vscode/launch.json)
+# Database commands  ]
 
-For debugging:
+npm run db:generate  # Generate Prisma Client}
 
-```json
+npm run db:push      # Push schema ke database```
+
+npm run db:migrate   # Buat migration baru
+
+npm run db:seed      # Seed data awal### Launch Configuration (.vscode/launch.json)
+
+npm run db:studio    # Buka Prisma Studio (GUI database)
+
+```For debugging:
+
+
+
+---```json
+
 {
-  "version": "0.2.0",
+
+## 🔐 Sistem Login & Role  "version": "0.2.0",
+
   "configurations": [
-    {
+
+### Role & Akses    {
+
       "name": "Next.js: debug server-side",
-      "type": "node-terminal",
-      "request": "launch",
-      "command": "npm run dev"
-    },
-    {
+
+| Role | Akses |      "type": "node-terminal",
+
+|---|---|      "request": "launch",
+
+| **Superadmin** | Semua fitur + Navigation, Homepage, School Profile, Settings |      "command": "npm run dev"
+
+| **Admin** | Kelola konten: Berita, Prestasi, Ekskul, Agenda, Pesan, Alumni, Fasilitas, Guru, Jurusan |    },
+
+| **User** | Hanya komentar (tidak bisa akses dashboard) |    {
+
       "name": "Next.js: debug client-side",
-      "type": "chrome",
+
+### Cara Login      "type": "chrome",
+
       "request": "launch",
-      "url": "http://localhost:3000"
-    }
-  ]
-}
+
+1. Buka `http://localhost:3000/admin/login`      "url": "http://localhost:3000"
+
+2. Masukkan email & password    }
+
+3. Superadmin: `admin@sekolah.com` / `admin123`  ]
+
+4. Admin: `medsos@sekolah.com` / `admin123`}
+
 ```
 
 ---
+
+---
+
+## 📂 Struktur Folder Penting
 
 ## 📦 Package Management
 
-### Check Outdated Packages
-
-```bash
-npm outdated
 ```
 
-### Update Packages
+website-sekolah-nextjs/### Check Outdated Packages
 
-```bash
-# Update all to latest (respecting semver)
-npm update
+├── app/
 
-# Update specific package
-npm update next
+│   ├── page.tsx                    # Homepage publik```bash
 
-# Update to latest (breaking changes possible)
-npm install next@latest
+│   ├── layout.tsx                  # Root layoutnpm outdated
+
+│   ├── globals.css                 # Global styles (Tailwind)```
+
+│   ├── admin/
+
+│   │   ├── login/page.tsx          # Halaman login### Update Packages
+
+│   │   ├── dashboard/
+
+│   │   │   ├── page.tsx            # Dashboard home (statistik)```bash
+
+│   │   │   ├── layout.tsx          # Dashboard layout + auth guard# Update all to latest (respecting semver)
+
+│   │   │   ├── components/         # AdminShell sidebarnpm update
+
+│   │   │   ├── news/               # CRUD Berita
+
+│   │   │   ├── achievements/       # CRUD Prestasi# Update specific package
+
+│   │   │   ├── extracurriculars/   # CRUD Ekstrakurikulernpm update next
+
+│   │   │   ├── agendas/            # CRUD Agenda
+
+│   │   │   ├── teachers/           # CRUD Guru# Update to latest (breaking changes possible)
+
+│   │   │   ├── facilities/         # CRUD Fasilitasnpm install next@latest
+
+│   │   │   ├── majors/             # CRUD Jurusan```
+
+│   │   │   ├── alumni/             # CRUD Alumni
+
+│   │   │   ├── users/              # Manajemen User### Add New Package
+
+│   │   │   ├── messages/           # Pesan masuk
+
+│   │   │   ├── comments/           # Moderasi komentar```bash
+
+│   │   │   ├── navigation/         # Editor navigasi (superadmin)# Production dependency
+
+│   │   │   ├── homepage/           # Editor hero & sambutan (superadmin)npm install package-name
+
+│   │   │   ├── school-profile/     # Editor profil sekolah (superadmin)
+
+│   │   │   └── settings/           # Pengaturan website (superadmin)# Dev dependency
+
+│   │   └── layout.tsx              # Admin layout wrappernpm install -D package-name
+
+│   ├── api/                        # API Routes (REST)
+
+│   │   ├── auth/                   # Login, Logout, Register, Me# Specific version
+
+│   │   ├── news/                   # CRUD Beritanpm install package-name@1.2.3
+
+│   │   ├── achievements/           # CRUD Prestasi```
+
+│   │   ├── extracurriculars/       # CRUD Ekskul
+
+│   │   ├── agendas/                # CRUD Agenda### Remove Package
+
+│   │   ├── teachers/               # CRUD Guru
+
+│   │   ├── facilities/             # CRUD Fasilitas```bash
+
+│   │   ├── majors/                 # CRUD Jurusannpm uninstall package-name
+
+│   │   ├── alumni/                 # CRUD Alumni```
+
+│   │   ├── users/                  # CRUD User
+
+│   │   ├── messages/               # CRUD Pesan### Audit & Fix Vulnerabilities
+
+│   │   ├── comments/               # CRUD Komentar
+
+│   │   ├── homepage/               # API Hero & Sambutan```bash
+
+│   │   ├── school-profile/         # API Profil Sekolah# Check for vulnerabilities
+
+│   │   ├── navigation/             # API Navigasinpm audit
+
+│   │   └── settings/               # API Settings
+
+│   ├── components/                 # Komponen halaman publik# Fix automatically (if possible)
+
+│   └── pages/                      # Halaman publik (About, News, dll)npm audit fix
+
+├── components/                     # Komponen homepage (Hero, Navbar, Footer, dll)
+
+├── lib/# Force fix (may have breaking changes)
+
+│   ├── prisma.ts                   # Prisma Client singletonnpm audit fix --force
+
+│   ├── auth.ts                     # Auth: login, getSession, requireAuth```
+
+│   ├── rbac.ts                     # Role-Based Access Control (40+ permissions)
+
+│   ├── api-response.ts             # Helper: apiSuccess, apiError, apiPagination---
+
+│   └── validations.ts              # Zod schema validasi
+
+├── prisma/## 🧪 Testing Setup (Optional)
+
+│   ├── schema.prisma               # Database schema (28+ tabel)
+
+│   └── seed.ts                     # Data seederIf adding tests to the project:
+
+├── public/                         # File statis (gambar, SVG)
+
+├── _admin_template/                # Template Materio (referensi, TIDAK dipakai)### Install Jest & Testing Library
+
+├── Documentation/                  # Dokumentasi project
+
+├── .env                            # Environment variables (JANGAN commit!)```bash
+
+├── package.json                    # Dependencies & scriptsnpm install -D jest @testing-library/react @testing-library/jest-dom jest-environment-jsdom
+
+├── tsconfig.json                   # TypeScript config```
+
+├── next.config.ts                  # Next.js config
+
+└── postcss.config.mjs              # PostCSS config (Tailwind)### Configure Jest
+
 ```
-
-### Add New Package
-
-```bash
-# Production dependency
-npm install package-name
-
-# Dev dependency
-npm install -D package-name
-
-# Specific version
-npm install package-name@1.2.3
-```
-
-### Remove Package
-
-```bash
-npm uninstall package-name
-```
-
-### Audit & Fix Vulnerabilities
-
-```bash
-# Check for vulnerabilities
-npm audit
-
-# Fix automatically (if possible)
-npm audit fix
-
-# Force fix (may have breaking changes)
-npm audit fix --force
-```
-
----
-
-## 🧪 Testing Setup (Optional)
-
-If adding tests to the project:
-
-### Install Jest & Testing Library
-
-```bash
-npm install -D jest @testing-library/react @testing-library/jest-dom jest-environment-jsdom
-```
-
-### Configure Jest
 
 Create `jest.config.js`:
 
-```javascript
-const nextJest = require('next/jest')
-
-const createJestConfig = nextJest({
-  dir: './',
-})
-
-const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'jest-environment-jsdom',
-}
-
-module.exports = createJestConfig(customJestConfig)
-```
-
-### Add Test Script
-
-In `package.json`:
-
-```json
-{
-  "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch"
-  }
-}
-```
-
 ---
 
-## 🐳 Docker Setup (Optional)
+```javascript
 
-### Dockerfile
+## 🛠️ Troubleshootingconst nextJest = require('next/jest')
 
-```dockerfile
+
+
+### ❌ Error: "Can't reach database server"const createJestConfig = nextJest({
+
+  dir: './',
+
+**Penyebab:** MySQL tidak jalan atau credential salah.})
+
+
+
+**Solusi:**const customJestConfig = {
+
+1. Pastikan MySQL/XAMPP sudah **START**  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
+2. Cek `DATABASE_URL` di file `.env`  testEnvironment: 'jest-environment-jsdom',
+
+3. Test koneksi: `npx prisma db pull --print`}
+
+
+
+### ❌ Error: "Port 3000 already in use"module.exports = createJestConfig(customJestConfig)
+
+```
+
+**Solusi:**
+
+```bash### Add Test Script
+
+# Windows - cari & matikan proses di port 3000
+
+netstat -ano | findstr :3000In `package.json`:
+
+taskkill /PID <nomor_PID> /F
+
+```json
+
+# Atau pakai port lain{
+
+npx next dev --port 3001  "scripts": {
+
+```    "test": "jest",
+
+    "test:watch": "jest --watch"
+
+### ❌ Loading lama saat pertama kali  }
+
+}
+
+**Normal!** Turbopack perlu compile saat pertama akses halaman. Setelahnya cepat.```
+
+
+
+### ❌ Error: "@prisma/client not generated"---
+
+
+
+```bash## 🐳 Docker Setup (Optional)
+
+npx prisma generate
+
+```### Dockerfile
+
+
+
+### ❌ Error: "Table doesn't exist"```dockerfile
+
 FROM node:18-alpine AS base
 
-FROM base AS deps
-WORKDIR /app
+```bash
+
+npx prisma db pushFROM base AS deps
+
+```WORKDIR /app
+
 COPY package*.json ./
-RUN npm ci
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
+### ❌ Prisma Studio (GUI Database)RUN npm ci
 
-FROM base AS runner
+
+
+Untuk melihat isi database secara visual:FROM base AS builder
+
+```bashWORKDIR /app
+
+npx prisma studioCOPY --from=deps /app/node_modules ./node_modules
+
+```COPY . .
+
+Buka `http://localhost:5555`RUN npm run build
+
+
+
+---FROM base AS runner
+
 WORKDIR /app
-ENV NODE_ENV production
+
+## 🔄 Perintah Berguna Sehari-hariENV NODE_ENV production
+
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
 
-EXPOSE 3000
+```bashCOPY --from=builder /app/.next/standalone ./
+
+# Hapus cache Next.js (jika ada masalah aneh)COPY --from=builder /app/.next/static ./.next/static
+
+Remove-Item -Recurse -Force .next     # Windows PowerShell
+
+rm -rf .next                           # Mac/LinuxEXPOSE 3000
+
 ENV PORT 3000
-CMD ["node", "server.js"]
-```
+
+# Reset database (HAPUS semua data!)CMD ["node", "server.js"]
+
+npx prisma db push --force-reset```
+
+npx prisma db seed
 
 ### Docker Compose
 
-```yaml
+# Cek TypeScript errors tanpa build
+
+npx tsc --noEmit```yaml
+
 version: '3.8'
-services:
-  web:
-    build: .
+
+# Build production (cek ada error atau tidak)services:
+
+npx next build  web:
+
+```    build: .
+
     ports:
-      - "3000:3000"
+
+---      - "3000:3000"
+
     environment:
-      - NODE_ENV=production
+
+## 📌 Quick Start (Ringkasan Singkat)      - NODE_ENV=production
+
 ```
 
+Untuk yang sudah paham, ini **7 perintah** dari nol sampai jalan:
+
 **Run:**
-```bash
-docker-compose up
-```
+
+```bash```bash
+
+git clone https://github.com/kahlaluthfi31/web-sekolah.gitdocker-compose up
+
+cd web-sekolah```
+
+npm install
+
+# Buat file .env (isi DATABASE_URL sesuai MySQL kamu)---
+
+npx prisma db push
+
+npx prisma db seed## 🔍 Debugging
+
+npm run dev
+
+```### Browser DevTools
+
+
+
+Lalu buka: `http://localhost:3000/admin/login`**Chrome/Edge:**
+
+- Press `F12` or `Ctrl+Shift+I`
+
+---- Go to Console tab for errors
+
+- Network tab for API calls
+
+## ✅ Checklist Setelah Setup- React DevTools extension for component inspection
+
+
+
+- [ ] Node.js v18+ terinstall### VS Code Debugging
+
+- [ ] MySQL berjalan di localhost:3306
+
+- [ ] `npm install` sukses1. Set breakpoint (click left of line number)
+
+- [ ] File `.env` sudah dibuat dengan `DATABASE_URL` yang benar2. Press `F5` or use Debug panel
+
+- [ ] `npx prisma db push` sukses (tabel terbuat)3. Select "Next.js: debug server-side" or "debug client-side"
+
+- [ ] `npx prisma db seed` sukses (3 user terbuat)
+
+- [ ] `npm run dev` berjalan tanpa error### Console Logging
+
+- [ ] Bisa buka `http://localhost:3000` di browser
+
+- [ ] Bisa login di `http://localhost:3000/admin/login````tsx
+
+- [ ] Dashboard muncul setelah login// Server-side (terminal output)
+
+console.log('Server:', data);
 
 ---
 
-## 🔍 Debugging
-
-### Browser DevTools
-
-**Chrome/Edge:**
-- Press `F12` or `Ctrl+Shift+I`
-- Go to Console tab for errors
-- Network tab for API calls
-- React DevTools extension for component inspection
-
-### VS Code Debugging
-
-1. Set breakpoint (click left of line number)
-2. Press `F5` or use Debug panel
-3. Select "Next.js: debug server-side" or "debug client-side"
-
-### Console Logging
-
-```tsx
-// Server-side (terminal output)
-console.log('Server:', data);
-
 // Client-side (browser console)
-console.log('Client:', data);
+
+**Setup selesai! Happy coding! 🚀**console.log('Client:', data);
+
 ```
 
 ---

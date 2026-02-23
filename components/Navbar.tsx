@@ -66,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
           </div>
           <div className="hidden xl:block">
             <div className="ml-10 flex items-center space-x-6">
-              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0092DD] ${currentPage === 'home' && isNavMaroon ? 'text-[#0092DD]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Home</button>
+              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0092DD] ${currentPage === 'home' && isNavMaroon ? 'text-[#0092DD]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
               
               <div className="relative group" ref={dropdownRef}>
                 <button 

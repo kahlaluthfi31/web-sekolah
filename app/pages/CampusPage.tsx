@@ -84,7 +84,7 @@ const CampusPage: React.FC = () => {
       <div className="bg-gray-100 py-4 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
           <span className="text-[#0092DD]">Home</span>{" "}
-          <span className="mx-2">/</span> Campus Facilities
+          <span className="mx-2">/</span> Sarana Prasarana
         </div>
       </div>
 

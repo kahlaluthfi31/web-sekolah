@@ -8,7 +8,7 @@ export default function AboutPage() {
       {/* Page Header */}
       <section className="bg-[#0092DD] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">About</h1>
+          <h1 className="text-4xl font-bold mb-4">Profile Sekolah</h1>
           <p className="max-w-2xl mx-auto text-white/80 text-sm leading-relaxed">
             Odio et unde deleniti. Deserunt numquam exercitationem. Officiis quo odio sint voluptas consequatur ut a odio voluptatem. Sit dolorum debitis veritatis natus dolores. Quasi ratione sint. Sit quaerat ipsum dolorem.
           </p>
@@ -18,7 +18,7 @@ export default function AboutPage() {
       {/* Breadcrumb */}
       <div className="bg-gray-100 py-4 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> About
+          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> Profil Sekolah
         </div>
       </div>
 

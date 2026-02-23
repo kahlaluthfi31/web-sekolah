@@ -78,21 +78,13 @@ const UpcomingEvents: React.FC = () => {
                   </span>
                 </div>
                 <h4 className="text-xl font-bold text-gray-900 mb-4">{event.title}</h4>
-                <div className="space-y-2 mb-6">
+                <div className="space-y-1">
                   <div className="flex items-center text-gray-500 text-xs">
                     <Clock className="h-3.5 w-3.5 mr-2" /> {event.time}
                   </div>
                   <div className="flex items-center text-gray-500 text-xs">
                     <MapPin className="h-3.5 w-3.5 mr-2" /> {event.location}
                   </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <button className="bg-[#0092DD] text-white px-5 py-2 rounded-full text-xs font-bold hover:bg-white hover:text-[#0092DD] transition-all duration-300">
-                    Learn More
-                  </button>
-                  <button className="text-gray-400 hover:text-[#0092DD] p-2 flex items-center text-xs font-bold">
-                    <Calendar className="h-4 w-4 mr-1.5" /> Add to Calendar
-                  </button>
                 </div>
               </div>
             </div>

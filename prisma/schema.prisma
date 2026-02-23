@@ -1,0 +1,718 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER MANAGEMENT ====================
+
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  email       String    @unique @db.VarChar(255)
+  password    String    @db.VarChar(255)
+  role        Role      @default(user)
+  status      Status    @default(pending)
+  avatar      String?   @db.VarChar(255)
+  lastSeenAt  DateTime? @map("last_seen_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  verifications        UserVerification[] @relation("UserVerifications")
+  verificationsApproved UserVerification[] @relation("VerifiedBy")
+  newsArticles         News[]             @relation("NewsAuthor")
+  comments             Comment[]
+  achievementsVerified StudentAchievement[] @relation("AchievementVerifiedBy")
+  alumniSubmissions    AlumniSubmission[] @relation("AlumniSubmittedBy")
+  alumniVerifications  AlumniSubmission[] @relation("AlumniVerifiedBy")
+  commentApprovals     Comment[]          @relation("CommentApprovedBy")
+  commentLikes         CommentLike[]
+
+  @@map("users")
+}
+
+enum Role {
+  superadmin
+  admin
+  user
+}
+
+enum Status {
+  active
+  inactive
+  pending
+}
+
+model UserVerification {
+  id               Int              @id @default(autoincrement())
+  userId           Int              @map("user_id")
+  verificationType VerificationType @map("verification_type")
+  verificationData String?          @db.Text
+  status           VerificationStatus @default(pending)
+  verifiedById     Int?             @map("verified_by")
+  verifiedAt       DateTime?        @map("verified_at")
+
+  // Relations
+  user       User  @relation("UserVerifications", fields: [userId], references: [id])
+  verifiedBy User? @relation("VerifiedBy", fields: [verifiedById], references: [id])
+
+  @@map("user_verifications")
+}
+
+enum VerificationType {
+  email
+  nisn
+  ijazah
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+// ==================== HOMEPAGE CONTENT ====================
+
+model MainHero {
+  id            Int      @id @default(autoincrement())
+  title         String?  @db.VarChar(255)
+  subtitle      String?  @db.Text
+  description   String?  @db.Text
+  image         String?  @db.VarChar(255)
+  videoUrl      String?  @map("video_url") @db.VarChar(255)
+  buttonText    String?  @map("button_text") @db.VarChar(100)
+  buttonUrl     String?  @map("button_url") @db.VarChar(255)
+  orderPosition Int      @default(0) @map("order_position")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("main_hero")
+}
+
+model PrincipalGreeting {
+  id             Int      @id @default(autoincrement())
+  title          String?  @db.VarChar(255)
+  content        String?  @db.Text
+  principalName  String?  @map("principal_name") @db.VarChar(255)
+  principalPhoto String?  @map("principal_photo") @db.VarChar(255)
+  signature      String?  @db.VarChar(255)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("principal_greetings")
+}
+
+model SchoolProfile {
+  id            Int                 @id @default(autoincrement())
+  section       SchoolProfileSection
+  title         String?             @db.VarChar(255)
+  content       String?             @db.Text
+  videoUrl      String?             @map("video_url") @db.VarChar(255)
+  image         String?             @db.VarChar(255)
+  orderPosition Int                 @default(0) @map("order_position")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  @@map("school_profile")
+}
+
+enum SchoolProfileSection {
+  sejarah
+  visi_misi
+  keunggulan
+}
+
+// ==================== ACADEMIC ====================
+
+model Major {
+  id            Int              @id @default(autoincrement())
+  name          String           @db.VarChar(255)
+  code          String?          @unique @db.VarChar(50)
+  description   String?          @db.Text
+  headOfMajor   String?          @map("head_of_major") @db.VarChar(255)
+  image         String?          @db.VarChar(255)
+  icon          String?          @db.VarChar(255)
+  detailType    MajorDetailType  @default(PAGE) @map("detail_type")
+  externalUrl   String?          @map("external_url") @db.VarChar(500)
+  orderPosition Int              @default(0) @map("order_position")
+  isActive      Boolean          @default(true) @map("is_active")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  competencies Competency[]
+  gallery      MajorGallery[]
+
+  @@map("majors")
+}
+
+enum MajorDetailType {
+  PAGE
+  EXTERNAL
+}
+
+model MajorGallery {
+  id        Int      @id @default(autoincrement())
+  majorId   Int      @map("major_id")
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  caption   String?  @db.VarChar(255)
+  orderPosition Int  @default(0) @map("order_position")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  major Major @relation(fields: [majorId], references: [id], onDelete: Cascade)
+
+  @@map("major_gallery")
+}
+
+model Competency {
+  id            Int              @id @default(autoincrement())
+  majorId       Int              @map("major_id")
+  name          String           @db.VarChar(255)
+  description   String?          @db.Text
+  detailType    MajorDetailType  @default(PAGE) @map("detail_type")
+  externalUrl   String?          @map("external_url") @db.VarChar(500)
+  isActive      Boolean          @default(true) @map("is_active")
+
+  // Relations
+  major   Major          @relation(fields: [majorId], references: [id], onDelete: Cascade)
+  gallery CompetencyGallery[]
+
+  @@map("competencies")
+}
+
+model CompetencyGallery {
+  id            Int      @id @default(autoincrement())
+  competencyId  Int      @map("competency_id")
+  imageUrl      String   @map("image_url") @db.VarChar(500)
+  caption       String?  @db.VarChar(255)
+  orderPosition Int      @default(0) @map("order_position")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  competency Competency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+
+  @@map("competency_gallery")
+}
+
+// ==================== STAFF ====================
+
+model Teacher {
+  id            Int           @id @default(autoincrement())
+  nip           String?       @db.VarChar(50)
+  name          String        @db.VarChar(255)
+  email         String?       @db.VarChar(255)
+  phone         String?       @db.VarChar(20)
+  photo         String?       @db.VarChar(255)
+  position      String?       @db.VarChar(255)
+  education     String?       @db.VarChar(255)
+  subjects      String?       @db.Text
+  status        TeacherStatus @default(ACTIVE)
+  joinDate      DateTime?     @map("join_date")
+  orderPosition Int           @default(0) @map("order_position")
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  structurePositions SchoolStructure[]
+  principalHistories PrincipalHistory[]
+
+  @@map("teachers")
+}
+
+enum TeacherStatus {
+  ACTIVE
+  RETIRED
+  RESIGNED
+  TRANSFERRED
+}
+
+model SchoolStructure {
+  id            Int     @id @default(autoincrement())
+  positionName  String  @map("position_name") @db.VarChar(255)
+  teacherId     Int?    @map("teacher_id")
+  orderPosition Int     @default(0) @map("order_position")
+
+  // Relations
+  teacher Teacher? @relation(fields: [teacherId], references: [id])
+
+  @@map("school_structure")
+}
+
+model PrincipalHistory {
+  id          Int       @id @default(autoincrement())
+  teacherId   Int       @map("teacher_id")
+  role        PrincipalRole
+  startYear   Int       @map("start_year")
+  endYear     Int?      @map("end_year")
+  note        String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@map("principal_histories")
+}
+
+enum PrincipalRole {
+  KEPALA_SEKOLAH
+  WAKIL_KEPALA_SEKOLAH
+}
+
+model Position {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique @db.VarChar(255)
+  description   String?  @db.Text
+  orderPosition Int      @default(0) @map("order_position")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("positions")
+}
+
+// ==================== FACILITIES ====================
+
+model Facility {
+  id            Int               @id @default(autoincrement())
+  category      String            @db.VarChar(100)
+  name          String            @db.VarChar(255)
+  description   String?           @db.Text
+  image         String?           @db.VarChar(255)
+  quantity      Int               @default(1)
+  condition     FacilityCondition @default(baik)
+  orderPosition Int               @default(0) @map("order_position")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  @@map("facilities")
+}
+
+model FacilityCategoryConfig {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  color     String   @default("bg-gray-100 text-gray-600") @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("facility_category_configs")
+}
+
+enum FacilityCondition {
+  baik
+  rusak
+  perlu_perbaikan
+}
+
+// ==================== NEWS & MEDIA ====================
+
+model News {
+  id              Int          @id @default(autoincrement())
+  title           String       @db.VarChar(255)
+  slug            String       @unique @db.VarChar(255)
+  excerpt         String?      @db.Text
+  content         String?      @db.LongText
+  featuredImage   String?      @map("featured_image") @db.VarChar(255)
+  category        NewsCategory
+  authorId        Int?         @map("author_id")
+  creatorName     String?      @map("creator_name") @db.VarChar(255)
+  creatorCategory String?      @map("creator_category") @db.VarChar(100)
+  views           Int          @default(0)
+  isPublished     Boolean      @default(false) @map("is_published")
+  publishedAt     DateTime?    @map("published_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  author User?      @relation("NewsAuthor", fields: [authorId], references: [id])
+  tags   NewsTag[]
+
+  @@map("news")
+}
+
+enum NewsCategory {
+  berita
+  kejuaraan
+  pengumuman
+  event
+}
+
+model NewsTag {
+  id      Int    @id @default(autoincrement())
+  newsId  Int    @map("news_id")
+  tagName String @map("tag_name") @db.VarChar(100)
+
+  // Relations
+  news News @relation(fields: [newsId], references: [id])
+
+  @@map("news_tags")
+}
+
+// ==================== ACHIEVEMENTS ====================
+
+model StudentAchievement {
+  id               Int                    @id @default(autoincrement())
+  studentName      String                 @map("student_name") @db.VarChar(255)
+  class            String?                @db.VarChar(50)
+  achievementName  String                 @map("achievement_name") @db.VarChar(255)
+  competitionName  String?                @map("competition_name") @db.VarChar(255)
+  level            String                 @default("sekolah") @db.VarChar(100)
+  position         String?                @db.VarChar(50)
+  year             Int?                   @db.Year
+  competitionDate  DateTime?              @map("competition_date") @db.Date
+  photo            String?                @db.VarChar(255)
+  certificateImage String?                @map("certificate_image") @db.VarChar(255)
+  verifiedById     Int?                   @map("verified_by")
+  verifiedAt       DateTime?              @map("verified_at")
+  status           VerificationStatus     @default(pending)
+  createdAt        DateTime               @default(now()) @map("created_at")
+
+  // Relations
+  verifiedBy User? @relation("AchievementVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@map("student_achievements")
+}
+
+// ==================== EXTRACURRICULAR ====================
+
+// Master data eskul (daftar eskul yang tersedia)
+model EskulData {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(255)
+  description String?   @db.Text
+  coachName   String?   @map("coach_name") @db.VarChar(255)
+  image       String?   @db.VarChar(255)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  activities EskulActivity[]
+
+  @@map("eskul_data")
+}
+
+// Kegiatan ekstrakurikuler
+model EskulActivity {
+  id            Int       @id @default(autoincrement())
+  eskulId       Int       @map("eskul_id")
+  activityTitle String    @map("activity_title") @db.VarChar(255)
+  description   String?   @db.Text
+  activityDate  DateTime  @map("activity_date") @db.Date
+  image         String?   @db.VarChar(255)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  eskul EskulData @relation(fields: [eskulId], references: [id], onDelete: Cascade)
+
+  @@map("eskul_activities")
+}
+
+// Keep old model for backward compatibility (deprecated)
+model Extracurricular {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(255)
+  activityTitle String?   @map("activity_title") @db.VarChar(255)
+  description   String?   @db.Text
+  activityDate  DateTime? @map("activity_date") @db.Date
+  timeStart     String?   @map("time_start") @db.VarChar(10)
+  timeEnd       String?   @map("time_end") @db.VarChar(10)
+  coachName     String?   @map("coach_name") @db.VarChar(255)
+  image         String?   @db.VarChar(255)
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("extracurriculars")
+}
+
+model ExtracurricularMember {
+  id                 Int    @id @default(autoincrement())
+  extracurricularId  Int    @map("extracurricular_id")
+  studentName        String @map("student_name") @db.VarChar(255)
+  class              String? @db.VarChar(50)
+  position           String? @db.VarChar(100)
+
+  @@map("extracurricular_members")
+}
+
+// ==================== AGENDA & EVENTS ====================
+
+model AgendaCategory {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  color     String?  @db.VarChar(50)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agendas Agenda[]
+
+  @@map("agenda_categories")
+}
+
+model Agenda {
+  id          Int             @id @default(autoincrement())
+  categoryId  Int?            @map("category_id")
+  title       String          @db.VarChar(255)
+  description String?         @db.Text
+  eventDate   DateTime?       @map("event_date") @db.Date
+  eventTime   DateTime?       @map("event_time") @db.Time
+  timeEnd     DateTime?       @map("time_end") @db.Time
+  timeEndText String?         @map("time_end_text") @db.VarChar(50)
+  location    String?         @db.VarChar(255)
+  organizer   String?         @db.VarChar(255)
+  image       String?         @db.VarChar(255)
+  status      AgendaStatus    @default(upcoming)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  category AgendaCategory? @relation(fields: [categoryId], references: [id])
+
+  @@map("agendas")
+}
+
+enum AgendaStatus {
+  upcoming
+  ongoing
+  completed
+  cancelled
+}
+
+// ==================== VIRTUAL TOUR ====================
+
+model VirtualTourLocation {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  orderPosition Int      @default(0) @map("order_position")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  images VirtualTourImage[]
+
+  @@map("virtual_tour_locations")
+}
+
+model VirtualTourImage {
+  id            Int     @id @default(autoincrement())
+  locationId    Int     @map("location_id")
+  imagePath     String  @map("image_path") @db.VarChar(255)
+  panoramaData  String? @map("panorama_data") @db.Text
+  hotspotInfo   String? @map("hotspot_info") @db.Text
+  orderPosition Int     @default(0) @map("order_position")
+
+  // Relations
+  location VirtualTourLocation @relation(fields: [locationId], references: [id])
+
+  @@map("virtual_tour_images")
+}
+
+// ==================== ALUMNI ====================
+
+model AlumniSubmission {
+  id               Int                @id @default(autoincrement())
+  alumniName       String             @map("alumni_name") @db.VarChar(255)
+  graduationYear   Int?               @map("graduation_year") @db.Year
+  major            String?            @db.VarChar(255)
+  currentOccupation String?           @map("current_occupation") @db.VarChar(255)
+  company          String?            @db.VarChar(255)
+  story            String?            @db.Text
+  photo            String?            @db.VarChar(255)
+  nisn             String?            @db.VarChar(50)
+  diplomaPhoto     String?            @map("diploma_photo") @db.VarChar(255)
+  submittedById    Int?               @map("submitted_by")
+  status           VerificationStatus @default(pending)
+  verifiedById     Int?               @map("verified_by")
+  verifiedAt       DateTime?          @map("verified_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+
+  // Relations
+  submittedBy User?          @relation("AlumniSubmittedBy", fields: [submittedById], references: [id])
+  verifiedBy  User?          @relation("AlumniVerifiedBy", fields: [verifiedById], references: [id])
+  profile     AlumniProfile?
+
+  @@map("alumni_submissions")
+}
+
+model AlumniProfile {
+  id              Int     @id @default(autoincrement())
+  submissionId    Int     @unique @map("submission_id")
+  displayOrder    Int     @default(0) @map("display_order")
+  featured        Boolean @default(false)
+
+  // Relations
+  submission AlumniSubmission @relation(fields: [submissionId], references: [id])
+
+  @@map("alumni_profiles")
+}
+
+// ==================== COMMENTS ====================
+
+model Comment {
+  id          Int                @id @default(autoincrement())
+  contentType CommentContentType @map("content_type")
+  contentId   Int                @map("content_id")
+  userId      Int                @map("user_id")
+  commentText String             @map("comment_text") @db.Text
+  parentId    Int?               @map("parent_id")
+  status      VerificationStatus @default(pending)
+  approvedById Int?              @map("approved_by")
+  approvedAt  DateTime?          @map("approved_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  // Relations
+  user       User          @relation(fields: [userId], references: [id])
+  approvedBy User?         @relation("CommentApprovedBy", fields: [approvedById], references: [id])
+  likes      CommentLike[]
+
+  @@map("comments")
+}
+
+enum CommentContentType {
+  news
+  achievement
+  agenda
+  facility
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  commentId Int      @map("comment_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  comment Comment @relation(fields: [commentId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("comment_likes")
+}
+
+// ==================== NOTICES & REGULATIONS ====================
+
+model ImportantNotice {
+  id           Int           @id @default(autoincrement())
+  title        String        @db.VarChar(255)
+  content      String?       @db.Text
+  noticeType   NoticeType    @map("notice_type")
+  priority     NoticePriority @default(medium)
+  displayUntil DateTime?     @map("display_until") @db.Date
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("important_notices")
+}
+
+enum NoticeType {
+  ppdb
+  pengumuman
+  info_penting
+}
+
+enum NoticePriority {
+  high
+  medium
+  low
+}
+
+model SchoolRegulation {
+  id            Int                     @id @default(autoincrement())
+  title         String                  @db.VarChar(255)
+  content       String?                 @db.Text
+  documentFile  String?                 @map("document_file") @db.VarChar(255)
+  category      SchoolRegulationCategory
+  orderPosition Int                     @default(0) @map("order_position")
+  createdAt     DateTime                @default(now()) @map("created_at")
+
+  @@map("school_regulations")
+}
+
+enum SchoolRegulationCategory {
+  siswa
+  guru
+  umum
+}
+
+// ==================== CONTACT ====================
+
+model ContactInfo {
+  id            Int             @id @default(autoincrement())
+  infoType      ContactInfoType @map("info_type")
+  label         String?         @db.VarChar(255)
+  value         String?         @db.VarChar(255)
+  icon          String?         @db.VarChar(255)
+  orderPosition Int             @default(0) @map("order_position")
+  isActive      Boolean         @default(true) @map("is_active")
+
+  @@map("contact_info")
+}
+
+enum ContactInfoType {
+  address
+  phone
+  email
+  social_media
+}
+
+model ContactMessage {
+  id         Int                  @id @default(autoincrement())
+  name       String               @db.VarChar(255)
+  email      String               @db.VarChar(255)
+  subject    String?              @db.VarChar(255)
+  message    String               @db.Text
+  phone      String?              @db.VarChar(20)
+  status     ContactMessageStatus @default(unread)
+  adminReply String?              @map("admin_reply") @db.Text
+  repliedAt  DateTime?            @map("replied_at")
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
+enum ContactMessageStatus {
+  unread
+  read
+  replied
+}
+
+// ==================== SETTINGS ====================
+
+model WebsiteSetting {
+  id          Int              @id @default(autoincrement())
+  settingKey  String           @unique @map("setting_key") @db.VarChar(255)
+  settingValue String?         @map("setting_value") @db.Text
+  settingType SettingType      @map("setting_type")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@map("website_settings")
+}
+
+enum SettingType {
+  text
+  image
+  url
+  boolean
+}
+
+model NavigationMenu {
+  id            Int          @id @default(autoincrement())
+  menuName      String       @map("menu_name") @db.VarChar(255)
+  menuUrl       String?      @map("menu_url") @db.VarChar(255)
+  parentId      Int?         @map("parent_id")
+  menuType      MenuType     @map("menu_type")
+  orderPosition Int          @default(0) @map("order_position")
+  isActive      Boolean      @default(true) @map("is_active")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@map("navigation_menu")
+}
+
+enum MenuType {
+  internal
+  external
+  dropdown
+}

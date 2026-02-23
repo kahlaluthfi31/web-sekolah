@@ -1,0 +1,26 @@
+import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/auth'
+import { AdminShell } from './components/AdminShell'
+
+export const metadata = {
+  title: 'Admin Dashboard - SMK',
+}
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const session = await getSession()
+
+  if (!session) {
+    redirect('/admin/login')
+  }
+
+  // Only superadmin & admin can access
+  if (session.role === 'user') {
+    redirect('/')
+  }
+
+  return <AdminShell user={session}>{children}</AdminShell>
+}

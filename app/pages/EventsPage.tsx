@@ -228,7 +228,7 @@ const EventsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Events List */}
+          {/* Events List */}   
           <div className="space-y-6">
             {currentEvents.map((event) => (
               <div
@@ -279,8 +279,8 @@ const EventsPage: React.FC = () => {
                     {activeTab === 'past' && 'attendees' in event && (
                       <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r">
                         <div className="flex items-center">
-                          <span className="text-green-700 font-semibold text-sm mr-2">✓ {event.status}</span>
-                          <span className="text-gray-600 text-sm">• {event.attendees}</span>
+                          <span className="text-green-700 font-semibold text-sm mr-2">✓ {(event as unknown as { status: string }).status}</span>
+                          <span className="text-gray-600 text-sm">• {(event as unknown as { attendees: string }).attendees}</span>
                         </div>
                       </div>
                     )}
