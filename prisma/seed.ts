@@ -44,7 +44,7 @@ async function main() {
       email: 'budi@gmail.com',
       password: hashedPassword,
       role: 'user',
-      status: 'pending',
+      status: 'inactive',
     },
   })
   console.log('✅ User:', regularUser.email)

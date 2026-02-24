@@ -18,7 +18,7 @@ model User {
   email       String    @unique @db.VarChar(255)
   password    String    @db.VarChar(255)
   role        Role      @default(user)
-  status      Status    @default(pending)
+  status      Status    @default(active)
   avatar      String?   @db.VarChar(255)
   lastSeenAt  DateTime? @map("last_seen_at")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -34,6 +34,7 @@ model User {
   alumniVerifications  AlumniSubmission[] @relation("AlumniVerifiedBy")
   commentApprovals     Comment[]          @relation("CommentApprovedBy")
   commentLikes         CommentLike[]
+  adminPermission      AdminPermission?
 
   @@map("users")
 }
@@ -47,7 +48,19 @@ enum Role {
 enum Status {
   active
   inactive
-  pending
+}
+
+// ==================== ACCESS CONTROL ====================
+
+model AdminPermission {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menuKeys    String   @db.Text @map("menu_keys") // JSON array of allowed menu keys
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_permissions")
 }
 
 model UserVerification {

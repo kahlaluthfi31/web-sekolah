@@ -64,7 +64,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   admin: [
     'dashboard.view',
     'news.view', 'news.create', 'news.edit', 'news.delete', 'news.publish',
-    'teachers.view',
+    'teachers.view', 'teachers.create', 'teachers.edit', 'teachers.delete',
+    'majors.view', 'majors.create', 'majors.edit', 'majors.delete',
+    'facilities.view', 'facilities.create', 'facilities.edit', 'facilities.delete',
     'achievements.view', 'achievements.create', 'achievements.edit', 'achievements.verify',
     'extracurriculars.view', 'extracurriculars.create', 'extracurriculars.edit',
     'agendas.view', 'agendas.create', 'agendas.edit',
@@ -99,7 +101,26 @@ export interface NavItem {
   children?: NavItem[]
 }
 
-export function getNavigation(role: UserRole): NavItem[] {
+// All menu keys that can be toggled for admin role
+export const ADMIN_MENU_ITEMS: { key: string; label: string; icon: string; href: string }[] = [
+  { key: 'news',             label: 'Berita & Pengumuman', icon: 'Newspaper',    href: '/admin/dashboard/news' },
+  { key: 'achievements',     label: 'Prestasi Siswa',      icon: 'Trophy',       href: '/admin/dashboard/achievements' },
+  { key: 'extracurriculars', label: 'Ekstrakurikuler',     icon: 'Volleyball',   href: '/admin/dashboard/extracurriculars' },
+  { key: 'agendas',          label: 'Agenda Kegiatan',     icon: 'CalendarDays', href: '/admin/dashboard/agendas' },
+  { key: 'alumni',           label: 'Data Alumni',          icon: 'GraduationCap',href: '/admin/dashboard/alumni' },
+  { key: 'comments',         label: 'Komentar',             icon: 'MessageCircle',href: '/admin/dashboard/comments' },
+  { key: 'messages',         label: 'Pesan Masuk',          icon: 'Mail',         href: '/admin/dashboard/messages' },
+  { key: 'teachers',         label: 'Guru & Staff',         icon: 'Users',        href: '/admin/dashboard/teachers' },
+  { key: 'majors',           label: 'Program Keahlian',     icon: 'BookOpen',     href: '/admin/dashboard/majors' },
+  { key: 'facilities',       label: 'Fasilitas',            icon: 'Building2',    href: '/admin/dashboard/facilities' },
+]
+
+// All menu keys enabled by default for admin
+export const DEFAULT_ADMIN_MENU_KEYS: string[] = [
+  'news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages',
+]
+
+export function getNavigation(role: UserRole, customMenuKeys?: string[] | null): NavItem[] {
   const allNav: NavItem[] = [
     { title: 'Dashboard', href: '/admin/dashboard', icon: 'LayoutDashboard', permission: 'dashboard.view' },
 
@@ -120,6 +141,9 @@ export function getNavigation(role: UserRole): NavItem[] {
     // User Management (Superadmin only)
     { title: 'Manajemen User', href: '/admin/dashboard/users', icon: 'UserCog', permission: 'users.view' },
 
+    // Access Control (Superadmin only)
+    { title: 'Hak Akses Admin', href: '/admin/dashboard/access-control', icon: 'ShieldCheck', permission: 'users.view' },
+
     // Website Settings (Superadmin only)
     { title: 'Menu Navigasi', href: '/admin/dashboard/navigation', icon: 'Menu', permission: 'navigation.view' },
     { title: 'Halaman Utama', href: '/admin/dashboard/homepage', icon: 'Home', permission: 'homepage.view' },
@@ -127,5 +151,22 @@ export function getNavigation(role: UserRole): NavItem[] {
     { title: 'Pengaturan', href: '/admin/dashboard/settings', icon: 'Settings', permission: 'settings.view' },
   ]
 
-  return allNav.filter(item => hasPermission(role, item.permission))
+  // For superadmin: always show everything
+  if (role === 'superadmin') {
+    return allNav.filter(item => hasPermission(role, item.permission))
+  }
+
+  // For admin: always filter by customMenuKeys (access-control settings)
+  // - undefined = still loading permissions → show only dashboard (prevent flash)
+  // - null      = no custom setting → use DEFAULT_ADMIN_MENU_KEYS
+  // - string[]  = custom setting from superadmin
+  const allowedKeys = customMenuKeys === undefined
+    ? []  // loading state: hide all menus until permissions fetched
+    : (customMenuKeys ?? DEFAULT_ADMIN_MENU_KEYS)
+
+  return allNav.filter(item => hasPermission(role, item.permission)).filter(item => {
+    if (item.href === '/admin/dashboard') return true
+    const key = ADMIN_MENU_ITEMS.find(m => m.href === item.href)?.key
+    return key ? allowedKeys.includes(key) : false
+  })
 }

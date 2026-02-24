@@ -72,7 +72,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="admin@sekolah.com"
+                placeholder="medsos@sekolah.com"
               />
             </div>
 
@@ -120,8 +120,8 @@ export default function LoginPage() {
           <div className="mt-6 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center mb-2">Demo Credentials:</p>
             <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600 space-y-1">
-              <p><span className="font-medium text-blue-600">Superadmin:</span> admin@sekolah.com / admin123</p>
-              <p><span className="font-medium text-green-600">Admin:</span> medsos@sekolah.com / admin123</p>
+              <p><span className="font-medium text-blue-600">Superadmin:</span> superadmin@smkn1ciamis.com <br />pass : super admin 123</p>
+              <p><span className="font-medium text-green-600">Admin:</span> medsos@sekolah.com <br /> pass : admin123</p>
             </div>
           </div>
         </div>

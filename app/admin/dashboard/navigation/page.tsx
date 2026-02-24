@@ -384,7 +384,7 @@ export default function NavigationPage() {
 
       {/* Info */}
       <div className="bg-blue-50 rounded-xl p-4 text-sm text-blue-700">
-        <p className="font-medium mb-1">💡 Tips:</p>
+        <p className="font-medium mb-1">Tips:</p>
         <ul className="list-disc list-inside space-y-0.5 text-blue-600">
           <li>Menu bertipe <strong>dropdown</strong> digunakan sebagai parent yang punya sub-menu</li>
           <li>Menu <strong>internal</strong> untuk link di dalam website (mis: /about)</li>

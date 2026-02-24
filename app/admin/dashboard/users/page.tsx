@@ -84,7 +84,7 @@ function ActionDropdown({
             className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-yellow-50 hover:text-yellow-700"
           >
             <Edit2 className="w-3.5 h-3.5" />
-            Edit Role
+            Edit
           </button>
           <div className="border-t border-gray-100 my-1" />
           <button
@@ -101,10 +101,10 @@ function ActionDropdown({
 }
 
 /* ------------------------------------------------------------------ */
-/* EditRoleModal                                                       */
+/* EditModal (Role + Status Akun)                                      */
 /* ------------------------------------------------------------------ */
 
-function EditRoleModal({
+function EditModal({
   user,
   onClose,
   onSaved,
@@ -114,8 +114,29 @@ function EditRoleModal({
   onSaved: () => void
 }) {
   const [role, setRole] = useState(user.role)
+  const [status, setStatus] = useState(user.status)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Status options depend on role
+  const statusOptions =
+    role === 'user'
+      ? [
+          { value: 'active', label: 'Aktif' },
+          { value: 'inactive', label: 'Nonaktif' },
+        ]
+      : [
+          { value: 'active', label: 'Aktif' },
+          { value: 'inactive', label: 'Nonaktif' },
+        ]
+
+  // If role changes and current status isn't valid, reset to 'active'
+  useEffect(() => {
+    const valid = statusOptions.map(o => o.value)
+    if (!valid.includes(status)) setStatus('active')
+  }, [role]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const unchanged = role === user.role && status === user.status
 
   const handleSave = async () => {
     setSaving(true)
@@ -124,7 +145,7 @@ function EditRoleModal({
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ role, status }),
       })
       const json = await res.json()
       if (!json.success) { setError(json.message || 'Gagal menyimpan'); return }
@@ -143,8 +164,8 @@ function EditRoleModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Edit Role</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Ubah role akun pengguna</p>
+            <h3 className="text-base font-semibold text-gray-900">Edit Akun</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Ubah role dan status akun pengguna</p>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
             <X className="w-4 h-4" />
@@ -183,6 +204,20 @@ function EditRoleModal({
             </p>
           </div>
 
+          {/* Status Akun select */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Status Akun</label>
+            <select
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {statusOptions.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+
           {error && (
             <div className="flex items-center gap-2 text-red-600 bg-red-50 rounded-xl px-4 py-2.5 text-sm">
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -202,7 +237,7 @@ function EditRoleModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || role === user.role}
+            disabled={saving || unchanged}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -366,7 +401,6 @@ function AddUserModal({
               >
                 <option value="active">Aktif</option>
                 <option value="inactive">Nonaktif</option>
-                <option value="pending">Pending</option>
               </select>
             </div>
           </div>
@@ -549,21 +583,12 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Manajemen User</h2>
-          <p className="text-sm text-gray-500">Kelola pengguna, role, dan status akun</p>
-        </div>
-        <button
-          onClick={() => setAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah User
-        </button>
+      <div>
+        <h2 className="text-xl font-bold text-gray-900">Manajemen User</h2>
+        <p className="text-sm text-gray-500">Kelola pengguna, role, dan status akun</p>
       </div>
 
-      {/* Filters */}
+      {/* Filters + Tambah User */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -593,8 +618,14 @@ export default function UsersPage() {
           <option value="">Semua Status</option>
           <option value="active">Aktif</option>
           <option value="inactive">Nonaktif</option>
-          <option value="pending">Pending</option>
         </select>
+        <button
+          onClick={() => setAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4" />
+          Tambah User
+        </button>
       </div>
 
       {/* Table */}
@@ -675,11 +706,9 @@ export default function UsersPage() {
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
                           user.status === 'active'
                             ? 'bg-green-100 text-green-700'
-                            : user.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          {user.status === 'active' ? 'Aktif' : user.status === 'pending' ? 'Pending' : 'Nonaktif'}
+                          {user.status === 'active' ? 'Aktif' : 'Nonaktif'}
                         </span>
                       </td>
 
@@ -733,12 +762,12 @@ export default function UsersPage() {
 
       {/* Legend */}
       <p className="text-xs text-gray-400">
-        Status login (Online/Offline) hanya berlaku untuk akun Admin & Superadmin. Diperbarui setiap 15 detik.
+        Status login ( Online / Offline ) akan diperbarui setiap 15 detik.
       </p>
 
       {/* Modals */}
       {editModal && (
-        <EditRoleModal
+        <EditModal
           user={editModal}
           onClose={() => setEditModal(null)}
           onSaved={fetchData}

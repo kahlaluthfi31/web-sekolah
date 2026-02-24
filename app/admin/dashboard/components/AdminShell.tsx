@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { SessionUser } from '@/lib/auth'
@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu as MenuIcon, Home, School, Settings, LogOut,
-  ChevronLeft, ChevronRight, X,
+  ChevronLeft, ChevronRight, X, ShieldCheck,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -18,7 +18,7 @@ import {
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
-  UserCog, Menu: MenuIcon, Home, School, Settings,
+  UserCog, Menu: MenuIcon, Home, School, Settings, ShieldCheck,
 }
 
 /* ------------------------------------------------------------------ */
@@ -102,10 +102,55 @@ interface AdminShellProps {
 export function AdminShell({ user, children }: AdminShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [customMenuKeys, setCustomMenuKeys] = useState<string[] | null | undefined>(undefined)
+  const prevKeysRef = useRef<string[] | null | undefined>(undefined)
   const pathname = usePathname()
   const router = useRouter()
 
-  const navigation = useMemo(() => getNavigation(user.role as UserRole), [user.role])
+  // Fetch custom permissions for admin role
+  const fetchPermissions = useCallback(async () => {
+    if (user.role !== 'admin') return
+    try {
+      const r = await fetch(`/api/admin-permissions?userId=${user.id}`)
+      const j = await r.json()
+      if (j.success) {
+        const next = (j.data.menuKeys ?? null) as string[] | null
+        const prev = prevKeysRef.current
+        // If permissions changed after initial load → redirect out of potentially forbidden page
+        if (prev !== undefined && JSON.stringify(prev) !== JSON.stringify(next)) {
+          setTimeout(() => router.push('/admin/dashboard'), 0)
+        }
+        prevKeysRef.current = next
+        setCustomMenuKeys(next)
+      }
+    } catch { /* ignore */ }
+  }, [user.id, user.role, router])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const sync = async () => {
+      if (cancelled) return
+      await fetchPermissions()
+    }
+
+    // Initial fetch + polling every 30s + re-fetch on window focus
+    void sync()
+    const interval = setInterval(() => { void sync() }, 30_000)
+    const onFocus = () => { void sync() }
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [fetchPermissions])
+
+  const navigation = useMemo(
+    () => getNavigation(user.role as UserRole, user.role === 'admin' ? customMenuKeys : undefined),
+    [user.role, customMenuKeys]
+  )
 
   const groups = useMemo(() => {
     const contentKeys = ['news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages']
@@ -115,7 +160,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
       dashboard: navigation.filter(n => n.href === '/admin/dashboard'),
       content: navigation.filter(n => contentKeys.some(k => n.href.includes(k))),
       master: navigation.filter(n => masterKeys.some(k => n.href.includes(k))),
-      users: navigation.filter(n => n.href.includes('users')),
+      users: navigation.filter(n => n.href.includes('users') || n.href.includes('access-control')),
       settings: navigation.filter(n => settingsKeys.some(k => n.href.includes(k))),
     }
   }, [navigation])
@@ -219,7 +264,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
 
         {/* User */}
         <div className="p-3 border-t border-gray-100 shrink-0">
-          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} mb-2`}>
+          {/* <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} mb-2`}>
             <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
               {user.name.charAt(0).toUpperCase()}
             </div>
@@ -229,7 +274,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
               </div>
             )}
-          </div>
+          </div> */}
           <button
             onClick={handleLogout}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all ${collapsed ? 'justify-center' : ''}`}
@@ -268,14 +313,6 @@ export function AdminShell({ user, children }: AdminShellProps) {
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                target="_blank"
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
-              >
-                <Home className="w-4 h-4" />
-                Lihat Website
-              </Link>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
                   {user.name.charAt(0).toUpperCase()}
