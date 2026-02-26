@@ -20,15 +20,15 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </p>
             <div className="space-y-4">
               <div className="flex items-center text-gray-400">
-                <MapPin className="h-5 w-5 mr-4 text-[#0092DD]" />
+                <MapPin className="h-5 w-5 mr-4 text-[#0268ab]" />
                 <span className="text-sm">123 Creative Boulevard, Design District, NY 10012</span>
               </div>
               <div className="flex items-center text-gray-400">
-                <Phone className="h-5 w-5 mr-4 text-[#0092DD]" />
+                <Phone className="h-5 w-5 mr-4 text-[#0268ab]" />
                 <span className="text-sm">+1 (555) 987-6543</span>
               </div>
               <div className="flex items-center text-gray-400">
-                <Mail className="h-5 w-5 mr-4 text-[#0092DD]" />
+                <Mail className="h-5 w-5 mr-4 text-[#0268ab]" />
                 <span className="text-sm">hello@designstudio.com</span>
               </div>
             </div>
@@ -87,9 +87,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <p className="text-sm text-gray-500">Subscribe to receive design insights and creative inspiration delivered monthly.</p>
             </div>
             <div className="flex items-center space-x-6">
-              <a href="#" className="text-gray-400 hover:text-[#0092DD] transition-colors flex items-center gap-1"><Twitter className="h-4 w-4" /> Twitter</a>
-              <a href="#" className="text-gray-400 hover:text-[#0092DD] transition-colors flex items-center gap-1"><Instagram className="h-4 w-4" /> Instagram</a>
-              <a href="#" className="text-gray-400 hover:text-[#0092DD] transition-colors flex items-center gap-1"><Linkedin className="h-4 w-4" /> LinkedIn</a>
+              <a href="#" className="text-gray-400 hover:text-[#0268ab] transition-colors flex items-center gap-1"><Twitter className="h-4 w-4" /> Twitter</a>
+              <a href="#" className="text-gray-400 hover:text-[#0268ab] transition-colors flex items-center gap-1"><Instagram className="h-4 w-4" /> Instagram</a>
+              <a href="#" className="text-gray-400 hover:text-[#0268ab] transition-colors flex items-center gap-1"><Linkedin className="h-4 w-4" /> LinkedIn</a>
             </div>
           </div>
           

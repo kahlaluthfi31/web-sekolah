@@ -54,24 +54,28 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
     <nav className={`fixed w-full z-50 transition-all duration-300 ${isNavMaroon ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => onNavigate('home')}>
+          <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
             <Image 
-              src="/images/web/logo-smea-lama.png" 
+              src="/images/web/logo-smkn1-ciamis.png" 
               alt="SMK NEGERI 1 CIAMIS Logo" 
-              width={180}
-              height={54}
+              width={35}
+              height={35}
               priority
+              className="object-contain"
             />
-            {/* <h1 className="text-white">SMEA</h1> */}
+            <div className={`text-sm font-bold leading-tight ${isNavMaroon ? 'text-gray-900' : 'text-white'}`}>
+              <div>SMKN 1</div>
+              <div>CIAMIS</div>
+            </div>
           </div>
           <div className="hidden xl:block">
             <div className="ml-10 flex items-center space-x-6">
-              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0092DD] ${currentPage === 'home' && isNavMaroon ? 'text-[#0092DD]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
+              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'home' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
               
               <div className="relative group" ref={dropdownRef}>
                 <button 
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0092DD] ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}
                 >
                   Tentang Kami <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                 </button>
@@ -85,7 +89,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                             onNavigate(item.page);
                             setShowDropdown(false);
                           }}
-                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#0092DD] transition-colors"
+                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#0268ab] transition-colors"
                         >
                           {item.name}
                         </button>
@@ -99,23 +103,18 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                 <button 
                   key={item.name}
                   onClick={() => onNavigate(item.page)}
-                  className={`text-sm font-medium transition-colors hover:text-[#0092DD] ${currentPage === item.page && isNavMaroon ? 'text-[#0092DD]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                  className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
                 >
                   {item.name}
                 </button>
               ))}
               
-              <div className="flex items-center space-x-4 ml-6">
-                <button 
-                  onClick={() => onNavigate('contact')}
-                  className={`text-sm font-medium transition-colors hover:text-[#0092DD] ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}
-                >
-                  Kontak
-                </button>
-                <button className="bg-[#0092DD] text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-white hover:text-[#0092DD] transition-all duration-300 shadow-lg">
-                  Login
-                </button>
-              </div>
+              <button 
+                onClick={() => onNavigate('contact')}
+                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'contact' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+              >
+                Kontak
+              </button>
             </div>
           </div>
 
@@ -140,14 +139,13 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                 <button
                   key={item.name}
                   onClick={() => { onNavigate(item.page); setIsOpen(false); }}
-                  className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#0092DD]"
+                  className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#0268ab]"
                 >
                   {item.name}
                 </button>
               ))}
             </div>
             <button onClick={() => { onNavigate('contact'); setIsOpen(false); }} className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50">Kontak</button>
-            <button className="w-full text-center bg-[#0092DD] text-white px-3 py-2 rounded-md text-base font-medium">Apply Now</button>
           </div>
         </div>
       )}

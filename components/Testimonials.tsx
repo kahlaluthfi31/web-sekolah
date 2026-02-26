@@ -1,104 +1,154 @@
 
-import React from 'react';
-import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Testimonials: React.FC = () => {
-  const testimonials = [
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+  
+  const allTestimonials = [
     {
-      name: "Rachel Chen",
-      role: "Project Manager",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
-      text: "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi.",
-      featured: false
-    },
-    {
-      name: "Jessica Martinez",
-      role: "UX Designer",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150",
-      text: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit sed eiusmod tempor.",
-      featured: true
-    },
-    {
-      name: "David Rodriguez",
-      role: "Software Engineer",
+      name: "Andi Firmansyah",
+      position: "Network Engineer",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
-      text: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa.",
-      featured: false
-    }
+      text: "Ilmu yang saya dapat di SMKN 1 Ciamis benar-benar membuka jalan karier saya. Sekarang saya bekerja sebagai network engineer di perusahaan multinasional.",
+    },
+    {
+      name: "Siti Nurhaliza",
+      position: "Accountant",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150",
+      text: "Guru-guru di sini sangat berdedikasi. Mereka tidak hanya mengajar teori, tapi juga membekali kami dengan pengalaman praktik yang langsung bisa diterapkan.",
+    },
+    {
+      name: "Rizky Maulana",
+      position: "Software Developer",
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150",
+      text: "Fasilitas laboratorium yang lengkap sangat membantu proses belajar saya. Saya bangga pernah menjadi bagian dari keluarga besar SMKN 1 Ciamis.",
+    },
+    {
+      name: "Dewi Kartika",
+      position: "UI/UX Designer",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
+      text: "Pengalaman magang industri yang difasilitasi sekolah membuat saya siap menghadapi dunia kerja. Terima kasih SMKN 1 Ciamis!",
+    },
+    {
+      name: "Budi Santoso",
+      position: "Data Analyst",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150",
+      text: "Kurikulum yang mengikuti perkembangan industri membuat saya tidak kesulitan beradaptasi di dunia kerja. Sangat direkomendasikan!",
+    },
+    {
+      name: "Maya Anggraini",
+      position: "Marketing Manager",
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
+      text: "Selain skill teknis, soft skill yang diajarkan juga sangat membantu karier saya. SMKN 1 Ciamis adalah tempat terbaik untuk mempersiapkan masa depan.",
+    },
+    {
+      name: "Faisal Rahman",
+      position: "System Administrator",
+      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150",
+      text: "Pengalaman belajar di SMKN 1 Ciamis sangat berkesan. Guru-guru profesional dan lingkungan belajar yang kondusif membentuk karakter saya.",
+    },
+    {
+      name: "Linda Wijaya",
+      position: "Content Creator",
+      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
+      text: "Kegiatan ekstrakurikuler yang beragam membuat saya bisa mengembangkan bakat dan minat. Alumni SMKN 1 Ciamis selalu kompak dan saling mendukung.",
+    },
+    {
+      name: "Ahmad Hidayat",
+      position: "Web Developer",
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150",
+      text: "Project-based learning yang diterapkan membuat saya terbiasa menghadapi masalah real-world. Saya merekomendasikan SMKN 1 Ciamis untuk semua calon siswa.",
+    },
   ];
 
+  const totalPages = Math.ceil(allTestimonials.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentTestimonials = allTestimonials.slice(startIndex, startIndex + itemsPerPage);
+
   return (
-    <section className="py-24 bg-gray-50 overflow-hidden">
+    <section className="py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Alumni</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">Hear what our current students and alumni have to say about their journey at MySchool.</p>
+
+        {/* Top label row */}
+        <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
+          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Testimoni Alumni</span>
+          <span className="text-xs text-gray-400">03 / 04</span>
         </div>
 
-        {/* Testimonial Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {testimonials.map((testimonial, index) => (
-            <div 
-              key={index} 
-              className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 hover:border-[#0092DD] transition-all duration-300"
-            >
-              {/* Avatar */}
-              <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <img 
-                    src={testimonial.image} 
-                    alt={testimonial.name}
-                    className="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-md"
-                  />
-                </div>
+        {/* Main layout: left headline + right cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+          {/* Left: Headline + Pagination */}
+          <div className="lg:col-span-4 flex flex-col">
+            <h2 className="text-5xl sm:text-6xl font-light text-gray-900 leading-[1.1] tracking-tight mb-auto">
+              Alumni<br />
+              <em className="not-italic font-bold text-[#0268ab]">SMKN 1 CIAMIS</em>
+            </h2>
+
+            {/* Pagination */}
+            <div className="flex items-center gap-4 mt-12">
+              <button 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#0268ab] hover:text-[#0268ab] transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-gray-900">{currentPage.toString().padStart(2, '0')}</span>
+                <span className="text-sm text-gray-400">/</span>
+                <span className="text-sm text-gray-400">{totalPages.toString().padStart(2, '0')}</span>
               </div>
 
-              {/* Rating Stars */}
-              {/* <div className="flex justify-center mb-6 space-x-1">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div> */}
+              <button 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#0268ab] hover:text-[#0268ab] transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
-              {/* Testimonial Text */}
-              <div className="mb-6">
-                <p className="text-gray-600 text-sm leading-relaxed italic text-center">
-                  &ldquo;{testimonial.text}&rdquo;
+          {/* Right: Cards grid */}
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-5">
+            {currentTestimonials.map((t, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300"
+              >
+                {/* Avatar */}
+                <div className="flex items-start gap-3 mb-4">
+                  <img
+                    src={t.image}
+                    alt={t.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <h4 className="text-base font-bold text-gray-900">{t.name}</h4>
+                    <p className="text-sm text-gray-500">{t.position}</p>
+                  </div>
+                </div>
+
+                {/* Text */}
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {t.text}
                 </p>
               </div>
+            ))}
+          </div>
 
-              {/* Name & Role */}
-              <div className="text-center border-t border-gray-100 pt-6">
-                <h4 className="font-bold text-gray-900 mb-1">{testimonial.name}</h4>
-                <p className="text-sm text-gray-500">{testimonial.role}</p>
-              </div>
-
-              {/* Quote Icon */}
-              <div className="flex justify-end mt-4">
-                <div className="bg-gray-100 rounded-full p-2">
-                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-center space-x-4">
-          <button className="p-4 rounded-full bg-[#0092DD] text-white hover:bg-[#0077BB] transition-colors shadow-lg">
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-          <button className="p-4 rounded-full bg-[#0092DD] text-white hover:bg-[#0077BB] transition-colors shadow-lg">
-            <ChevronRight className="h-6 w-6" />
-          </button>
-        </div>
       </div>
     </section>
   );
 };
 
 export default Testimonials;
+
 
 

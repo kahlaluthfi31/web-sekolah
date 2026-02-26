@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs'
 async function main() {
   console.log('🌱 Start seeding...')
 
+  // Password yang mudah diingat untuk testing
   const hashedPassword = await bcrypt.hash('admin123', 10)
-  const hashedSuperAdminPassword = await bcrypt.hash('super admin 123', 12)
   
   // Create Super Admin
   const admin = await prisma.user.upsert({
@@ -14,12 +14,12 @@ async function main() {
     create: {
       name: 'Super Admin',
       email: 'superadmin@smkn1ciamis.com',
-      password: hashedSuperAdminPassword,
+      password: hashedPassword,
       role: 'superadmin',
       status: 'active',
     },
   })
-  console.log('✅ User:', admin.email)
+  console.log('✅ User:', admin.email, '| Password: admin123')
 
   // Create Admin (guru piket / tim medsos)
   const adminUser = await prisma.user.upsert({
@@ -33,7 +33,7 @@ async function main() {
       status: 'active',
     },
   })
-  console.log('✅ User:', adminUser.email)
+  console.log('✅ User:', adminUser.email, '| Password: admin123')
 
   // Create User (pending approval)
   const regularUser = await prisma.user.upsert({
@@ -47,7 +47,7 @@ async function main() {
       status: 'inactive',
     },
   })
-  console.log('✅ User:', regularUser.email)
+  console.log('✅ User:', regularUser.email, '| Password: admin123 (Status: pending)')
 
   // ---- Sample News ----
   const news1 = await prisma.news.upsert({
@@ -262,7 +262,17 @@ async function main() {
     console.log('✅ Created 8 sample contact messages')
   }
 
-  console.log('🎉 Seeding finished!')
+  console.log('\n🎉 Seeding finished!')
+  console.log('\n📝 Login Credentials:')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('Super Admin:')
+  console.log('  Email: superadmin@smkn1ciamis.com')
+  console.log('  Password: admin123')
+  console.log('')
+  console.log('Admin:')
+  console.log('  Email: medsos@sekolah.com')
+  console.log('  Password: admin123')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
 }
 
 main()

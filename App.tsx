@@ -5,11 +5,14 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import QuickStats from '@/components/QuickStats';
 import AboutSection from '@/components/AboutSection';
+import ProgramKeahlian from '@/components/ProgramKeahlian';
 import FeaturedPrograms from '@/components/FeaturedPrograms';
 import StudentLife from '@/components/StudentLife';
 import Testimonials from '@/components/Testimonials';
 import RecentNews from '@/components/RecentNews';
 import UpcomingEvents from '@/components/UpcomingEvents';
+import SocialFeeds from '@/components/SocialFeeds';
+import Partners from '@/components/Partners';
 import Footer from '@/components/Footer';
 import AboutPage from '@/app/pages/AboutPage';
 import AdmissionsPage from '@/app/pages/AdmissionsPage';
@@ -39,11 +42,14 @@ const App: React.FC = () => {
           <>
             <Hero />
             {/* <QuickStats /> */}
-            <div id="about"><AboutSection /></div>
+            {/* <div id="about"><AboutSection /></div> */}
+            <ProgramKeahlian />
             <div id="events"><UpcomingEvents /></div>
+            <SocialFeeds />
             <div id="news"><RecentNews /></div>
             <div id="students"><StudentLife /></div>
             <Testimonials />
+            <Partners />
             {/* <div id="programs"><FeaturedPrograms /></div> */}
           </>
         );
@@ -73,9 +79,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar onNavigate={navigateTo} currentPage={currentPage} />
-      <main className="flex-grow">
+      <main className="flex-grow overflow-x-hidden">
         {renderPage()}
       </main>
       <Footer onNavigate={navigateTo} />
