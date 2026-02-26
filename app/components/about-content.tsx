@@ -26,7 +26,7 @@ export default function AboutPage() {
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-20">
           <span className="text-[#0092DD] text-[10px] font-bold uppercase tracking-[0.2em] mb-4 block">Excellence in Education</span>
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">Shaping Tomorrow's Innovators<br />Through Progressive Learning</h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">Shaping Tomorrow's Innovators Through Progressive Learning</h2>
           <p className="max-w-3xl mx-auto text-gray-500 leading-relaxed">
             Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui.
           </p>

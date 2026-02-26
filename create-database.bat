@@ -5,7 +5,7 @@ echo ====================================
 echo.
 
 REM Ganti path ini sesuai lokasi MySQL Anda
-set MYSQL_PATH=C:\xampp_baru\mysql\bin
+set MYSQL_PATH=C:\laragon\data\mysql-8
 
 echo Creating database 'sekolah_db'...
 echo.

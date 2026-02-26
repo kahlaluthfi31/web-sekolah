@@ -50,17 +50,17 @@ const Hero: React.FC = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button className="w-full sm:w-auto px-6 py-3 bg-[#0092DD] text-white rounded-full font-semibold text-base hover:bg-white hover:text-[#0092DD] transition-all duration-300 transform hover:scale-105 shadow-lg">
+          <button className="w-full sm:w-auto px-6 py-3 bg-[#0268ab] text-white rounded-full font-semibold text-base hover:bg-white hover:text-[#0268ab] transition-all duration-300 transform hover:scale-105 shadow-lg">
             Apply Now
           </button>
-          <button className="w-full sm:w-auto px-6 py-3 bg-transparent border-2 border-white text-white rounded-full font-semibold text-base hover:bg-white hover:text-[#0092DD] transition-all duration-300 transform hover:scale-105">
+          <button className="w-full sm:w-auto px-6 py-3 bg-transparent border-2 border-white text-white rounded-full font-semibold text-base hover:bg-white hover:text-[#0268ab] transition-all duration-300 transform hover:scale-105">
             School Tour
           </button>
         </div>
 
         {/* Announcement Badge */}
         <div className="mt-12 inline-flex items-center space-x-3 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
-          <span className="bg-[#0092DD] text-[10px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded">New</span>
+          <span className="bg-[#0268ab] text-[10px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded">New</span>
           <span className="text-white text-sm font-medium">Fall 2025 Applications Open - Early Decision Deadline December 15</span>
         </div>
       </div>

@@ -50,12 +50,12 @@ const FeaturedPrograms: React.FC = () => {
           <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 group">
             <div className="relative h-64 overflow-hidden">
               <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800" alt="CS & AI" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute top-4 left-4 bg-[#0092DD] text-white px-3 py-1 rounded text-xs font-bold uppercase tracking-widest flex items-center">
+              <div className="absolute top-4 left-4 bg-[#2596be] text-white px-3 py-1 rounded text-xs font-bold uppercase tracking-widest flex items-center">
                 <Star className="h-3 w-3 mr-1 fill-white" /> Top Rated
               </div>
             </div>
             <div className="p-8">
-              <span className="text-[#0092DD] text-xs font-bold uppercase tracking-widest mb-2 block">Engineering</span>
+              <span className="text-[#2596be] text-xs font-bold uppercase tracking-widest mb-2 block">Engineering</span>
               <h4 className="text-2xl font-bold mb-4">Computer Science & AI</h4>
               <p className="text-gray-600 mb-6 line-clamp-2">Master the latest technologies in artificial intelligence, machine learning, and software engineering with our industry-led program.</p>
               
@@ -65,7 +65,7 @@ const FeaturedPrograms: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-                <button className="text-[#0092DD] font-bold text-sm hover:underline">Learn More</button>
+                <button className="text-[#2596be] font-bold text-sm hover:underline">Learn More</button>
                 <span className="text-xs text-gray-400">320 enrolled</span>
               </div>
             </div>
@@ -79,14 +79,14 @@ const FeaturedPrograms: React.FC = () => {
                   <img src={prog.image} alt={prog.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                 </div>
                 <div className="ml-6 flex-grow">
-                  <span className="text-[#0092DD] text-[10px] font-bold uppercase tracking-widest">{prog.category}</span>
-                  <h5 className="font-bold text-gray-900 group-hover:text-[#0092DD] transition-colors">{prog.title}</h5>
+                  <span className="text-[#2596be] text-[10px] font-bold uppercase tracking-widest">{prog.category}</span>
+                  <h5 className="font-bold text-gray-900 group-hover:text-[#2596be] transition-colors">{prog.title}</h5>
                   <div className="flex space-x-4 text-xs text-gray-500 mt-1">
                     <span>{prog.duration}</span>
                     <span>{prog.degree}</span>
                   </div>
                 </div>
-                <div className="p-2 rounded-full border border-gray-200 text-gray-400 group-hover:bg-[#0092DD] group-hover:text-white transition-colors">
+                <div className="p-2 rounded-full border border-gray-200 text-gray-400 group-hover:bg-[#2596be] group-hover:text-white transition-colors">
                   <ArrowUpRight className="h-5 w-5" />
                 </div>
               </div>
