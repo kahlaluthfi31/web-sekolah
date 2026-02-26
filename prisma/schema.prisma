@@ -63,6 +63,36 @@ model AdminPermission {
   @@map("admin_permissions")
 }
 
+// ==================== VIRTUAL TOUR ====================
+
+model VirtualTourScene {
+  id          Int      @id @default(autoincrement())
+  sceneKey    String   @unique @db.VarChar(100) @map("scene_key") // e.g. "gerbang-depan"
+  title       String   @db.VarChar(255)
+  imagePath   String   @db.VarChar(500) @map("image_path")        // e.g. /assets/360/gerbang.jpg
+  sortOrder   Int      @default(0) @map("sort_order")
+  isDefault   Boolean  @default(false) @map("is_default")          // first scene
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  hotspots    VirtualTourHotspot[]
+
+  @@map("virtual_tour_scenes")
+}
+
+model VirtualTourHotspot {
+  id            Int              @id @default(autoincrement())
+  sceneId       Int              @map("scene_id")
+  scene         VirtualTourScene @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  pitch         Float
+  yaw           Float
+  text          String           @db.VarChar(255)              // tooltip label
+  targetSceneId Int?             @map("target_scene_id")       // null = info type
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  @@map("virtual_tour_hotspots")
+}
+
 model UserVerification {
   id               Int              @id @default(autoincrement())
   userId           Int              @map("user_id")

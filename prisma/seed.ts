@@ -156,6 +156,27 @@ async function main() {
     console.log('✅ Facility: Perpustakaan')
   }
 
+  // ---- Sample Extracurriculars ----
+  const eskulData = [
+    { name: 'Pramuka', activityTitle: 'Latihan Rutin Pramuka', description: 'Kegiatan kepanduan yang membentuk karakter dan kemandirian siswa.', timeStart: '14:00', timeEnd: '16:00', coachName: 'Bpk. Agus Santoso', isActive: true },
+    { name: 'PMR (Palang Merah Remaja)', activityTitle: 'Pelatihan Pertolongan Pertama', description: 'Kegiatan kemanusiaan dan pertolongan pertama berbasis Palang Merah Indonesia.', timeStart: '08:00', timeEnd: '10:00', coachName: 'Ibu Siti Rahayu', isActive: true },
+    { name: 'Futsal', activityTitle: 'Latihan Futsal Mingguan', description: 'Olahraga futsal untuk melatih kerjasama tim dan kebugaran jasmani.', timeStart: '15:00', timeEnd: '17:00', coachName: 'Bpk. Dani Prasetyo', isActive: true },
+    { name: 'Bola Basket', activityTitle: 'Latihan Bola Basket', description: 'Latihan rutin bola basket untuk menyiapkan atlet sekolah di kompetisi.', timeStart: '15:00', timeEnd: '17:00', coachName: 'Bpk. Rudi Hartono', isActive: true },
+    { name: 'English Club', activityTitle: 'English Speaking Session', description: 'Klub bahasa Inggris untuk meningkatkan kemampuan berbicara dan menulis dalam bahasa Inggris.', timeStart: '14:00', timeEnd: '15:30', coachName: 'Ibu Dewi Anggraini', isActive: true },
+    { name: 'Robotika', activityTitle: 'Workshop Pemrograman Robot', description: 'Desain dan pemrograman robot untuk kompetisi tingkat regional dan nasional.', timeStart: '14:00', timeEnd: '16:30', coachName: 'Bpk. Eko Wijaya', isActive: true },
+    { name: 'Seni Tari', activityTitle: 'Latihan Tari Tradisional', description: 'Melestarikan seni tari tradisional dan modern Nusantara.', timeStart: '14:00', timeEnd: '15:30', coachName: 'Ibu Ratna Sari', isActive: true },
+    { name: 'Paduan Suara', activityTitle: 'Latihan Vokal & Harmoni', description: 'Latihan vokal dan harmoni untuk tampil di berbagai acara sekolah dan lomba.', timeStart: '08:00', timeEnd: '10:00', coachName: 'Ibu Melati Kusuma', isActive: true },
+    { name: 'OSIS', activityTitle: 'Rapat Koordinasi OSIS', description: 'Organisasi Siswa Intra Sekolah sebagai wadah kepemimpinan dan organisasi siswa.', timeStart: '14:00', timeEnd: '16:00', coachName: 'Bpk. Hendra Gunawan', isActive: true },
+    { name: 'Jurnalistik', activityTitle: 'Pelatihan Jurnalistik Dasar', description: 'Menulis berita, fotografi, dan pengelolaan media sekolah (mading dan website).', timeStart: '14:00', timeEnd: '15:30', coachName: 'Ibu Yanti Permata', isActive: true },
+  ]
+  const eskulCount = await prisma.extracurricular.count()
+  if (eskulCount === 0) {
+    for (const e of eskulData) {
+      await prisma.extracurricular.create({ data: e })
+    }
+    console.log(`✅ Created ${eskulData.length} extracurriculars`)
+  }
+
   // ---- Sample Achievement ----
   let achievementId = 1
   const ach = await prisma.studentAchievement.findFirst({ where: { achievementName: 'Juara 1 Lomba Jaringan' } })

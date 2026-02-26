@@ -40,6 +40,8 @@ export type Permission =
   | 'homepage.view' | 'homepage.edit'
   // School Profile (Superadmin only)
   | 'school_profile.view' | 'school_profile.edit'
+  // Virtual Tour
+  | 'virtual_tour.view' | 'virtual_tour.manage'
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   superadmin: [
@@ -60,6 +62,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'navigation.view', 'navigation.edit',
     'homepage.view', 'homepage.edit',
     'school_profile.view', 'school_profile.edit',
+    'virtual_tour.view', 'virtual_tour.manage',
   ],
   admin: [
     'dashboard.view',
@@ -73,6 +76,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'alumni.view', 'alumni.verify',
     'comments.view', 'comments.approve', 'comments.delete',
     'messages.view', 'messages.reply',
+    'virtual_tour.view', 'virtual_tour.manage',
   ],
   user: [
     'comments.create',
@@ -113,9 +117,9 @@ export const ADMIN_MENU_ITEMS: { key: string; label: string; icon: string; href:
   { key: 'teachers',         label: 'Guru & Staff',         icon: 'Users',        href: '/admin/dashboard/teachers' },
   { key: 'majors',           label: 'Program Keahlian',     icon: 'BookOpen',     href: '/admin/dashboard/majors' },
   { key: 'facilities',       label: 'Fasilitas',            icon: 'Building2',    href: '/admin/dashboard/facilities' },
+  { key: 'virtual-tour',     label: 'Virtual Tour',         icon: 'Camera',       href: '/admin/dashboard/virtual-tour' },
 ]
 
-// All menu keys enabled by default for admin
 export const DEFAULT_ADMIN_MENU_KEYS: string[] = [
   'news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages',
 ]
@@ -137,6 +141,7 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
     { title: 'Guru & Staff', href: '/admin/dashboard/teachers', icon: 'Users', permission: 'teachers.view' },
     { title: 'Program Keahlian', href: '/admin/dashboard/majors', icon: 'BookOpen', permission: 'majors.view' },
     { title: 'Fasilitas', href: '/admin/dashboard/facilities', icon: 'Building2', permission: 'facilities.view' },
+    { title: 'Virtual Tour', href: '/admin/dashboard/virtual-tour', icon: 'Camera', permission: 'virtual_tour.view' },
 
     // User Management (Superadmin only)
     { title: 'Manajemen User', href: '/admin/dashboard/users', icon: 'UserCog', permission: 'users.view' },
