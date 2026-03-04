@@ -153,7 +153,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
   )
 
   const groups = useMemo(() => {
-    const contentKeys = ['news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages']
+    const contentKeys = ['news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages', 'partners']
     const masterKeys = ['teachers', 'majors', 'facilities', 'virtual-tour']
     const settingsKeys = ['navigation', 'homepage', 'school-profile', 'settings']
     return {

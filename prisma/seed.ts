@@ -229,6 +229,33 @@ async function main() {
     console.log('✅ Alumni: Dewi Lestari')
   }
 
+  // ---- Sample Partners (17 data) ----
+  const partnerCount = await prisma.partner.count()
+  if (partnerCount === 0) {
+    await prisma.partner.createMany({
+      data: [
+        { name: 'PT Indo Karya', logoUrl: null, websiteUrl: 'https://indokarya.co.id', orderPosition: 1, isActive: true },
+        { name: 'Maju Manufaktur', logoUrl: null, websiteUrl: 'https://majumanufaktur.com', orderPosition: 2, isActive: true },
+        { name: 'Retail Nusantara', logoUrl: null, websiteUrl: 'https://retailnusantara.id', orderPosition: 3, isActive: true },
+        { name: 'Bisnis Group', logoUrl: null, websiteUrl: 'https://bisnisgroup.com', orderPosition: 4, isActive: true },
+        { name: 'Profesional Corp', logoUrl: null, websiteUrl: 'https://profesionalcorp.com', orderPosition: 5, isActive: true },
+        { name: 'Properti Indonesia', logoUrl: null, websiteUrl: 'https://propertiindonesia.id', orderPosition: 6, isActive: true },
+        { name: 'Konstruksi Prima', logoUrl: null, websiteUrl: 'https://konstruksiprima.co.id', orderPosition: 7, isActive: true },
+        { name: 'Logistik Jaya', logoUrl: null, websiteUrl: 'https://logistikjaya.id', orderPosition: 8, isActive: true },
+        { name: 'Bank Sejahtera Nusantara', logoUrl: null, websiteUrl: 'https://banksn.id', orderPosition: 9, isActive: true },
+        { name: 'PT Sumber Teknologi Global', logoUrl: null, websiteUrl: 'https://sumberteknologi.com', orderPosition: 10, isActive: true },
+        { name: 'Creative Media Studio', logoUrl: null, websiteUrl: 'https://creativemedia.id', orderPosition: 11, isActive: true },
+        { name: 'Hotel Maju Bersama', logoUrl: null, websiteUrl: 'https://hotelmajubersama.com', orderPosition: 12, isActive: true },
+        { name: 'Restoran Selera Nusantara', logoUrl: null, websiteUrl: 'https://seleranusantara.id', orderPosition: 13, isActive: true },
+        { name: 'PT Agro Makmur', logoUrl: null, websiteUrl: 'https://agromakmur.co.id', orderPosition: 14, isActive: true },
+        { name: 'CV Sentra Elektronik', logoUrl: null, websiteUrl: 'https://sentraelektronik.id', orderPosition: 15, isActive: true },
+        { name: 'SME Digital Partner', logoUrl: null, websiteUrl: 'https://smedigitalpartner.com', orderPosition: 16, isActive: true },
+        { name: 'PT Transportasi Mandiri', logoUrl: null, websiteUrl: 'https://transportasmandiri.co.id', orderPosition: 17, isActive: true },
+      ],
+    })
+    console.log('✅ Created 17 sample partners')
+  }
+
   // ---- Sample Comments (5 data) ----
   const commentCount = await prisma.comment.count()
   if (commentCount === 0) {

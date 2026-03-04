@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import {
-  Plus, Search, MoreHorizontal, Edit2, Trash2, Eye,
+  Plus, Search, MoreVertical, Edit2, Trash2, Eye,
   Loader2, AlertTriangle, ExternalLink, Globe, BookOpen,
   ChevronLeft, ChevronRight, X, Save, Upload, ImageIcon, Images,
   CheckCircle2,
 } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Major {
@@ -153,7 +154,7 @@ function TeacherSelect({ value, onChange }: {
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">Kepala Jurusan</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">Kepala Program Keahlian</label>
       <div className="relative">
         <input type="text" value={query} onFocus={() => setOpen(true)}
           onChange={e => { setQuery(e.target.value); setOpen(true); onChange(e.target.value, null) }}
@@ -193,44 +194,26 @@ function TeacherSelect({ value, onChange }: {
 function ActionDropdown({ onDetail, onEdit, onDelete }: {
   onDetail: () => void; onEdit: () => void; onDelete: () => void
 }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setDropUp(window.innerHeight - r.bottom < 150)
-    }
-    setOpen(v => !v)
-  }
-
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(150)
   return (
     <div ref={ref} className="relative">
       <button ref={btnRef} onClick={toggle}
         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-        <MoreHorizontal className="w-4 h-4" />
+        <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className={`absolute right-0 w-36 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-          <button onClick={() => { setOpen(false); onDetail() }}
+        <div style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }} className="w-36 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
+          <button onClick={() => { close(); onDetail() }}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50">
             <Eye className="w-3.5 h-3.5" /> Detail
           </button>
-          <button onClick={() => { setOpen(false); onEdit() }}
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onEdit() }}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <button onClick={() => { setOpen(false); onDelete() }}
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onDelete() }}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
             <Trash2 className="w-3.5 h-3.5" /> Hapus
           </button>
@@ -255,7 +238,7 @@ function DeleteModal({ name, onConfirm, onCancel, deleting }: {
             </div>
           </div>
           <div className="text-center space-y-1.5">
-            <h3 className="text-lg font-bold text-gray-900">Hapus Jurusan</h3>
+            <h3 className="text-lg font-bold text-gray-900">Hapus Program Keahlian</h3>
             <p className="text-sm text-gray-500">
               Yakin ingin menghapus <span className="font-semibold text-gray-700">{name}</span>?
             </p>
@@ -387,7 +370,7 @@ function GalleryTabContent({ competencies }: { competencies: CompetencyForm[] })
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Images className="w-10 h-10 text-gray-300 mb-3" />
-        <p className="text-sm font-medium text-gray-500">Simpan data jurusan terlebih dahulu</p>
+        <p className="text-sm font-medium text-gray-500">Simpan data program keahlian terlebih dahulu</p>
         <p className="text-xs text-gray-400 mt-1">Konsentrasi keahlian harus tersimpan sebelum dapat mengupload foto galeri</p>
       </div>
     )
@@ -397,8 +380,8 @@ function GalleryTabContent({ competencies }: { competencies: CompetencyForm[] })
     <div className="space-y-4">
       <p className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
         {saved.length === 1
-          ? 'Jurusan ini memiliki 1 konsentrasi — galeri di bawah adalah galeri untuk konsentrasi tersebut.'
-          : `Jurusan ini memiliki ${saved.length} konsentrasi. Setiap konsentrasi memiliki galeri foto masing-masing.`}
+          ? 'Program Keahlian ini memiliki 1 konsentrasi — galeri di bawah adalah galeri untuk konsentrasi tersebut.'
+          : `Program Keahlian ini memiliki ${saved.length} konsentrasi. Setiap konsentrasi memiliki galeri foto masing-masing.`}
       </p>
       {unsaved.length > 0 && (
         <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-700">
@@ -520,20 +503,20 @@ function MajorDataForm({ form, setForm, competencies, setCompetencies, error }: 
       )}
 
       <div className="space-y-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Informasi Jurusan</p>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Informasi Program Keahlian</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Jurusan *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Program Keahlian <span className="text-red-500">*</span></label>
             <input type="text" required value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Teknik Komputer dan Jaringan"
+              placeholder="Rekayasa Perangkat Lunak"
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Jurusan</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Program Keahlian</label>
             <input type="text" value={form.code}
               onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-              placeholder="TKJ"
+              placeholder="RPL"
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono" />
           </div>
         </div>
@@ -542,7 +525,7 @@ function MajorDataForm({ form, setForm, competencies, setCompetencies, error }: 
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Deskripsi</label>
           <textarea rows={2} value={form.description}
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            placeholder="Deskripsi singkat jurusan..."
+            placeholder="Deskripsi singkat program keahlian..."
             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" />
         </div>
 
@@ -553,9 +536,9 @@ function MajorDataForm({ form, setForm, competencies, setCompetencies, error }: 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <PhotoUpload label="Gambar Cover" value={form.image}
-            onChange={url => setForm(f => ({ ...f, image: url }))} hint="Banner/cover jurusan" />
+            onChange={url => setForm(f => ({ ...f, image: url }))} hint="Banner/cover program keahlian" />
           <PhotoUpload label="Logo / Icon" value={form.icon}
-            onChange={url => setForm(f => ({ ...f, icon: url }))} hint="Logo jurusan" square />
+            onChange={url => setForm(f => ({ ...f, icon: url }))} hint="Logo Program Keahlian" square />
         </div>
       </div>
 
@@ -585,7 +568,7 @@ function MajorDataForm({ form, setForm, competencies, setCompetencies, error }: 
         </div>
         {form.detailType === 'EXTERNAL' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Tujuan *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Tujuan <span className="text-red-500">*</span></label>
             <input type="url" value={form.externalUrl}
               onChange={e => setForm(f => ({ ...f, externalUrl: e.target.value }))}
               placeholder="https://instagram.com/jurusan_tkj"
@@ -640,7 +623,7 @@ function ModalShell({
               <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
                 <button type="button" onClick={() => onTabChange('data')}
                   className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${tab === 'data' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                  Data Jurusan
+                  Data Program
                 </button>
                 <button type="button" onClick={() => onTabChange('gallery')}
                   className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${tab === 'gallery' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -667,7 +650,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
   const [savedCompetencies, setSavedCompetencies] = useState<CompetencyForm[]>([])
 
   const handleSave = async () => {
-    if (!form.name.trim()) { setError('Nama jurusan wajib diisi'); setTab('data'); return }
+    if (!form.name.trim()) { setError('Nama program keahlian wajib diisi'); setTab('data'); return }
     const validComps = competencies.filter(c => c.name.trim())
     if (validComps.length === 0) { setError('Minimal 1 konsentrasi keahlian wajib diisi'); setTab('data'); return }
     if (form.detailType === 'EXTERNAL' && !form.externalUrl.trim()) {
@@ -714,7 +697,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
 
   return (
     <ModalShell
-      title="Tambah Jurusan" subtitle="Tambah program keahlian baru"
+      title="Tambah Program keahlian" subtitle="Tambah program keahlian baru"
       tab={tab} onTabChange={setTab} onClose={onClose} disabled={saving}
     >
       <div className="px-6 py-5 max-h-[65vh] overflow-y-auto">
@@ -724,18 +707,18 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
         ) : !saved ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Save className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm font-medium text-gray-500">Simpan data jurusan terlebih dahulu</p>
-            <p className="text-xs text-gray-400 mt-1">Klik tombol &quot;Simpan Jurusan&quot; di tab Data Jurusan, lalu kembali ke sini untuk upload galeri</p>
+            <p className="text-sm font-medium text-gray-500">Simpan data program keahlian terlebih dahulu</p>
+            <p className="text-xs text-gray-400 mt-1">Klik tombol &quot;Simpan Program &quot; di tab Data Program Keahlian, lalu kembali ke sini untuk upload galeri</p>
             <button type="button" onClick={() => setTab('data')}
               className="mt-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-all">
-              Kembali ke Data Jurusan
+              Kembali ke Data Program
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl border border-green-200">
               <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-              <p className="text-sm text-green-700">Data jurusan berhasil disimpan. Silakan upload foto galeri untuk setiap konsentrasi.</p>
+              <p className="text-sm text-green-700">Data Program Keahlian berhasil disimpan. Silakan upload foto galeri untuk setiap konsentrasi.</p>
             </div>
             <GalleryTabContent competencies={savedCompetencies} />
           </div>
@@ -752,7 +735,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
               <button type="button" onClick={handleSave} disabled={saving}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? 'Menyimpan...' : 'Simpan Jurusan'}
+                {saving ? 'Menyimpan...' : 'Simpan Program'}
               </button>
             )}
             {saved && (
@@ -816,7 +799,7 @@ function EditModal({ majorId, onClose, onSaved }: {
   useEffect(() => { loadMajor() }, [loadMajor])
 
   const handleSave = async () => {
-    if (!form.name.trim()) { setError('Nama jurusan wajib diisi'); setTab('data'); return }
+    if (!form.name.trim()) { setError('Nama program keahlian wajib diisi'); setTab('data'); return }
     const validComps = competencies.filter(c => c.name.trim())
     if (validComps.length === 0) { setError('Minimal 1 konsentrasi keahlian wajib diisi'); setTab('data'); return }
     if (form.detailType === 'EXTERNAL' && !form.externalUrl.trim()) {
@@ -857,7 +840,7 @@ function EditModal({ majorId, onClose, onSaved }: {
 
   return (
     <ModalShell
-      title="Edit Jurusan" subtitle="Ubah data jurusan dan konsentrasi"
+      title="Edit Program Keahlian" subtitle="Ubah data program dan konsentrasi"
       tab={tab} onTabChange={setTab} onClose={onClose} disabled={saving}
     >
       {loading ? (
@@ -931,7 +914,7 @@ function DetailModal({ major, onClose }: { major: Major; onClose: () => void }) 
         <div className="flex min-h-full items-start justify-center p-4 py-8">
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">Detail Jurusan</h3>
+              <h3 className="text-base font-bold text-gray-900">Detail Program Keahlian</h3>
               <button onClick={onClose}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
                 <X className="w-5 h-5" />
@@ -968,7 +951,7 @@ function DetailModal({ major, onClose }: { major: Major; onClose: () => void }) 
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-xs text-gray-400">Kepala Jurusan</p>
+                    <p className="text-xs text-gray-400">Kepala Program</p>
                     <p className="font-medium text-gray-800 mt-0.5">{detail?.headOfMajor || major.headOfMajor || '—'}</p>
                   </div>
                   <div>
@@ -1107,8 +1090,8 @@ export default function MajorsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Jurusan</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Kelola data jurusan dan konsentrasi keahlian</p>
+        <h2 className="text-xl font-bold text-gray-900">Program Keahlian</h2>
+        <p className="text-sm text-gray-500 mt-0.5">Kelola data program keahlian dan konsentrasi keahlian</p>
       </div>
 
       {/* Filter Bar */}
@@ -1116,7 +1099,7 @@ export default function MajorsPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Cari jurusan..." value={search}
+            <input type="text" placeholder="Cari program keahlian..." value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
               className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             {search && (
@@ -1128,13 +1111,13 @@ export default function MajorsPage() {
           </div>
           <button onClick={() => setAddModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm whitespace-nowrap">
-            <Plus className="w-4 h-4" /> Tambah Jurusan
+            <Plus className="w-4 h-4" /> Tambah Program
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -1142,14 +1125,14 @@ export default function MajorsPage() {
         ) : majors.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">{search ? `Tidak ada hasil untuk "${search}"` : 'Belum ada data jurusan'}</p>
+            <p className="text-sm">{search ? `Tidak ada hasil untuk "${search}"` : 'Belum ada data program'}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Jurusan</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Program Keahlian</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Kode</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Konsentrasi</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Tipe</th>
@@ -1209,7 +1192,7 @@ export default function MajorsPage() {
 
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">Menampilkan {majors.length} dari {total} jurusan</p>
+            <p className="text-xs text-gray-500">Menampilkan {majors.length} dari {total} program keahlian</p>
             <div className="flex items-center gap-2">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">

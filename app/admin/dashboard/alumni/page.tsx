@@ -1,7 +1,8 @@
 ﻿'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, ChevronLeft, ChevronRight, Loader2, MoreVertical, Eye, Check, X, AlertTriangle, GraduationCap, Briefcase, Building2, FileText, Image } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface Alumni {
   id: string
@@ -39,44 +40,28 @@ function getStatusColor(status: string): string {
 }
 
 function ActionDropdown({ onView, onApprove, onReject, status }: { onView: () => void; onApprove?: () => void; onReject?: () => void; status: string }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-
-  const handleToggle = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      setDropUp(window.innerHeight - rect.bottom < 150)
-    }
-    setOpen(!open)
-  }
-
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(150)
   return (
     <div ref={ref} className="relative inline-block">
-      <button ref={btnRef} onClick={handleToggle} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+      <button ref={btnRef} onClick={toggle} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
         <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className={'absolute right-0 w-44 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden ' + (dropUp ? 'bottom-full mb-1' : 'top-full mt-1')}>
-          <button onClick={() => { setOpen(false); onView() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+        <div style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }} className="w-44 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
+          <button onClick={() => { close(); onView() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50">
             <Eye className="w-3.5 h-3.5" /> Lihat Detail
           </button>
           {status === 'pending' && onApprove && (
-            <button onClick={() => { setOpen(false); onApprove() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-green-600 hover:bg-green-50">
-              <Check className="w-3.5 h-3.5" /> Setujui
-            </button>
+            <><div className="border-t border-gray-100" />
+              <button onClick={() => { close(); onApprove() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-green-600 hover:bg-green-50">
+                <Check className="w-3.5 h-3.5" /> Setujui
+              </button></>
           )}
           {status === 'pending' && onReject && (
-            <button onClick={() => { setOpen(false); onReject() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
-              <X className="w-3.5 h-3.5" /> Tolak
-            </button>
+            <><div className="border-t border-gray-100" />
+              <button onClick={() => { close(); onReject() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
+                <X className="w-3.5 h-3.5" /> Tolak
+              </button></>
           )}
         </div>
       )}
@@ -189,32 +174,32 @@ export default function AlumniPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-gray-900">Manajemen Alumni</h2>
-        <p className="text-sm text-gray-500">Verifikasi dan kelola data alumni sekolah</p>
+        <p className="text-sm text-gray-500">Verifikasi dan kelola testimoni alumni sekolah</p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Cari nama alumni..." 
-            value={search} 
-            onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }} 
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          <input
+            type="text"
+            placeholder="Cari nama alumni..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <select 
-          value={statusFilter} 
-          onChange={e => { setStatusFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }} 
+        <select
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
           className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua Status</option>
           {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
-        <select 
-          value={yearFilter} 
-          onChange={e => { setYearFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }} 
+        <select
+          value={yearFilter}
+          onChange={e => { setYearFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
           className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua Tahun</option>
@@ -261,7 +246,7 @@ export default function AlumniPage() {
                           <span>Tahun {item.graduationYear}</span>
                         </div>
                         {item.major && (
-                          <p className="text-xs text-gray-500 pl-5">Jurusan {item.major}</p>
+                          <p className="text-xs text-gray-500 pl-5">Program Keahlian {item.major}</p>
                         )}
                       </div>
                     </td>
@@ -289,7 +274,7 @@ export default function AlumniPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end">
-                        <ActionDropdown 
+                        <ActionDropdown
                           status={item.status}
                           onView={() => openDetailModal(item)}
                           onApprove={() => setConfirmAction({ alumni: item, type: 'approve' })}
@@ -321,8 +306,8 @@ export default function AlumniPage() {
 
       {/* Detail Modal */}
       {showModal && selectedAlumni && (
-        <DetailModal 
-          alumni={selectedAlumni} 
+        <DetailModal
+          alumni={selectedAlumni}
           onClose={() => { setShowModal(false); setSelectedAlumni(null) }}
           onApprove={() => setConfirmAction({ alumni: selectedAlumni, type: 'approve' })}
           onReject={() => setConfirmAction({ alumni: selectedAlumni, type: 'reject' })}
@@ -347,7 +332,7 @@ export default function AlumniPage() {
 function DetailModal({ alumni, onClose, onApprove, onReject }: { alumni: Alumni; onClose: () => void; onApprove: () => void; onReject: () => void }) {
   // Default sample diploma photo jika tidak ada
   const diplomaPhotoUrl = alumni.diplomaPhoto || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6dVyMGQK10_5LN0pSYyg-8TgKxT9QTGNKsw&s'
-  
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -383,7 +368,7 @@ function DetailModal({ alumni, onClose, onApprove, onReject }: { alumni: Alumni;
                     </p>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Jurusan</label>
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Program Keahlian</label>
                     <p className="text-sm text-gray-700 mt-1">{alumni.major || '-'}</p>
                   </div>
                 </div>
@@ -427,14 +412,14 @@ function DetailModal({ alumni, onClose, onApprove, onReject }: { alumni: Alumni;
                 <div>
                   <label className="text-xs font-medium text-gray-500">Foto Ijazah</label>
                   <div className="mt-2">
-                    <img 
-                      src={diplomaPhotoUrl} 
+                    <img
+                      src={diplomaPhotoUrl}
                       alt="Foto Ijazah"
                       className="w-full max-h-64 object-contain rounded-lg border border-gray-200 bg-white"
                     />
-                    <a 
-                      href={diplomaPhotoUrl} 
-                      target="_blank" 
+                    <a
+                      href={diplomaPhotoUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline mt-2"
                     >

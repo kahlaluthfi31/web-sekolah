@@ -12,6 +12,7 @@ import Testimonials from '@/components/Testimonials';
 import RecentNews from '@/components/RecentNews';
 import UpcomingEvents from '@/components/UpcomingEvents';
 import SocialFeeds from '@/components/SocialFeeds';
+import SocialFeedsVertikal from '@/components/SocialFeeds(vertikal)';
 import Partners from '@/components/Partners';
 import Footer from '@/components/Footer';
 import AboutPage from '@/app/pages/AboutPage';
@@ -45,7 +46,7 @@ const App: React.FC = () => {
             {/* <div id="about"><AboutSection /></div> */}
             <ProgramKeahlian />
             <div id="events"><UpcomingEvents /></div>
-            <SocialFeeds />
+            <SocialFeedsVertikal />
             <div id="news"><RecentNews /></div>
             <div id="students"><StudentLife /></div>
             <Testimonials />

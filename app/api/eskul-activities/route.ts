@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         include: {
           eskul: {
-            select: { id: true, name: true, coachName: true }
+            select: { id: true, name: true, coachName: true, image: true }
           }
         }
       }),

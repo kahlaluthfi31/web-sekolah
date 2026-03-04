@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import {
-  Plus, Search, MoreHorizontal, Edit2, Trash2,
+  Plus, Search, MoreVertical, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X, Save,
   ArrowLeft, AlertTriangle, Users, BookOpen, Award, Camera,
 } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface Teacher {
   id: number; nip: string | null; name: string; email: string | null
@@ -52,55 +53,27 @@ function ActionDropdown({
   onEdit: () => void
   onDelete: () => void
 }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setDropUp(window.innerHeight - r.bottom < 150)
-    }
-    setOpen(v => !v)
-  }
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(150)
   return (
     <div ref={ref} className="relative">
-      <button
-        ref={btnRef}
-        onClick={toggle}
-        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-      >
-        <MoreHorizontal className="w-4 h-4" />
+      <button ref={btnRef} onClick={toggle} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+        <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div
-          className={`absolute right-0 w-36 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}
-        >
+        <div style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }} className="w-36 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
           {onDetail && (
-            <button
-              onClick={() => { setOpen(false); onDetail() }}
-              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              <Search className="w-3.5 h-3.5" /> Detail
-            </button>
+            <>
+              <button onClick={() => { close(); onDetail() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50">
+                <Search className="w-3.5 h-3.5" /> Detail
+              </button>
+              <div className="border-t border-gray-100" />
+            </>
           )}
-          <button
-            onClick={() => { setOpen(false); onEdit() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          >
+          <button onClick={() => { close(); onEdit() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <button
-            onClick={() => { setOpen(false); onDelete() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-          >
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onDelete() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
             <Trash2 className="w-3.5 h-3.5" /> Hapus
           </button>
         </div>

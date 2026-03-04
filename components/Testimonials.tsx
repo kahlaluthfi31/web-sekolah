@@ -1,154 +1,168 @@
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+interface AlumniTestimonial {
+  id: number;
+  alumniName: string;
+  graduationYear?: number | null;
+  major?: string | null;
+  currentOccupation?: string | null;
+  company?: string | null;
+  story?: string | null;
+  status: string;
+  photo?: string | null;
+}
 
 const Testimonials: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [allTestimonials, setAllTestimonials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 3;
-  
-  const allTestimonials = [
-    {
-      name: "Andi Firmansyah",
-      position: "Network Engineer",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
-      text: "Ilmu yang saya dapat di SMKN 1 Ciamis benar-benar membuka jalan karier saya. Sekarang saya bekerja sebagai network engineer di perusahaan multinasional.",
-    },
-    {
-      name: "Siti Nurhaliza",
-      position: "Accountant",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150",
-      text: "Guru-guru di sini sangat berdedikasi. Mereka tidak hanya mengajar teori, tapi juga membekali kami dengan pengalaman praktik yang langsung bisa diterapkan.",
-    },
-    {
-      name: "Rizky Maulana",
-      position: "Software Developer",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150",
-      text: "Fasilitas laboratorium yang lengkap sangat membantu proses belajar saya. Saya bangga pernah menjadi bagian dari keluarga besar SMKN 1 Ciamis.",
-    },
-    {
-      name: "Dewi Kartika",
-      position: "UI/UX Designer",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
-      text: "Pengalaman magang industri yang difasilitasi sekolah membuat saya siap menghadapi dunia kerja. Terima kasih SMKN 1 Ciamis!",
-    },
-    {
-      name: "Budi Santoso",
-      position: "Data Analyst",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150",
-      text: "Kurikulum yang mengikuti perkembangan industri membuat saya tidak kesulitan beradaptasi di dunia kerja. Sangat direkomendasikan!",
-    },
-    {
-      name: "Maya Anggraini",
-      position: "Marketing Manager",
-      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
-      text: "Selain skill teknis, soft skill yang diajarkan juga sangat membantu karier saya. SMKN 1 Ciamis adalah tempat terbaik untuk mempersiapkan masa depan.",
-    },
-    {
-      name: "Faisal Rahman",
-      position: "System Administrator",
-      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150",
-      text: "Pengalaman belajar di SMKN 1 Ciamis sangat berkesan. Guru-guru profesional dan lingkungan belajar yang kondusif membentuk karakter saya.",
-    },
-    {
-      name: "Linda Wijaya",
-      position: "Content Creator",
-      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
-      text: "Kegiatan ekstrakurikuler yang beragam membuat saya bisa mengembangkan bakat dan minat. Alumni SMKN 1 Ciamis selalu kompak dan saling mendukung.",
-    },
-    {
-      name: "Ahmad Hidayat",
-      position: "Web Developer",
-      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150",
-      text: "Project-based learning yang diterapkan membuat saya terbiasa menghadapi masalah real-world. Saya merekomendasikan SMKN 1 Ciamis untuk semua calon siswa.",
-    },
-  ];
+
+  useEffect(() => {
+    const fetchAlumniTestimonials = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/alumni?status=approved&limit=100');
+        const result = await response.json();
+
+        if (result.success) {
+          // Filter alumni yang memiliki story (testimoni) dan status approved
+          const testimonialsWithStory = result.data.filter((alumni: AlumniTestimonial) =>
+            alumni.story && alumni.story.trim().length > 0 && alumni.status === 'approved'
+          );
+
+          setAllTestimonials(testimonialsWithStory);
+        } else {
+          setError('Gagal memuat data testimoni');
+        }
+      } catch (err) {
+        setError('Terjadi kesalahan saat memuat data');
+        console.error('Error fetching alumni testimonials:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAlumniTestimonials();
+  }, []);
 
   const totalPages = Math.ceil(allTestimonials.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentTestimonials = allTestimonials.slice(startIndex, startIndex + itemsPerPage);
+  const currentTestimonials = allTestimonials.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
+    <section className="py-16 bg-[#f0f4f8] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         {/* Top label row */}
         <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
-          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Testimoni Alumni</span>
-          <span className="text-xs text-gray-400">03 / 04</span>
+          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">
+            Testimoni
+          </span>
+          <span className="text-xs text-gray-400">07 / 08</span>
         </div>
 
-        {/* Main layout: left headline + right cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-
-          {/* Left: Headline + Pagination */}
-          <div className="lg:col-span-4 flex flex-col">
-            <h2 className="text-5xl sm:text-6xl font-light text-gray-900 leading-[1.1] tracking-tight mb-auto">
-              Alumni<br />
-              <em className="not-italic font-bold text-[#0268ab]">SMKN 1 CIAMIS</em>
-            </h2>
-
-            {/* Pagination */}
-            <div className="flex items-center gap-4 mt-12">
-              <button 
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#0268ab] hover:text-[#0268ab] transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-gray-900">{currentPage.toString().padStart(2, '0')}</span>
-                <span className="text-sm text-gray-400">/</span>
-                <span className="text-sm text-gray-400">{totalPages.toString().padStart(2, '0')}</span>
-              </div>
-
-              <button 
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#0268ab] hover:text-[#0268ab] transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+        {/* Loading state */}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           </div>
+        )}
 
-          {/* Right: Cards grid */}
-          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-5">
-            {currentTestimonials.map((t, i) => (
+        {/* Error state */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mb-10">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Cards grid */}
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {currentTestimonials.map((alumni) => (
               <div
-                key={i}
-                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300"
+                key={alumni.id}
+                className="group bg-white rounded-2xl p-6 flex flex-col items-center text-center border border-transparent hover:border-[#0268ab] transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative overflow-hidden"
               >
                 {/* Avatar */}
-                <div className="flex items-start gap-3 mb-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-gray-100 mb-4 shrink-0">
                   <img
-                    src={t.image}
-                    alt={t.name}
-                    className="w-12 h-12 rounded-full object-cover"
+                    src={
+                      alumni.photo ||
+                      "https://media.istockphoto.com/vectors/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-vector-id1130884625?k=6&m=1130884625&s=170667a&w=0&h=b4ICEL-2imqnsT-m2tYGxZdxlgD1yKxmoDA-PmPc2-A="
+                    }
+                    alt={alumni.alumniName}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src =
+                        "https://media.istockphoto.com/vectors/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-vector-id1130884625?k=6&m=1130884625&s=170667a&w=0&h=b4ICEL-2imqnsT-m2tYGxZdxlgD1yKxmoDA-PmPc2-A=";
+                    }}
                   />
-                  <div>
-                    <h4 className="text-base font-bold text-gray-900">{t.name}</h4>
-                    <p className="text-sm text-gray-500">{t.position}</p>
-                  </div>
                 </div>
+                {/* Name & position */}
+                <h4 className="text-sm font-bold text-gray-900">
+                  {alumni.alumniName}
+                </h4>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {alumni.currentOccupation || alumni.major || "Alumni"}
+                </p>
+                {alumni.company && (
+                  <p className="text-xs text-gray-400">{alumni.company}</p>
+                )}
+
+                {/* Quote open */}
+                <span className="text-3xl leading-none text-[#0268ab]/30 font-serif self-start mb-1">
+                  &ldquo;
+                </span>
 
                 {/* Text */}
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {t.text}
+                <p className="text-sm text-gray-600 leading-relaxed flex-1 px-1">
+                  {alumni.story}
                 </p>
+
+                {/* Quote close */}
+                <span className="text-3xl leading-none text-[#0268ab]/30 font-serif self-end mt-1">
+                  &rdquo;
+                </span>
+
+                {/* Graduation year */}
+                {alumni.graduationYear && (
+                  <p className="mt-3 text-[11px] text-gray-400">
+                    Lulusan {alumni.graduationYear}
+                  </p>
+                )}
               </div>
             ))}
           </div>
+        )}
 
+        {/* Pagination — bottom right */}
+        <div className="flex justify-end items-center gap-3">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="w-11 h-11 rounded-full bg-[#0e3057] flex items-center justify-center text-white hover:bg-[#0268ab] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
+            }
+            disabled={currentPage === totalPages}
+            className="w-11 h-11 rounded-full bg-[#0e3057] flex items-center justify-center text-white hover:bg-[#0268ab] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
-
       </div>
     </section>
   );
 };
 
 export default Testimonials;
-
-
-

@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import {
-  Plus, Search, MoreHorizontal, Edit2, Trash2,
+  Plus, Search, MoreVertical, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X, Save,
   ArrowLeft, AlertTriangle, Eye, Upload,
 } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface News {
   id: number
@@ -38,37 +39,25 @@ const CATEGORY_COLORS: Record<string, string> = {
 const CREATOR_CATEGORIES = ['Guru','Siswa Piket Kelas 10','Siswa Piket Kelas 11','Siswa Piket Kelas 12','Tim Medsos']
 
 function ActionDropdown({ onDetail, onEdit, onDelete }: { onDetail?: () => void; onEdit: () => void; onDelete: () => void }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    function handleClick(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      setDropUp(spaceBelow < 160)
-    }
-    setOpen(!open)
-  }
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(160)
   return (
     <div ref={ref} className="relative">
       <button ref={btnRef} onClick={toggle} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-        <MoreHorizontal className="w-4 h-4" />
+        <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className={`absolute right-0 w-36 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-          {onDetail && <button onClick={() => { setOpen(false); onDetail() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+        <div
+          style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }}
+          className="w-36 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden"
+        >
+          {onDetail && <><button onClick={() => { close(); onDetail() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
             <Eye className="w-3.5 h-3.5" /> Detail
-          </button>}
-          <button onClick={() => { setOpen(false); onEdit() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+          </button><div className="border-t border-gray-100" /></>}
+          <button onClick={() => { close(); onEdit() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <button onClick={() => { setOpen(false); onDelete() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onDelete() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
             <Trash2 className="w-3.5 h-3.5" /> Hapus
           </button>
         </div>
@@ -190,22 +179,22 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
             <form onSubmit={handleSubmit} className="p-6">
               <div className="grid lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-5">
-                  <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Judul *</label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan judul berita..." required /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Judul <span className="text-red-500">*</span></label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan judul berita..." required /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Slug (URL) <span className="text-xs text-gray-400 font-normal">— otomatis dari judul</span></label><input type="text" value={form.slug} readOnly className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-100 text-gray-500 cursor-not-allowed" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Ringkasan</label><textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows={3} placeholder="Ringkasan singkat berita..." /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Konten *</label><textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows={10} placeholder="Tulis konten berita di sini..." required /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Konten <span className="text-red-500">*</span></label><textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows={10} placeholder="Tulis konten berita di sini..." required /></div>
                 </div>
                 <div className="space-y-5">
                   {showCreatorFields && (
                     <div className="bg-blue-50/50 rounded-2xl border border-blue-100 p-5 space-y-4">
                       <h3 className="font-semibold text-blue-900 text-sm">Pembuat Berita</h3>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Pembuat *</label><input type="text" value={form.creatorName} onChange={e => setForm(f => ({ ...f, creatorName: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" placeholder="cth: Kahla Luthfiyah" required /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori Pembuat *</label><select value={form.creatorCategory} onChange={e => setForm(f => ({ ...f, creatorCategory: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required><option value="">Pilih kategori...</option>{CREATOR_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Pembuat <span className="text-red-500">*</span></label><input type="text" value={form.creatorName} onChange={e => setForm(f => ({ ...f, creatorName: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" placeholder="cth: Kahla Luthfiyah" required /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori Pembuat <span className="text-red-500">*</span></label><select value={form.creatorCategory} onChange={e => setForm(f => ({ ...f, creatorCategory: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required><option value="">Pilih kategori...</option>{CREATOR_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
                     </div>
                   )}
                   <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                     <h3 className="font-semibold text-gray-900 text-sm">Pengaturan Publikasi</h3>
-                    <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori *</label><select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="berita">Berita</option><option value="kejuaraan">Kejuaraan</option><option value="pengumuman">Pengumuman</option><option value="event">Event</option></select></div>
+                    <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori <span className="text-red-500">*</span></label><select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="berita">Berita</option><option value="kejuaraan">Kejuaraan</option><option value="pengumuman">Pengumuman</option><option value="event">Event</option></select></div>
                     <div>
                       <div className="flex items-center justify-between">
                         <div>
@@ -381,9 +370,7 @@ export default function NewsListPage() {
           <h2 className="text-xl font-bold text-gray-900">Berita &amp; Pengumuman</h2>
           <p className="text-sm text-gray-500">Kelola berita, pengumuman, dan informasi sekolah</p>
         </div>
-        <button onClick={handleCreate} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm">
-          <Plus className="w-4 h-4" /> Tulis Berita
-        </button>
+        
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -403,6 +390,9 @@ export default function NewsListPage() {
           <option value="true">Published</option>
           <option value="false">Draft</option>
         </select>
+        <button onClick={handleCreate} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm">
+          <Plus className="w-4 h-4" /> Tulis Berita
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
@@ -414,7 +404,7 @@ export default function NewsListPage() {
             <p className="text-sm text-gray-500">{getEmptyMessage()}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto overflow-y-visible">
+          <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">

@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import {
   Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight,
-  Loader2, Building2, MoreHorizontal, AlertTriangle,
+  Loader2, Building2, MoreVertical, AlertTriangle,
   X, Upload, ImageIcon, Save, Tag, Palette, Filter,
 } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Facility {
@@ -54,40 +55,21 @@ const COLOR_OPTIONS = [
 
 // ─── ActionDropdown ───────────────────────────────────────────────────────────
 function ActionDropdown({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setDropUp(window.innerHeight - r.bottom < 120)
-    }
-    setOpen(v => !v)
-  }
-
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(120)
   return (
     <div ref={ref} className="relative">
       <button ref={btnRef} onClick={toggle}
         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-        <MoreHorizontal className="w-4 h-4" />
+        <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className={`absolute right-0 w-32 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-          <button onClick={() => { setOpen(false); onEdit() }}
+        <div style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }} className="w-32 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
+          <button onClick={() => { close(); onEdit() }}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <button onClick={() => { setOpen(false); onDelete() }}
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onDelete() }}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
             <Trash2 className="w-3.5 h-3.5" /> Hapus
           </button>
@@ -636,7 +618,7 @@ function CategoriesTab() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -785,7 +767,7 @@ function FacilitiesTab({ categories }: { categories: FacilityCat[] }) {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />

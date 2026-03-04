@@ -6,6 +6,7 @@ import {
   Upload, MapPin, ChevronDown, ChevronUp, Star, X, Eye, MoreVertical,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 const VirtualTourViewer = dynamic(() => import('@/components/VirtualTourViewer'), { ssr: false })
 
@@ -146,36 +147,31 @@ function ActionMenu({ onEdit, onDelete, deleting, small }: {
   deleting?: boolean
   small?: boolean
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(120)
 
   return (
-    <div ref={ref} className="relative" style={{ zIndex: open ? 50 : 'auto' }}>
+    <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen(o => !o)}
+        ref={btnRef}
+        onClick={toggle}
         className={`${small ? 'p-1.5' : 'p-2'} text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors`}
       >
         {deleting ? <Loader2 className={`${small ? 'w-3.5 h-3.5' : 'w-4 h-4'} animate-spin`} /> : <MoreVertical className={`${small ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />}
       </button>
       {open && (
-        <div className="fixed-dropdown absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-[9999] overflow-hidden">
+        <div
+          style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }}
+          className="w-36 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+        >
           <button
-            onClick={() => { setOpen(false); onEdit() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={() => { close(); onEdit() }}
+            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors"
           >
-            <Pencil className="w-3.5 h-3.5 text-blue-500" /> Edit
+            <Pencil className="w-3.5 h-3.5" /> Edit
           </button>
+          <div className="border-t border-gray-100" />
           <button
-            onClick={() => { setOpen(false); onDelete() }}
+            onClick={() => { close(); onDelete() }}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" /> Hapus
@@ -843,7 +839,7 @@ export default function VirtualTourAdminPage() {
             showCoords={true}
           />
           <p className="text-xs text-gray-400 text-center">
-             Untuk copy koordinat hotspot: arahkan objek ke <strong>tengah layar</strong> preview, lalu klik koordinat di pojok kanan bawah.
+            Untuk copy koordinat hotspot: arahkan objek ke <strong>tengah layar</strong> preview, lalu klik koordinat di pojok kanan bawah.
             Jika gambar terus loading, refresh halaman.
           </p>
         </div>
@@ -969,7 +965,7 @@ export default function VirtualTourAdminPage() {
       <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-xs text-blue-600">
         <p className="font-medium mb-1">Cara penggunaan:</p>
         <ul className="space-y-0.5 text-blue-500">
-          <li>1. Upload foto 360 (format equirectangular, min 40002000px untuk kualitas terbaik)</li>
+          <li>1. Upload foto 360 (format equirectangular, rosolusi minimal 8000x6000px atau sama dengan 50MP untuk kualitas terbaik)</li>
           <li>2. Buka Preview Tour, arahkan objek ke <strong>tengah layar</strong>, copy koordinat dari pojok kanan bawah</li>
           <li>3. Paste Pitch &amp; Yaw ke form Tambah Hotspot agar posisi akurat</li>
           <li>4. Tandai satu scene sebagai <strong>Scene Pertama</strong></li>

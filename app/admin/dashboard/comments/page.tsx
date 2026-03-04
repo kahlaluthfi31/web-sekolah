@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { MessageSquare, Search, MoreVertical, Eye, Check, X, Loader2, RefreshCw, User, Clock, Newspaper } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface Comment {
   id: number
@@ -41,66 +42,50 @@ function ActionDropdown({
   status: string
   loading: boolean
 }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-
-  const handleToggle = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      setDropUp(window.innerHeight - rect.bottom < 160)
-    }
-    setOpen(v => !v)
-  }
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(160)
 
   return (
     <div ref={ref} className="relative">
       <button
         ref={btnRef}
-        onClick={handleToggle}
+        onClick={toggle}
         disabled={loading}
         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
       </button>
       {open && (
-        <div className={
-          'absolute right-0 w-44 bg-white rounded-xl border border-gray-200 shadow-xl py-1 ' +
-          (dropUp ? 'bottom-full mb-1' : 'top-full mt-1') +
-          ' z-[9999]'
-        }
-          style={{ zIndex: 9999 }}
+        <div
+          style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }}
+          className="w-44 bg-white rounded-xl border border-gray-200 shadow-xl py-1"
         >
           <button
-            onClick={() => { setOpen(false); onView() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+            onClick={() => { close(); onView() }}
+            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition"
           >
             <Eye className="w-3.5 h-3.5" /> Lihat Berita
           </button>
           {status !== 'approved' && (
-            <button
-              onClick={() => { setOpen(false); onApprove() }}
-              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 transition"
-            >
-              <Check className="w-3.5 h-3.5" /> Setujui
-            </button>
+            <>
+              <div className="border-t border-gray-100" />
+              <button
+                onClick={() => { close(); onApprove() }}
+                className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 transition"
+              >
+                <Check className="w-3.5 h-3.5" /> Setujui
+              </button>
+            </>
           )}
           {status !== 'rejected' && (
-            <button
-              onClick={() => { setOpen(false); onReject() }}
-              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
-            >
-              <X className="w-3.5 h-3.5" /> Tolak
-            </button>
+            <>
+              <div className="border-t border-gray-100" />
+              <button
+                onClick={() => { close(); onReject() }}
+                className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+              >
+                <X className="w-3.5 h-3.5" /> Tolak
+              </button>
+            </>
           )}
         </div>
       )}
@@ -197,13 +182,6 @@ export default function CommentsPage() {
         >
           {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <button
-          onClick={fetchComments}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-        >
-          <RefreshCw className={'w-4 h-4 ' + (loading ? 'animate-spin text-blue-500' : 'text-gray-400')} />
-          <span>Refresh</span>
-        </button>
       </div>
 
       {/* Content */}

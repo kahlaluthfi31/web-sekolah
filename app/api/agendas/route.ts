@@ -2,6 +2,70 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, apiError, handleError } from '@/lib/api-response'
 
+// ─── Helper: hitung status berdasarkan tanggal & jam ──────────────────────────
+function computeStatus(eventDate: Date | null, eventTime: Date | null): 'upcoming' | 'ongoing' | 'completed' {
+  if (!eventDate) return 'upcoming'
+
+  const [y, m, d] = [eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate()]
+  const hh = eventTime ? eventTime.getUTCHours() : 0
+  const mm = eventTime ? eventTime.getUTCMinutes() : 0
+
+  const eventStartMs = new Date(y, m, d, hh, mm).getTime()
+  const nowMs = Date.now()
+
+  // Belum sampai jam mulai → upcoming
+  if (nowMs < eventStartMs) return 'upcoming'
+
+  // Sudah lewat jam mulai → minimal ongoing
+  // (completed hanya bisa di-set jika ada timeEnd & sudah terlewat — ditangani di autoUpdateStatuses)
+  return 'ongoing'
+}
+
+// ─── Helper: auto-update status agenda yang sudah berubah ─────────────────────
+async function autoUpdateStatuses(agendas: Array<{ id: number; eventDate: Date | null; eventTime: Date | null; timeEnd: Date | null; timeEndText: string | null; status: string }>) {
+  const toUpdate: Array<{ id: number; newStatus: 'upcoming' | 'ongoing' | 'completed' }> = []
+
+  for (const agenda of agendas) {
+    const base = computeStatus(agenda.eventDate, agenda.eventTime)
+
+    let computed: 'upcoming' | 'ongoing' | 'completed' = base
+
+    // Jika jam selesai diketahui, gunakan untuk auto-completed
+    if (base === 'ongoing' && agenda.timeEnd && !agenda.timeEndText) {
+      if (!agenda.eventDate) { computed = 'ongoing'; }
+      else {
+        const [y, m, d] = [agenda.eventDate.getUTCFullYear(), agenda.eventDate.getUTCMonth(), agenda.eventDate.getUTCDate()]
+        const ehh = agenda.timeEnd.getUTCHours()
+        const emm = agenda.timeEnd.getUTCMinutes()
+        const eventEndMs = new Date(y, m, d, ehh, emm).getTime()
+        if (Date.now() >= eventEndMs) computed = 'completed'
+      }
+    }
+
+    // Jika jam selesai tidak diketahui (timeEndText ada), jangan auto-complete —
+    // biarkan status yang sudah di-set admin (completed) tetap, hanya update upcoming→ongoing
+    if (agenda.timeEndText) {
+      if (base === 'upcoming') computed = 'upcoming'
+      else if (agenda.status === 'completed') computed = 'completed' // pertahankan manual completed
+      else computed = 'ongoing'
+    }
+
+    if (agenda.status !== computed) {
+      toUpdate.push({ id: agenda.id, newStatus: computed })
+    }
+  }
+
+  if (toUpdate.length > 0) {
+    await Promise.all(
+      toUpdate.map(({ id, newStatus }) =>
+        prisma.agenda.update({ where: { id }, data: { status: newStatus } })
+      )
+    )
+  }
+
+  return toUpdate
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -14,6 +78,8 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get('year')
     const skip = (page - 1) * limit
 
+    const isPublished = searchParams.get('isPublished')
+
     const where: Record<string, unknown> = {}
     if (search) {
       where.OR = [
@@ -23,6 +89,7 @@ export async function GET(request: NextRequest) {
     }
     if (status) where.status = status
     if (categoryId) where.categoryId = parseInt(categoryId)
+    if (isPublished !== null) where.isPublished = isPublished === 'true'
 
     // Filter by month and year
     if (month || year) {
@@ -68,7 +135,28 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    return apiPagination(data, page, limit, total)
+    // Auto-update status agenda yang sudah berubah (tanpa nunggu)
+    autoUpdateStatuses(data).catch(() => {})
+
+    // Kembalikan data dengan status yang sudah dihitung ulang (real-time)
+    const dataWithComputedStatus = data.map((item) => {
+      const base = computeStatus(item.eventDate, item.eventTime)
+      let status: string = base
+
+      if (base === 'ongoing' && item.timeEnd && !item.timeEndText) {
+        if (item.eventDate) {
+          const [y, m, d] = [item.eventDate.getUTCFullYear(), item.eventDate.getUTCMonth(), item.eventDate.getUTCDate()]
+          const ehh = item.timeEnd.getUTCHours()
+          const emm = item.timeEnd.getUTCMinutes()
+          if (Date.now() >= new Date(y, m, d, ehh, emm).getTime()) status = 'completed'
+        }
+      }
+      if (item.timeEndText && item.status === 'completed') status = 'completed'
+
+      return { ...item, status }
+    })
+
+    return apiPagination(dataWithComputedStatus, page, limit, total)
   } catch (error) {
     return handleError(error)
   }
@@ -87,8 +175,11 @@ export async function POST(request: NextRequest) {
       if (!timeStr || timeStr.trim() === '') return null
       const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/
       if (!timeRegex.test(timeStr.trim())) return null
-      const dateStr = `1970-01-01T${timeStr.trim()}`
-      const d = new Date(dateStr)
+      // Normalisasi ke HH:mm:ss lalu tambah "Z" agar diparse sebagai UTC
+      // mencegah pergeseran jam akibat timezone lokal server
+      const parts = timeStr.trim().split(':')
+      const normalized = `${parts[0].padStart(2,'0')}:${parts[1].padStart(2,'0')}:${parts[2] ? parts[2].padStart(2,'0') : '00'}`
+      const d = new Date(`1970-01-01T${normalized}.000Z`)
       return isNaN(d.getTime()) ? null : d
     }
 
@@ -105,6 +196,7 @@ export async function POST(request: NextRequest) {
         organizer: body.organizer || null,
         image: body.image || null,
         status: body.status || 'upcoming',
+        isPublished: body.isPublished !== undefined ? Boolean(body.isPublished) : true,
       },
       include: {
         category: {

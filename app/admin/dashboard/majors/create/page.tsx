@@ -122,7 +122,7 @@ export default function CreateMajorPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim()) { setError('Nama jurusan wajib diisi'); return }
+    if (!form.name.trim()) { setError('Nama program keahlian wajib diisi'); return }
     if (form.detailType === 'EXTERNAL' && !form.externalUrl.trim()) {
       setError('URL eksternal wajib diisi jika tipe Redirect Eksternal'); return
     }
@@ -175,7 +175,7 @@ export default function CreateMajorPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Tambah Jurusan</h2>
+          <h2 className="text-xl font-bold text-gray-900">Tambah Program keahlian</h2>
           <p className="text-sm text-gray-500">Tambah program keahlian baru</p>
         </div>
       </div>
@@ -190,11 +190,11 @@ export default function CreateMajorPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Informasi Dasar */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
-          <h3 className="text-sm font-semibold text-gray-900">Informasi Jurusan</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Informasi Program Keahlian</h3>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Jurusan *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Program Keahlian</label>
               <input
                 type="text"
                 required
@@ -205,7 +205,7 @@ export default function CreateMajorPage() {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Jurusan</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Program Keahlian</label>
               <input
                 type="text"
                 value={form.code}
@@ -222,18 +222,18 @@ export default function CreateMajorPage() {
               rows={3}
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Deskripsi singkat jurusan..."
+              placeholder="Deskripsi singkat program keahlian..."
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kepala Jurusan</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kepala Program Keahlian</label>
             <input
               type="text"
               value={form.headOfMajor}
               onChange={e => setForm(f => ({ ...f, headOfMajor: e.target.value }))}
-              placeholder="Nama kepala jurusan"
+              placeholder="Nama kepala program keahlian"
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -250,7 +250,7 @@ export default function CreateMajorPage() {
               label="Logo / Icon"
               value={form.icon}
               onChange={url => setForm(f => ({ ...f, icon: url }))}
-              hint="Logo jurusan, background transparan lebih baik"
+              hint="Logo program keahlian, background transparan lebih baik"
               square
             />
           </div>
@@ -327,7 +327,7 @@ export default function CreateMajorPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Konsentrasi Keahlian</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Tambah konsentrasi yang ada di jurusan ini</p>
+              <p className="text-xs text-gray-400 mt-0.5">Tambah konsentrasi yang ada di program keahlian ini</p>
             </div>
             <button
               type="button"

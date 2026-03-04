@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import {
-  Plus, Search, MoreHorizontal, Edit2, Trash2,
+  Plus, Search, MoreVertical, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X, Save,
   ArrowLeft, AlertTriangle, Trophy, Upload,
   Calendar, ImageIcon, Eye,
 } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 /* -- types -- */
 interface Achievement {
@@ -55,55 +56,23 @@ function ActionDropdown({ onDetail, onEdit, onDelete }: {
   onEdit: () => void
   onDelete: () => void
 }) {
-  const [open, setOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      setDropUp(spaceBelow < 200)
-    }
-    setOpen(!open)
-  }
-
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(200)
   return (
     <div ref={ref} className="relative">
-      <button
-        ref={btnRef}
-        onClick={toggle}
-        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-      >
-        <MoreHorizontal className="w-4 h-4" />
+      <button ref={btnRef} onClick={toggle} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+        <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className={`absolute right-0 w-44 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-          <button
-            onClick={() => { setOpen(false); onDetail() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
+        <div style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }} className="w-44 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
+          <button onClick={() => { close(); onDetail() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
             <Eye className="w-3.5 h-3.5" /> Detail
           </button>
-          <button
-            onClick={() => { setOpen(false); onEdit() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onEdit() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition-colors">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <button
-            onClick={() => { setOpen(false); onDelete() }}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-          >
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onDelete() }} className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
             <Trash2 className="w-3.5 h-3.5" /> Hapus
           </button>
         </div>
@@ -319,6 +288,11 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
       setSaving(false)
       return
     }
+    if (!form.photo) {
+      setError('Mohon upload foto bukti prestasi')
+      setSaving(false)
+      return
+    }
     const payload: Record<string, unknown> = {
       studentName: form.studentName,
       class: classValue || null,
@@ -385,7 +359,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
                 {/* Left col */}
                 <div className="lg:col-span-2 space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Siswa *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Siswa <span className="text-red-500">*</span></label>
                     <input type="text" required value={form.studentName}
                       onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -394,7 +368,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Kelas *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Kelas <span className="text-red-500">*</span></label>
                       <select value={form.classGrade}
                         onChange={e => setForm(f => ({ ...f, classGrade: e.target.value }))}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -402,7 +376,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
                       </select>
                     </div>
                     <div ref={majorRef} className="relative">
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Jurusan</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Program Keahlian</label>
                       <input type="text" value={form.major}
                         onChange={e => {
                           setForm(f => ({ ...f, major: e.target.value }))
@@ -410,7 +384,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
                         }}
                         onFocus={() => setMajorDropOpen(true)}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Ketik atau pilih jurusan..." />
+                        placeholder="Ketik atau pilih program keahlian..." />
                       {majorDropOpen && filteredMajors.length > 0 && (
                         <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-lg z-50 max-h-48 overflow-y-auto">
                           {filteredMajors.map(m => (
@@ -418,7 +392,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
                               onClick={() => { setForm(f => ({ ...f, major: m.code || m.name })); setMajorDropOpen(false) }}
                               className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors">
                               <span className="font-medium">{m.code || m.name}</span>
-                              {m.code && <span className="text-gray-400 ml-1.5">� {m.name}</span>}
+                              {m.code && <span className="text-gray-400 ml-1.5">{m.name}</span>}
                             </button>
                           ))}
                         </div>
@@ -427,7 +401,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Cabang Lomba / Prestasi *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Cabang Lomba / Prestasi <span className="text-red-500">*</span></label>
                     <input type="text" required value={form.achievementName}
                       onChange={e => setForm(f => ({ ...f, achievementName: e.target.value }))}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -444,7 +418,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Tingkat *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Tingkat <span className="text-red-500">*</span></label>
                       <select value={form.level}
                         onChange={e => setForm(f => ({ ...f, level: e.target.value, customLevel: e.target.value === '_lainnya' ? f.customLevel : '' }))}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -472,7 +446,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
 
                   {form.level === '_lainnya' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Tingkat Kustom *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Tingkat Kustom <span className="text-red-500">*</span></label>
                       <input type="text" value={form.customLevel}
                         onChange={e => setForm(f => ({ ...f, customLevel: e.target.value }))}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -496,7 +470,7 @@ function AchievementFormModal({ achievement, majors, onClose, onSaved }: {
                 <div className="space-y-5">
                   <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                     <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4 text-blue-500" /> Foto Bukti Prestasi
+                      <ImageIcon className="w-4 h-4 text-blue-500" /> Foto Bukti Prestasi <span className="text-red-500">*</span>
                     </h3>
                     <ImageUploadBlock
                       label="Upload bukti prestasi (menerima hadiah/piagam)"
@@ -553,7 +527,7 @@ export default function AchievementsPage() {
     fetch('/api/majors/list')
       .then(r => r.json())
       .then(j => { if (j.success) setMajors(j.data) })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   const fetchData = useCallback(async () => {
@@ -612,10 +586,6 @@ export default function AchievementsPage() {
           <h2 className="text-xl font-bold text-gray-900">Prestasi Siswa</h2>
           <p className="text-sm text-gray-500">Kelola data prestasi dan kejuaraan siswa</p>
         </div>
-        <button onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm">
-          <Plus className="w-4 h-4" /> Tambah Prestasi
-        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -628,14 +598,14 @@ export default function AchievementsPage() {
         <select value={level}
           onChange={e => { setLevel(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
           className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Semua Level</option>
+          <option value="">Semua Tingkatan</option>
           {LEVELS.filter(l => l.value !== '_lainnya').map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
           <option value="_lainnya">Lainnya</option>
         </select>
         <select value={majorFilter}
           onChange={e => { setMajorFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
           className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Semua Jurusan</option>
+          <option value="">Semua Program</option>
           {majors.map(m => <option key={m.id} value={m.code || m.name}>{m.code || m.name}</option>)}
         </select>
         <select value={classFilter}
@@ -650,6 +620,10 @@ export default function AchievementsPage() {
           <option value="">Semua Tahun</option>
           {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
         </select>
+        <button onClick={openCreate}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm">
+          <Plus className="w-4 h-4" /> Tambah Prestasi
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">

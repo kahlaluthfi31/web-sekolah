@@ -52,7 +52,7 @@ export default function MajorsManagementPage() {
       }
     } catch (error) {
       console.error('Error fetching majors:', error)
-      alert('Gagal memuat data jurusan')
+      alert('Gagal memuat data program')
     } finally {
       setLoading(false)
     }
@@ -63,7 +63,7 @@ export default function MajorsManagementPage() {
   }, [fetchMajors])
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus jurusan ini?')) return
+    if (!confirm('Apakah Anda yakin ingin menghapus program keahlian ini?')) return
 
     try {
       const response = await fetch(`/api/majors/${id}`, {
@@ -71,11 +71,11 @@ export default function MajorsManagementPage() {
       })
 
       if (response.ok) {
-        alert('Jurusan berhasil dihapus')
+        alert('Program keahlian berhasil dihapus')
         fetchMajors()
       } else {
         const data = await response.json()
-        alert(data.message || 'Gagal menghapus jurusan')
+        alert(data.message || 'Gagal menghapus program keahlian')
       }
     } catch (error) {
       console.error('Error deleting major:', error)
@@ -97,7 +97,7 @@ export default function MajorsManagementPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Kelola Jurusan</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Kelola Program Keahlian</h1>
                 <p className="mt-1 text-sm text-gray-600">Manajemen program keahlian sekolah</p>
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function MajorsManagementPage() {
               className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <Plus className="w-5 h-5" />
-              <span>Tambah Jurusan</span>
+              <span>Tambah Program Keahlian</span>
             </Link>
           </div>
         </div>
@@ -118,13 +118,13 @@ export default function MajorsManagementPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <div className="max-w-xl">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cari Jurusan
+              Cari Program Keahlian
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Cari nama jurusan, kode..."
+                placeholder="Cari nama program keahlian, kode..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -141,7 +141,7 @@ export default function MajorsManagementPage() {
             </div>
           ) : majors.length === 0 ? (
             <div className="col-span-full py-12 text-center text-gray-500">
-              Tidak ada data jurusan
+              Tidak ada data program keahlian
             </div>
           ) : (
             majors.map((major) => (

@@ -4,6 +4,27 @@ import { apiSuccess, apiError, handleError } from '@/lib/api-response'
 
 type Params = { params: Promise<{ id: string }> }
 
+// ─── Helper: hitung status berdasarkan tanggal & jam ──────────────────────────
+function computeStatus(eventDate: Date | null, eventTime: Date | null, timeEnd: Date | null, timeEndText: string | null): 'upcoming' | 'ongoing' | 'completed' {
+  if (!eventDate) return 'upcoming'
+  const [y, m, d] = [eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate()]
+  const hh = eventTime ? eventTime.getUTCHours() : 0
+  const mm = eventTime ? eventTime.getUTCMinutes() : 0
+  const eventStartMs = new Date(y, m, d, hh, mm).getTime()
+  const nowMs = Date.now()
+
+  if (nowMs < eventStartMs) return 'upcoming'
+
+  // Jam selesai diketahui → bisa auto-completed
+  if (timeEnd && !timeEndText) {
+    const ehh = timeEnd.getUTCHours()
+    const emm = timeEnd.getUTCMinutes()
+    if (nowMs >= new Date(y, m, d, ehh, emm).getTime()) return 'completed'
+  }
+
+  return 'ongoing'
+}
+
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
@@ -16,7 +37,21 @@ export async function GET(_req: NextRequest, { params }: Params) {
       },
     })
     if (!data) return apiError('Agenda tidak ditemukan', 404)
-    return apiSuccess(data)
+
+    // Jika jam selesai tidak diketahui dan sudah di-set "completed" oleh admin, pertahankan
+    let computedStatus: string
+    if (data.timeEndText && data.status === 'completed') {
+      computedStatus = 'completed'
+    } else {
+      computedStatus = computeStatus(data.eventDate, data.eventTime, data.timeEnd, data.timeEndText)
+    }
+
+    // Update DB jika berbeda (fire-and-forget)
+    if (data.status !== computedStatus) {
+      prisma.agenda.update({ where: { id: data.id }, data: { status: computedStatus as 'upcoming' | 'ongoing' | 'completed' } }).catch(() => {})
+    }
+
+    return apiSuccess({ ...data, status: computedStatus })
   } catch (error) {
     return handleError(error)
   }
@@ -41,8 +76,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
       // Validate time format (HH:mm or HH:mm:ss)
       const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/
       if (!timeRegex.test(timeStr.trim())) return null
-      const dateStr = `1970-01-01T${timeStr.trim()}`
-      const d = new Date(dateStr)
+      // Normalisasi ke HH:mm:ss lalu tambah "Z" agar diparse sebagai UTC
+      // mencegah pergeseran jam akibat timezone lokal server
+      const parts = timeStr.trim().split(':')
+      const normalized = `${parts[0].padStart(2,'0')}:${parts[1].padStart(2,'0')}:${parts[2] ? parts[2].padStart(2,'0') : '00'}`
+      const d = new Date(`1970-01-01T${normalized}.000Z`)
       return isNaN(d.getTime()) ? null : d
     }
 
@@ -87,6 +125,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         organizer: body.organizer !== undefined ? body.organizer : existing.organizer,
         image: body.image !== undefined ? body.image : existing.image,
         status: body.status ?? existing.status,
+        isPublished: body.isPublished !== undefined ? Boolean(body.isPublished) : existing.isPublished,
       },
       include: {
         category: {

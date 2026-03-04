@@ -55,9 +55,9 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
-            <Image 
-              src="/images/web/logo-smkn1-ciamis.png" 
-              alt="SMK NEGERI 1 CIAMIS Logo" 
+            <Image
+              src="/images/web/logo-smkn1-ciamis.png"
+              alt="SMK NEGERI 1 CIAMIS Logo"
               width={35}
               height={35}
               priority
@@ -71,9 +71,9 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
           <div className="hidden xl:block">
             <div className="ml-10 flex items-center space-x-6">
               <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'home' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
-              
+
               <div className="relative group" ref={dropdownRef}>
-                <button 
+                <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}
                 >
@@ -100,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
               </div>
 
               {mainNavItems.slice(1).map((item) => (
-                <button 
+                <button
                   key={item.name}
                   onClick={() => onNavigate(item.page)}
                   className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
@@ -108,8 +108,8 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                   {item.name}
                 </button>
               ))}
-              
-              <button 
+
+              <button
                 onClick={() => onNavigate('contact')}
                 className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'contact' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
               >

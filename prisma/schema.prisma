@@ -509,6 +509,7 @@ model Agenda {
   organizer   String?         @db.VarChar(255)
   image       String?         @db.VarChar(255)
   status      AgendaStatus    @default(upcoming)
+  isPublished Boolean         @default(true) @map("is_published")
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
@@ -678,6 +679,18 @@ enum SchoolRegulationCategory {
   siswa
   guru
   umum
+}
+
+model Partner {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  logoUrl       String?  @map("logo_url") @db.VarChar(255)
+  websiteUrl    String?  @map("website_url") @db.VarChar(255)
+  orderPosition Int      @default(0) @map("order_position")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("partners")
 }
 
 // ==================== CONTACT ====================

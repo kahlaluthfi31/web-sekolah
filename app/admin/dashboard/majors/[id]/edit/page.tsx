@@ -204,8 +204,8 @@ export default function EditMajorPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Edit Jurusan</h2>
-          <p className="text-sm text-gray-500">Ubah data jurusan dan konsentrasi</p>
+          <h2 className="text-xl font-bold text-gray-900">Edit Program Keahlian</h2>
+          <p className="text-sm text-gray-500">Ubah data Program dan konsentrasi</p>
         </div>
       </div>
 
@@ -219,16 +219,16 @@ export default function EditMajorPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Informasi Dasar */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
-          <h3 className="text-sm font-semibold text-gray-900">Informasi Jurusan</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Informasi Program Keahlian</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Jurusan *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Program Keahlian *</label>
               <input type="text" required value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Jurusan</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Program Keahlian</label>
               <input type="text" value={form.code}
                 onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono" />
@@ -243,7 +243,7 @@ export default function EditMajorPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kepala Jurusan</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kepala Program Keahlian</label>
             <input type="text" value={form.headOfMajor}
               onChange={e => setForm(f => ({ ...f, headOfMajor: e.target.value }))}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />

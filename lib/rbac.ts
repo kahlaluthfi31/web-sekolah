@@ -26,6 +26,8 @@ export type Permission =
   | 'agendas.view' | 'agendas.create' | 'agendas.edit' | 'agendas.delete'
   // Alumni
   | 'alumni.view' | 'alumni.verify'
+  // Partners
+  | 'partners.view' | 'partners.create' | 'partners.edit' | 'partners.delete'
   // Comments
   | 'comments.view' | 'comments.create' | 'comments.approve' | 'comments.delete'
   // Users
@@ -55,6 +57,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'extracurriculars.view', 'extracurriculars.create', 'extracurriculars.edit', 'extracurriculars.delete',
     'agendas.view', 'agendas.create', 'agendas.edit', 'agendas.delete',
     'alumni.view', 'alumni.verify',
+    'partners.view', 'partners.create', 'partners.edit', 'partners.delete',
     'comments.view', 'comments.create', 'comments.approve', 'comments.delete',
     'users.view', 'users.create', 'users.edit', 'users.delete',
     'messages.view', 'messages.reply', 'messages.delete',
@@ -74,6 +77,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'extracurriculars.view', 'extracurriculars.create', 'extracurriculars.edit',
     'agendas.view', 'agendas.create', 'agendas.edit',
     'alumni.view', 'alumni.verify',
+    'partners.view', 'partners.create', 'partners.edit',
     'comments.view', 'comments.approve', 'comments.delete',
     'messages.view', 'messages.reply',
     'virtual_tour.view', 'virtual_tour.manage',
@@ -111,17 +115,18 @@ export const ADMIN_MENU_ITEMS: { key: string; label: string; icon: string; href:
   { key: 'achievements',     label: 'Prestasi Siswa',      icon: 'Trophy',       href: '/admin/dashboard/achievements' },
   { key: 'extracurriculars', label: 'Ekstrakurikuler',     icon: 'Volleyball',   href: '/admin/dashboard/extracurriculars' },
   { key: 'agendas',          label: 'Agenda Kegiatan',     icon: 'CalendarDays', href: '/admin/dashboard/agendas' },
-  { key: 'alumni',           label: 'Data Alumni',          icon: 'GraduationCap',href: '/admin/dashboard/alumni' },
+  { key: 'alumni',           label: 'Data Alumni',         icon: 'GraduationCap',href: '/admin/dashboard/alumni' },
   { key: 'comments',         label: 'Komentar',             icon: 'MessageCircle',href: '/admin/dashboard/comments' },
   { key: 'messages',         label: 'Pesan Masuk',          icon: 'Mail',         href: '/admin/dashboard/messages' },
   { key: 'teachers',         label: 'Guru & Staff',         icon: 'Users',        href: '/admin/dashboard/teachers' },
   { key: 'majors',           label: 'Program Keahlian',     icon: 'BookOpen',     href: '/admin/dashboard/majors' },
   { key: 'facilities',       label: 'Fasilitas',            icon: 'Building2',    href: '/admin/dashboard/facilities' },
   { key: 'virtual-tour',     label: 'Virtual Tour',         icon: 'Camera',       href: '/admin/dashboard/virtual-tour' },
+  { key: 'partners',         label: 'Mitra Kerja Sama',     icon: 'Building2',    href: '/admin/dashboard/partners' },
 ]
 
 export const DEFAULT_ADMIN_MENU_KEYS: string[] = [
-  'news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages',
+  'news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages', 'partners',
 ]
 
 export function getNavigation(role: UserRole, customMenuKeys?: string[] | null): NavItem[] {
@@ -136,6 +141,7 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
     { title: 'Data Alumni', href: '/admin/dashboard/alumni', icon: 'GraduationCap', permission: 'alumni.view' },
     { title: 'Komentar', href: '/admin/dashboard/comments', icon: 'MessageCircle', permission: 'comments.view' },
     { title: 'Pesan Masuk', href: '/admin/dashboard/messages', icon: 'Mail', permission: 'messages.view' },
+    { title: 'Mitra Kerja Sama', href: '/admin/dashboard/partners', icon: 'Building2', permission: 'partners.view' },
 
     // Data Master (Superadmin only)
     { title: 'Guru & Staff', href: '/admin/dashboard/teachers', icon: 'Users', permission: 'teachers.view' },

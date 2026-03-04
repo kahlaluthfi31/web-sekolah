@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         role: 'user',
-        status: 'pending', // User harus diverifikasi admin
+        status: 'inactive', // User menunggu verifikasi admin sebelum diaktifkan
       },
       select: { id: true, name: true, email: true, role: true, status: true },
     })

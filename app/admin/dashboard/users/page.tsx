@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Search, Trash2, Loader2, ChevronLeft, ChevronRight, UserCog,
-  Plus, MoreHorizontal, Edit2, X, Eye, EyeOff, AlertTriangle,
+  Plus, MoreVertical, Edit2, X, Eye, EyeOff, AlertTriangle,
   CheckCircle2,
 } from 'lucide-react'
+import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface UserItem {
   id: number
@@ -48,51 +49,25 @@ const roleLabel: Record<string, string> = {
 /* ------------------------------------------------------------------ */
 
 function ActionDropdown({
-  userId,
-  userName,
-  onEdit,
-  onDelete,
+  userId, userName, onEdit, onDelete,
 }: {
-  userId: number
-  userName: string
-  onEdit: (id: number) => void
-  onDelete: (id: number, name: string) => void
+  userId: number; userName: string
+  onEdit: (id: number) => void; onDelete: (id: number, name: string) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
+  const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(120)
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-      >
-        <MoreHorizontal className="w-4 h-4" />
+      <button ref={btnRef} onClick={toggle} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+        <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-9 z-50 w-40 bg-white border border-gray-100 rounded-xl shadow-lg py-1 text-sm">
-          <button
-            onClick={() => { setOpen(false); onEdit(userId) }}
-            className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-yellow-50 hover:text-yellow-700"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-            Edit
+        <div style={{ position: 'fixed', top: dropUp ? 'auto' : pos.top, bottom: dropUp ? window.innerHeight - pos.top : 'auto', right: pos.right, zIndex: 9999 }} className="w-40 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden text-sm">
+          <button onClick={() => { close(); onEdit(userId) }} className="flex items-center gap-2 w-full px-4 py-2.5 text-left text-yellow-600 hover:bg-yellow-50">
+            <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <div className="border-t border-gray-100 my-1" />
-          <button
-            onClick={() => { setOpen(false); onDelete(userId, userName) }}
-            className="flex items-center gap-2 w-full px-4 py-2 text-left text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Hapus
+          <div className="border-t border-gray-100" />
+          <button onClick={() => { close(); onDelete(userId, userName) }} className="flex items-center gap-2 w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50">
+            <Trash2 className="w-3.5 h-3.5" /> Hapus
           </button>
         </div>
       )}
@@ -629,7 +604,7 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
