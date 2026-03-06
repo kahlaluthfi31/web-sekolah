@@ -13,11 +13,20 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [inHeroSection, setInHeroSection] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      const heroHeight = window.innerHeight;
+      const scrollPosition = window.scrollY;
+      
+      setScrolled(scrollPosition > 20);
+      setInHeroSection(scrollPosition < heroHeight);
+    };
+    
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -32,7 +41,10 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isNavMaroon = scrolled || currentPage !== 'home';
+  // Determine navbar style based on scroll position and page
+  const isHomePage = currentPage === 'home';
+  const isSolidWhite = !inHeroSection || !isHomePage;
+  const isGlassEffect = isHomePage && scrolled && inHeroSection;
 
   const dropdownItems: { name: string; page: PageType }[] = [
     { name: 'Profil Sekolah', page: 'about-us' },
@@ -51,31 +63,37 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
   ];
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${isNavMaroon ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${
+      isSolidWhite 
+        ? 'bg-white shadow-md py-2' 
+        : isGlassEffect 
+        ? 'bg-white/5 backdrop-blur-lg py-2' 
+        : 'bg-transparent py-2'
+    }`}>
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
+          <div className="shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
             <Image
               src="/images/web/logo-smkn1-ciamis.png"
               alt="SMK NEGERI 1 CIAMIS Logo"
-              width={35}
-              height={35}
+              width={32}
+              height={32}
               priority
               className="object-contain"
             />
-            <div className={`text-sm font-bold leading-tight ${isNavMaroon ? 'text-gray-900' : 'text-white'}`}>
+            <div className={`text-xs font-bold leading-tight ${isSolidWhite ? 'text-gray-900' : 'text-white'}`}>
               <div>SMKN 1</div>
               <div>CIAMIS</div>
             </div>
           </div>
           <div className="hidden xl:block">
             <div className="ml-10 flex items-center space-x-6">
-              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'home' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
+              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'home' && isSolidWhite ? 'text-[#0268ab]' : isSolidWhite ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
 
               <div className="relative group" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isSolidWhite ? 'text-gray-700' : 'text-white'}`}
                 >
                   Tentang Kami <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                 </button>
@@ -103,7 +121,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                 <button
                   key={item.name}
                   onClick={() => onNavigate(item.page)}
-                  className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                  className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isSolidWhite ? 'text-[#0268ab]' : isSolidWhite ? 'text-gray-700' : 'text-white'}`}
                 >
                   {item.name}
                 </button>
@@ -111,7 +129,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
 
               <button
                 onClick={() => onNavigate('contact')}
-                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'contact' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'contact' && isSolidWhite ? 'text-[#0268ab]' : isSolidWhite ? 'text-gray-700' : 'text-white'}`}
               >
                 Kontak
               </button>
@@ -119,7 +137,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
           </div>
 
           <div className="xl:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className={`p-2 rounded-md ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}>
+            <button onClick={() => setIsOpen(!isOpen)} className={`p-2 rounded-md ${isSolidWhite ? 'text-gray-700' : 'text-white'}`}>
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
