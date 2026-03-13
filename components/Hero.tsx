@@ -46,7 +46,7 @@ const Hero: React.FC = () => {
           SMK NEGERI 1 CIAMIS
         </h1>
         <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed">
-          TEsssssssssss a community of scholars, researchers, and creators dedicated to pushing the boundaries of knowledge and preparing for a global future.
+          Tes aja a community of scholars, researchers, and creators dedicated to pushing the boundaries of knowledge and preparing for a global future.
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
