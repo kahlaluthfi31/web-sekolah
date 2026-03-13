@@ -9,7 +9,8 @@ import {
   LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu as MenuIcon, Home, School, Settings, LogOut,
-  ChevronLeft, ChevronRight, X, ShieldCheck, Camera,
+  ChevronLeft, ChevronRight, ChevronDown, X, ShieldCheck, Camera,
+  Layers, Award,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -19,6 +20,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu: MenuIcon, Home, School, Settings, ShieldCheck, Camera,
+  Layers, Award,
 }
 
 /* ------------------------------------------------------------------ */
@@ -30,27 +32,171 @@ function SidebarNavLink({
   isActive,
   collapsed,
   onNavigate,
+  indent = 0,
 }: {
   item: NavItem
   isActive: boolean
   collapsed: boolean
   onNavigate?: () => void
+  indent?: number
 }) {
   const Icon = iconMap[item.icon] || LayoutDashboard
   return (
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all
         ${isActive
           ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
-        ${collapsed ? 'justify-center' : ''}`}
+        ${collapsed ? 'justify-center' : ''}
+        ${indent === 1 ? 'py-2' : ''}
+        ${indent === 2 ? 'py-1.5' : ''}`}
+      style={!collapsed && indent > 0 ? { paddingLeft: `${0.75 + indent * 0.75}rem` } : undefined}
       title={collapsed ? item.title : undefined}
     >
-      <Icon className="w-5 h-5 shrink-0" />
-      {!collapsed && <span className="truncate">{item.title}</span>}
+      <Icon className={`shrink-0 ${indent >= 2 ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} />
+      {!collapsed && <span className={`truncate ${indent >= 2 ? 'text-xs' : ''}`}>{item.title}</span>}
     </Link>
+  )
+}
+
+/** Level-2 accordion — no further nesting */
+function SidebarNavDropdownInner({
+  item,
+  pathname,
+  collapsed,
+  onNavigate,
+}: {
+  item: NavItem
+  pathname: string
+  collapsed: boolean
+  onNavigate?: () => void
+}) {
+  const Icon = iconMap[item.icon] || LayoutDashboard
+  const isAnyChildActive = item.children?.some(c => pathname.startsWith(c.href)) ?? false
+  const [manualOpen, setManualOpen] = useState(false)
+  const open = isAnyChildActive || manualOpen
+
+  if (collapsed) {
+    return (
+      <>
+        {item.children?.map(child => (
+          <SidebarNavLink
+            key={child.href}
+            item={child}
+            isActive={pathname === child.href}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            indent={2}
+          />
+        ))}
+      </>
+    )
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setManualOpen(o => !o)}
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all
+          ${isAnyChildActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+        style={{ paddingLeft: '1.5rem' }}
+      >
+        <Icon className="w-3.5 h-3.5 shrink-0" />
+        <span className="truncate flex-1 text-left text-xs">{item.title}</span>
+        <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="mt-0.5 space-y-0.5">
+          {item.children?.map(child => (
+            <SidebarNavLink
+              key={child.href}
+              item={child}
+              isActive={pathname === child.href}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+              indent={2}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Level-1 accordion — supports children (which may also have children → level-2) */
+function SidebarNavDropdown({
+  item,
+  pathname,
+  collapsed,
+  onNavigate,
+}: {
+  item: NavItem
+  pathname: string
+  collapsed: boolean
+  onNavigate?: () => void
+}) {
+  const Icon = iconMap[item.icon] || LayoutDashboard
+  const isAnyChildActive = (function checkActive(nav: NavItem): boolean {
+    if (pathname.startsWith(nav.href) && nav.href !== '/admin/dashboard') return true
+    return nav.children?.some(checkActive) ?? false
+  })(item)
+  const [manualOpen, setManualOpen] = useState(false)
+  const open = isAnyChildActive || manualOpen
+
+  if (collapsed) {
+    // In collapsed mode, show the parent icon pointing to the first child's href
+    const firstLeaf = item.children?.[0]
+    return (
+      <Link
+        href={firstLeaf?.href ?? item.href}
+        onClick={onNavigate}
+        className={`flex items-center justify-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+          ${isAnyChildActive ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+        title={item.title}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+      </Link>
+    )
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setManualOpen(o => !o)}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+          ${isAnyChildActive ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+        <span className="truncate flex-1 text-left">{item.title}</span>
+        <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="mt-0.5 space-y-0.5">
+          {item.children?.map(child =>
+            child.children && child.children.length > 0 ? (
+              <SidebarNavDropdownInner
+                key={child.href}
+                item={child}
+                pathname={pathname}
+                collapsed={collapsed}
+                onNavigate={onNavigate}
+              />
+            ) : (
+              <SidebarNavLink
+                key={child.href}
+                item={child}
+                isActive={pathname === child.href}
+                collapsed={collapsed}
+                onNavigate={onNavigate}
+                indent={1}
+              />
+            )
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -76,15 +222,25 @@ function SidebarNavGroup({
         </p>
       )}
       <div className="space-y-0.5">
-        {items.map(item => (
-          <SidebarNavLink
-            key={item.href}
-            item={item}
-            isActive={pathname === item.href}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
-        ))}
+        {items.map(item =>
+          item.children && item.children.length > 0 ? (
+            <SidebarNavDropdown
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          ) : (
+            <SidebarNavLink
+              key={item.href}
+              item={item}
+              isActive={pathname === item.href}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          )
+        )}
       </div>
     </div>
   )

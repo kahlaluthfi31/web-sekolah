@@ -196,7 +196,7 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
 
           {/* Nama scene — pojok kiri bawah */}
           {currentSceneTitle && (
-            <div className="absolute bottom-3 left-3 z-[100] flex items-center gap-2 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl pointer-events-none select-none" style={{ maxWidth: '55%' }}>
+            <div className="absolute bottom-3 left-3 z-100 flex items-center gap-2 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl pointer-events-none select-none" style={{ maxWidth: '55%' }}>
               <MapPin className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span className="text-xs font-medium" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'normal' }}>{currentSceneTitle}</span>
             </div>
@@ -207,7 +207,7 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
             <button
               onClick={handleCopyCoords}
               title="Klik copy koordinat"
-              className="absolute bottom-3 right-3 z-[100] flex items-center gap-2 bg-black/70 hover:bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors select-none"
+              className="absolute bottom-3 right-3 z-100 flex items-center gap-2 bg-black/70 hover:bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors select-none"
             >
               <Crosshair className="w-3.5 h-3.5" />
               <span>Pitch: <strong>{coords.pitch}</strong> &nbsp; Yaw: <strong>{coords.yaw}</strong></span>

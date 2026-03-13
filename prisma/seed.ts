@@ -4,22 +4,23 @@ import bcrypt from 'bcryptjs'
 async function main() {
   console.log('🌱 Start seeding...')
 
-  // Password yang mudah diingat untuk testing
+  // Password Super Admin
+  const superAdminPassword = await bcrypt.hash('super admin 123', 10)
   const hashedPassword = await bcrypt.hash('admin123', 10)
   
   // Create Super Admin
   const admin = await prisma.user.upsert({
     where: { email: 'superadmin@smkn1ciamis.com' },
-    update: {},
+    update: { password: superAdminPassword },
     create: {
       name: 'Super Admin',
       email: 'superadmin@smkn1ciamis.com',
-      password: hashedPassword,
+      password: superAdminPassword,
       role: 'superadmin',
       status: 'active',
     },
   })
-  console.log('✅ User:', admin.email, '| Password: admin123')
+  console.log('✅ User:', admin.email, '| Password: super admin 123')
 
   // Create Admin (guru piket / tim medsos)
   const adminUser = await prisma.user.upsert({
@@ -290,11 +291,65 @@ async function main() {
   }
 
   console.log('\n🎉 Seeding finished!')
+
+  // ---- Visi & Misi seed ----
+  const visiMisiData = [
+    {
+      section: 'visi_misi' as const,
+      title: 'Visi',
+      content: 'Menjadi lembaga pendidikan vokasi yang unggul, terpercaya, dan berdaya saing global dalam mencetak lulusan yang kompeten, berakhlak mulia, dan siap menghadapi tantangan era industri 4.0 dengan tetap menjunjung tinggi nilai-nilai luhur bangsa Indonesia.',
+      image: '/images/school-building.jpg',
+      orderPosition: 0,
+    },
+    {
+      section: 'visi_misi' as const,
+      title: 'Misi',
+      content: JSON.stringify([
+        'Menyelenggarakan pendidikan vokasi berkualitas dengan menerapkan kurikulum yang relevan dengan kebutuhan industri',
+        'Mengembangkan karakter siswa yang berintegritas, mandiri, dan berjiwa wirausaha',
+        'Memfasilitasi pembelajaran inovatif berbasis teknologi digital dan kolaborasi industri',
+        'Mempersiapkan lulusan yang profesional, adaptif, dan berdaya saing tinggi di pasar kerja global',
+        'Menjalin kemitraan strategis dengan dunia usaha dan industri untuk memperkuat link and match',
+      ]),
+      image: '/images/students-learning.jpg',
+      orderPosition: 1,
+    },
+  ]
+
+  for (const vm of visiMisiData) {
+    const existing = await prisma.schoolProfile.findFirst({
+      where: { section: vm.section, title: vm.title },
+    })
+    if (!existing) {
+      await prisma.schoolProfile.create({ data: vm })
+    }
+  }
+  console.log('✅ Visi & Misi seeded')
+
+  // ---- Page Headers seed ----
+  const pageHeadersData = [
+    { pageKey: 'about', title: 'Profil Sekolah', subtitle: 'Mengenal lebih dekat SMK Negeri 1 Ciamis - Sejarah, Visi Misi, dan Keunggulan yang menjadikan kami pilihan terbaik untuk pendidikan vokasi berkualitas.' },
+    { pageKey: 'news', title: 'Berita & Pengumuman', subtitle: 'Ikuti perkembangan terbaru, pengumuman penting, dan informasi seputar kegiatan sekolah kami.' },
+    { pageKey: 'contact', title: 'Hubungi Kami', subtitle: 'Jangan ragu untuk menghubungi kami. Tim kami siap membantu menjawab pertanyaan dan kebutuhan Anda.' },
+    { pageKey: 'admissions', title: 'Penerimaan Siswa Baru', subtitle: 'Bergabunglah bersama kami dan mulai perjalanan pendidikan vokasi terbaik Anda di SMK Negeri 1 Ciamis.' },
+    { pageKey: 'alumni', title: 'Alumni', subtitle: 'Bangga dengan jejak alumni kami yang sukses berkarir di berbagai bidang industri nasional dan internasional.' },
+    { pageKey: 'campus', title: 'Tur Kampus', subtitle: 'Jelajahi fasilitas modern dan lingkungan belajar kondusif yang kami sediakan untuk mendukung perkembangan siswa.' },
+  ]
+
+  for (const ph of pageHeadersData) {
+    await prisma.pageHeader.upsert({
+      where: { pageKey: ph.pageKey },
+      update: { title: ph.title, subtitle: ph.subtitle },
+      create: { pageKey: ph.pageKey, title: ph.title, subtitle: ph.subtitle },
+    })
+  }
+  console.log('✅ Page Headers seeded')
+
   console.log('\n📝 Login Credentials:')
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('Super Admin:')
   console.log('  Email: superadmin@smkn1ciamis.com')
-  console.log('  Password: admin123')
+  console.log('  Password: super admin 123')
   console.log('')
   console.log('Admin:')
   console.log('  Email: medsos@sekolah.com')

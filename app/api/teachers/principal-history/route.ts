@@ -6,8 +6,10 @@ import { z } from 'zod'
 const principalHistorySchema = z.object({
   teacherId: z.number(),
   role: z.enum(['KEPALA_SEKOLAH', 'WAKIL_KEPALA_SEKOLAH']),
+  bidang: z.string().optional().nullable(),
   startYear: z.number().min(1900).max(2100),
   endYear: z.number().min(1900).max(2100).optional().nullable(),
+  endReason: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
 })
 
@@ -57,16 +59,18 @@ export async function POST(request: NextRequest) {
     const roleLabel = ROLE_LABEL[data.role] ?? data.role
     const newEnd = data.endYear ?? null
 
-    // Check for overlapping periods for the same role
+    // Check for overlapping periods for the same role (and same bidang for wakil)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const overlapWhere: any = {
+      role: data.role,
+      startYear: { lte: newEnd ?? 9999 },
+      OR: [{ endYear: null }, { endYear: { gte: data.startYear } }],
+    }
+    if (data.role === 'WAKIL_KEPALA_SEKOLAH' && data.bidang) {
+      overlapWhere.bidang = data.bidang
+    }
     const overlap = await prisma.principalHistory.findFirst({
-      where: {
-        role: data.role,
-        startYear: { lte: newEnd ?? 9999 },
-        OR: [
-          { endYear: null },
-          { endYear: { gte: data.startYear } },
-        ],
-      },
+      where: overlapWhere,
       include: { teacher: { select: { name: true } } },
     })
 
@@ -74,16 +78,45 @@ export async function POST(request: NextRequest) {
       const periodStr = overlap.endYear === null
         ? `${overlap.startYear} – Sekarang`
         : `${overlap.startYear} – ${overlap.endYear}`
+      const bidangStr = data.bidang ? ` Bidang ${data.bidang}` : ''
       if (overlap.endYear === null) {
         return apiError(
-          `${roleLabel} "${overlap.teacher.name}" masih aktif menjabat (${periodStr}). Edit data tersebut terlebih dahulu untuk mengisi tahun selesai sebelum menambah penerus baru.`,
+          `${roleLabel}${bidangStr} "${overlap.teacher.name}" masih aktif menjabat (${periodStr}). Edit data tersebut terlebih dahulu untuk mengisi tahun selesai sebelum menambah penerus baru.`,
           400,
         )
       }
       return apiError(
-        `Periode bertabrakan dengan ${roleLabel} "${overlap.teacher.name}" (${periodStr}). Edit masa akhir periode jabatan sebelumnya, agar tidak saling tumpang tindih`,
+        `Periode bertabrakan dengan ${roleLabel}${bidangStr} "${overlap.teacher.name}" (${periodStr}). Edit masa akhir periode jabatan sebelumnya, agar tidak saling tumpang tindih`,
         400,
       )
+    }
+
+    // Rule: A teacher who has EVER served as Wakil Kepala Sekolah at this school
+    // cannot be added as Kepala Sekolah (and vice versa is already blocked by overlap check)
+    if (data.role === 'KEPALA_SEKOLAH') {
+      const hadWakepsek = await prisma.principalHistory.findFirst({
+        where: { teacherId: data.teacherId, role: 'WAKIL_KEPALA_SEKOLAH' },
+        include: { teacher: { select: { name: true } } },
+      })
+      if (hadWakepsek) {
+        return apiError(
+          `"${hadWakepsek.teacher.name}" pernah menjabat sebagai Wakil Kepala Sekolah di sekolah ini, sehingga tidak dapat diangkat menjadi Kepala Sekolah di sekolah yang sama.`,
+          400,
+        )
+      }
+    }
+
+    if (data.role === 'WAKIL_KEPALA_SEKOLAH') {
+      const hadKepsek = await prisma.principalHistory.findFirst({
+        where: { teacherId: data.teacherId, role: 'KEPALA_SEKOLAH' },
+        include: { teacher: { select: { name: true } } },
+      })
+      if (hadKepsek) {
+        return apiError(
+          `"${hadKepsek.teacher.name}" pernah menjabat sebagai Kepala Sekolah di sekolah ini, sehingga tidak dapat diangkat menjadi Wakil Kepala Sekolah di sekolah yang sama.`,
+          400,
+        )
+      }
     }
 
     const history = await prisma.principalHistory.create({

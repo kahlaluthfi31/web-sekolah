@@ -3,15 +3,11 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import QuickStats from '@/components/QuickStats';
-import AboutSection from '@/components/AboutSection';
 import ProgramKeahlian from '@/components/ProgramKeahlian';
-import FeaturedPrograms from '@/components/FeaturedPrograms';
 import StudentLife from '@/components/StudentLife';
 import Testimonials from '@/components/Testimonials';
 import RecentNews from '@/components/RecentNews';
 import UpcomingEvents from '@/components/UpcomingEvents';
-import SocialFeeds from '@/components/SocialFeeds';
 import SocialFeedsVertikal from '@/components/SocialFeeds(vertikal)';
 import Partners from '@/components/Partners';
 import Footer from '@/components/Footer';
@@ -25,13 +21,23 @@ import AlumniPage from '@/app/pages/AlumniPage';
 import NewsDetailsPage from '@/app/pages/NewsDetailsPage';
 import ContactPage from '@/app/pages/ContactPage';
 import EventsPage from '@/app/pages/EventsPage';
+import AnnouncementPopup from '@/components/AnnouncementPopup';
 
 export type PageType = 'home' | 'about-us' | 'admissions' | 'faculty' | 'campus' | 'students-life' | 'news' | 'alumni' | 'news-details' | 'contact' | 'events';
 
+const SESSION_KEY = 'smk_last_page';
+
+// Safe sessionStorage read — returns 'home' during SSR
+function getInitialPage(): PageType {
+  if (typeof window === 'undefined') return 'home';
+  return (sessionStorage.getItem(SESSION_KEY) as PageType | null) ?? 'home';
+}
+
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<PageType>('home');
+  const [currentPage, setCurrentPage] = useState<PageType>(getInitialPage);
 
   const navigateTo = (page: PageType) => {
+    sessionStorage.setItem(SESSION_KEY, page);
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -81,8 +87,9 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
+      <AnnouncementPopup onNavigate={navigateTo} />
       <Navbar onNavigate={navigateTo} currentPage={currentPage} />
-      <main className="flex-grow overflow-x-hidden">
+      <main className="grow overflow-x-hidden">
         {renderPage()}
       </main>
       <Footer onNavigate={navigateTo} />

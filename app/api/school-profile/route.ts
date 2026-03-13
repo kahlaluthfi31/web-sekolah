@@ -4,9 +4,14 @@ import { apiSuccess, apiError, handleError } from '@/lib/api-response'
 import { getSession } from '@/lib/auth'
 
 // GET all school profile sections
-export async function GET() {
+// ?section=visi_misi → filter by section
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const section = searchParams.get('section') as 'sejarah' | 'visi_misi' | 'keunggulan' | null
+
     const profiles = await prisma.schoolProfile.findMany({
+      where: section ? { section } : undefined,
       orderBy: [{ section: 'asc' }, { orderPosition: 'asc' }],
     })
     return apiSuccess(profiles)
