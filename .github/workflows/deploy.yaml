@@ -21,6 +21,8 @@ jobs:
     - name: Deploy to server via SSH
       run: |
         ssh -p 21032 -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            eval \$(ssh-agent -s)
+            ssh-add ~/.ssh/wisnu
             cd web
             git pull origin main
             npm install
