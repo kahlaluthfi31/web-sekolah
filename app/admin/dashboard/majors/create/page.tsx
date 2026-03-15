@@ -298,7 +298,7 @@ export default function CreateMajorPage() {
 
           {form.detailType === 'EXTERNAL' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Tujuan *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Tujuan <span className="text-red-500">*</span></label>
               <input
                 type="url"
                 value={form.externalUrl}

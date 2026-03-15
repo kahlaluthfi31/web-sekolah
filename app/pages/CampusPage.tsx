@@ -1,8 +1,32 @@
-import React, { useEffect, useRef } from "react";
-import { Play, MapPin, Calendar, Clock, ArrowRight } from "lucide-react";
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+import type { PannellumConfig } from "@/components/VirtualTourViewer";
+import { Compass, Info, Route } from "lucide-react";
+
+const VirtualTourViewer = dynamic(() => import("@/components/VirtualTourViewer"), { ssr: false });
 
 const CampusPage: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [facilities, setFacilities] = useState<FacilityCard[]>([]);
+  const [loadingFacilities, setLoadingFacilities] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [tourConfig, setTourConfig] = useState<PannellumConfig | null>(null);
+  const [loadingTour, setLoadingTour] = useState(true);
+  const [tourError, setTourError] = useState<string>("");
+
+  type FacilityCard = {
+    id: number;
+    name: string;
+    description: string | null;
+    category: string;
+    image: string | null;
+    quantity: number;
+    quantityType?: "jumlah" | "kapasitas";
+    condition: string;
+  };
 
   // Auto-scrolling logic for the gallery
   useEffect(() => {
@@ -23,6 +47,45 @@ const CampusPage: React.FC = () => {
 
     animationFrameId = requestAnimationFrame(scroll);
     return () => cancelAnimationFrame(animationFrameId);
+  }, []);
+
+  // Load facilities data
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/facilities?limit=12");
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.data)) {
+          setFacilities(json.data);
+        }
+      } catch (err) {
+        console.error("Failed to load facilities", err);
+      } finally {
+        setLoadingFacilities(false);
+      }
+    };
+    load();
+  }, []);
+
+  // Load virtual tour configuration
+  useEffect(() => {
+    const loadTour = async () => {
+      try {
+        const res = await fetch("/api/virtual-tour/config");
+        const json = await res.json();
+        if (json?.success && json.data) {
+          setTourConfig(json.data as PannellumConfig);
+        } else {
+          setTourError(json?.message || "Gagal memuat virtual tour.");
+        }
+      } catch (err) {
+        console.error("Failed to load virtual tour config", err);
+        setTourError("Gagal memuat virtual tour.");
+      } finally {
+        setLoadingTour(false);
+      }
+    };
+    loadTour();
   }, []);
 
   const galleryImages = [
@@ -88,131 +151,137 @@ const CampusPage: React.FC = () => {
         </div>
       </div>
 
-
-      {/* World-Class Facilities */}
+      {/* Sarana Prasarana (dynamic from facilities) */}
       <section className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            World-Class Facilities
+        <div className="text-center mb-16">
+          <span className="text-[#0092DD] text-[10px] font-bold uppercase tracking-[0.2em] mb-4 block">
+            Sarana Prasarana
+          </span>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            Fasilitas Unggulan
           </h2>
-          <p className="text-sm text-gray-500 max-w-2xl mx-auto">
-            Suspendisse potenti. Sed ut perspiciatis unde omnis iste natus error
-            sit voluptatem accusantium doloremque laudantium.
+          <p className="max-w-2xl mx-auto text-gray-500 leading-relaxed">
+            Jelajahi fasilitas kami yang mendukung proses belajar, kreativitas, dan kenyamanan seluruh warga sekolah.
           </p>
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              title: "Academic Excellence",
-              items: [
-                "State-of-the-art lecture halls",
-                "Interactive learning labs",
-                "Collaborative study spaces",
-                "Research facilities",
-              ],
-              img: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=500",
-            },
-            {
-              title: "Sports & Wellness",
-              items: [
-                "Olympic-size swimming pool",
-                "Multi-purpose gymnasium",
-                "Wellness center",
-                "Outdoor sports courts",
-              ],
-              img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=500",
-            },
-            {
-              title: "Student Life",
-              items: [
-                "Modern dormitories",
-                "Student union building",
-                "Dining commons",
-                "Recreation centers",
-              ],
-              img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=500",
-            },
-          ].map((facility, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-3xl overflow-hidden shadow-md group border border-gray-100"
-            >
-              <div className="h-64 overflow-hidden">
-                <img
-                  src={facility.img}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  alt={facility.title}
-                />
-              </div>
-              <div className="p-8">
-                <h4 className="text-xl font-bold mb-6">{facility.title}</h4>
-                <ul className="space-y-3 mb-8">
-                  {facility.items.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center text-xs text-gray-500"
-                    >
-                      <span className="w-1 h-1 rounded-full bg-[#0092DD] mr-3"></span>{" "}
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <button className="text-[10px] font-bold uppercase text-[#0092DD] hover:underline">
-                  Explore {facility.title.split(" ")[0]} Spaces &rarr;
-                </button>
-              </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {loadingFacilities ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="animate-pulse bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="h-56 bg-gray-200" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 w-24 bg-gray-200 rounded-full" />
+                    <div className="h-5 w-40 bg-gray-200 rounded-full" />
+                    <div className="h-3 w-full bg-gray-200 rounded-full" />
+                    <div className="h-3 w-5/6 bg-gray-200 rounded-full" />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : facilities.length === 0 ? (
+            <div className="text-center text-gray-500">Belum ada data fasilitas.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {facilities.map((item) => {
+                const qtyLabel = item.quantityType === "kapasitas" ? "Kapasitas" : "Qty";
+                const isExpanded = expandedIds.has(item.id);
+                const toggleExpand = () => {
+                  setExpandedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                    return next;
+                  });
+                };
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-3xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200"
+                  >
+                    <div className="relative h-64 overflow-hidden">
+                      <Image
+                        src={item.image || "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=600"}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="(min-width: 1024px) 320px, 100vw"
+                        unoptimized
+                      />
+                      <span className="absolute top-3 left-3 inline-flex items-center px-3 py-1 text-xs font-semibold bg-white/90 text-[#0092DD] rounded-full border border-[#0092DD]/30 shadow-sm">
+                        {item.category || "Fasilitas"}
+                      </span>
+                    </div>
+
+                    <div className="p-6 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-900">{item.name}</h4>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <p>Kondisi {item.condition?.replace(/_/g, " ") || "-"}</p>
+                        <p>
+                          {qtyLabel} : <span className="font-semibold text-gray-800">{item.quantity ?? "-"}</span>
+                        </p>
+                      </div>
+
+                      <p className={`text-sm text-gray-600 leading-relaxed ${isExpanded ? "" : "line-clamp-3"}`}>
+                        {item.description || "Belum ada deskripsi untuk fasilitas ini."}
+                      </p>
+                      {item.description && item.description.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={toggleExpand}
+                          className="text-xs font-semibold text-[#0092DD] hover:underline"
+                        >
+                          {isExpanded ? "Sembunyikan" : "Selengkapnya"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
       {/* Experience Campus Virtual Tour */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50 rounded-[40px] p-8 md:p-16 flex flex-col lg:flex-row items-center gap-16">
-          <div className="w-full lg:w-1/2 relative rounded-3xl overflow-hidden shadow-2xl h-[400px]">
-            <img
-              src="https://media.istockphoto.com/id/2197753729/id/foto/siswa-berjalan-dan-berbicara-bersama-di-malmo-swedia.jpg?s=1024x1024&w=is&k=20&c=fcKtVwgQMBoJ4Ff6JxVGN2lKkMxwNwylRqxdj0Gt9hM="
-              className="w-full h-full object-cover"
-              alt="Classroom"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button className="bg-white/90 backdrop-blur px-6 py-3 rounded-full font-bold flex items-center shadow-xl">
-                <Play className="h-4 w-4 mr-2 text-[#0092DD] fill-[#0092DD]" />{" "}
-                360° Virtual Tour
-              </button>
-            </div>
+          <div className="w-full lg:w-1/2">
+            {loadingTour ? (
+              <div className="h-100 rounded-3xl bg-gray-200 animate-pulse border border-gray-100 shadow-2xl" />
+            ) : tourConfig && tourConfig.default?.firstScene && Object.keys(tourConfig.scenes || {}).length > 0 ? (
+              <VirtualTourViewer config={tourConfig} height="400px" />
+            ) : (
+              <div className="h-100 rounded-3xl bg-gray-100 border border-gray-200 shadow-inner flex items-center justify-center text-center px-6 text-gray-500 text-sm">
+                {tourError || "Belum ada virtual tour yang tersedia."}
+              </div>
+            )}
           </div>
           <div className="w-full lg:w-1/2">
             <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
-              Experience Our Campus
+              Virtual Tour 360° SMKN 1 Ciamis
             </h2>
             <p className="text-gray-500 mb-10 text-sm leading-relaxed">
-              Nulla facilisi morbi tempus iaculis urna id volutpat lacus laoreet
-              non curabitur gravida arcu ac tortor dignissim convallis.
+              Jelajahi setiap sudut sekolah secara virtual tanpa harus datang langsung. Temukan ruang kelas, fasilitas, dan arah jalur dengan mudah sehingga kamu bisa mengenal lingkungan SMKN 1 Ciamis dari rumah, atau mempersiapkan kunjungan tanpa takut tersesat di area sekolah.
             </p>
             <div className="space-y-6 mb-12">
               <div className="flex items-start">
-                <Play className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4" />
-                <p className="text-sm font-medium">Interactive walkthrough</p>
+                <Compass className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4" />
+                <p className="text-sm font-medium">Berkeliling 360° ke seluruh area sekolah</p>
               </div>
               <div className="flex items-start">
-                <MapPin className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4" />
-                <p className="text-sm font-medium">Campus navigation</p>
+                <Info className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4" />
+                <p className="text-sm font-medium">Info detail tiap titik tempat</p>
               </div>
               <div className="flex items-start">
-                <Clock className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4" />
-                <p className="text-sm font-medium">
-                  Detailed facility information
-                </p>
+                <Route className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4" />
+                <p className="text-sm font-medium">Panduan rute sebelum berkunjung supaya tidak tersesat</p>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <button className="bg-[#0092DD] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#77C5F0] hover:text-[#0092DD] transition-colors shadow-lg">
-                Start Virtual Tour
-              </button>
-              <button className="border-2 border-gray-200 text-gray-900 px-8 py-3 rounded-lg font-bold hover:border-[#0092DD] hover:text-[#0092DD] transition-all">
-                Schedule Visit
-              </button>
             </div>
           </div>
         </div>
@@ -236,15 +305,18 @@ const CampusPage: React.FC = () => {
         >
           <div className="flex">
             {galleryImages.map((item, i) => (
-              <div key={i} className="inline-block px-4 w-[400px]">
+              <div key={i} className="inline-block px-4 w-100">
                 <div className="relative rounded-3xl overflow-hidden h-64 group cursor-pointer shadow-lg">
-                  <img
+                  <Image
                     src={item.img}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="object-cover group-hover:scale-110 transition-transform duration-700"
                     alt={item.title}
+                    fill
+                    sizes="(min-width: 1024px) 400px, 100vw"
+                    unoptimized
                   />
                   {/* Requested hover overlay from image 5 */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
                     <h4 className="text-white font-bold text-xl mb-2">
                       {item.title}
                     </h4>
@@ -263,5 +335,3 @@ const CampusPage: React.FC = () => {
 };
 
 export default CampusPage;
-
-

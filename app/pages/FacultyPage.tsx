@@ -260,10 +260,10 @@ function RiwayatKepsekSection() {
         <div className="w-full h-px bg-gray-200 mb-8" />
 
         {loading ? (
-          <div className="flex gap-5 overflow-hidden">
+          <div className="flex gap-6 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="shrink-0 w-48 rounded-2xl border border-gray-100 overflow-hidden">
-                <Skeleton className="w-full h-56 rounded-none rounded-t-2xl" />
+              <div key={i} className="shrink-0 w-64 rounded-2xl border border-gray-100 overflow-hidden bg-white">
+                <Skeleton className="w-full h-60 rounded-none rounded-t-2xl" />
                 <div className="p-4 space-y-2">
                   <Skeleton className="h-4 w-4/5" />
                   <Skeleton className="h-3 w-3/5" />
@@ -282,7 +282,7 @@ function RiwayatKepsekSection() {
             {/* Scroll container */}
             <div
               ref={scrollRef}
-              className="flex gap-5 overflow-x-auto pb-2"
+              className="flex gap-7 overflow-x-auto pb-3"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {histories.map((h) => {
@@ -291,12 +291,12 @@ function RiwayatKepsekSection() {
                 return (
                   <div
                     key={h.id}
-                    className={`shrink-0 w-52 rounded-2xl border overflow-hidden flex flex-col ${
+                    className={`shrink-0 w-72 rounded-3xl overflow-hidden flex flex-col bg-white/90 backdrop-blur border transition-all duration-200 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.25)] hover:shadow-[0_16px_40px_-18px_rgba(0,0,0,0.3)] hover:scale-[1.01] ${
                       isActive ? 'border-[#0092DD]/30' : 'border-gray-200'
                     }`}
                   >
                     {/* Foto portrait */}
-                    <div className="relative w-full" style={{ aspectRatio: '3/4' }}>
+                    <div className="relative w-full bg-linear-to-b from-gray-100 to-white" style={{ aspectRatio: '3/4' }}>
                       {h.teacher?.photo ? (
                         <Image
                           src={h.teacher.photo}
@@ -306,46 +306,46 @@ function RiwayatKepsekSection() {
                           unoptimized
                         />
                       ) : (
-                        <div className={`w-full h-full flex items-center justify-center text-4xl font-bold ${isActive ? 'bg-[#0092DD]/10 text-[#0092DD]' : 'bg-gray-100 text-gray-300'}`}>
+                        <div className={`w-full h-full flex items-center justify-center text-4xl font-bold ${isActive ? 'bg-[#0092DD]/8 text-[#0092DD]' : 'bg-gray-100 text-gray-300'}`}>
                           {h.teacher?.name?.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
 
                     {/* Info bawah foto */}
-                    <div className="flex flex-col items-center gap-2 p-3.5 flex-1 bg-white text-center">
+                    <div className="flex flex-col gap-2.5 p-4 flex-1 bg-white text-center">
                       {/* Nama */}
-                      <p className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 w-full">
+                      <p className="font-semibold text-gray-900 text-base leading-snug whitespace-nowrap overflow-hidden text-ellipsis" title={h.teacher?.name ?? ''}>
                         {h.teacher?.name}
                       </p>
 
                       {/* Periode — soft bg + border + rounded-full */}
                       <div className="flex items-center justify-center gap-2">
                         {/* Tahun mulai — biru */}
-                        <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-300">
+                        <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 shadow-[0_6px_16px_-12px_rgba(37,99,235,0.6)]">
                           {h.startYear}
                         </span>
                         {/* Tanda pemisah */}
-                        <span className="text-gray-400 text-xs font-bold">-</span>
+                        <span className="text-gray-300 text-xs font-bold">-</span>
                         {/* Tahun selesai */}
                         {isActive ? (
-                          <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-300">
+                          <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200 shadow-[0_6px_16px_-12px_rgba(22,163,74,0.6)]">
                             Sekarang
                           </span>
                         ) : (
-                          <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-red-50 text-red-400 border border-red-300">
+                          <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-red-50 text-red-500 border border-red-200 shadow-[0_6px_16px_-12px_rgba(239,68,68,0.6)]">
                             {h.endYear}
                           </span>
                         )}
                       </div>
 
                       {/* Tipe keluar / status */}
-                      <p className="text-[11px] text-gray-500">
+                      <p className="text-[11px] text-gray-500 leading-snug">
                         {isActive ? 'Aktif Menjabat' : (h.endReason ? h.endReason : 'Pindah Tugas')}
                       </p>
 
                       {/* Note / catatan */}
-                      <p className="text-[10px] text-gray-400 leading-snug line-clamp-2 italic">
+                      <p className="text-[11px] text-gray-400 leading-snug line-clamp-2 italic">
                         {h.note ?? 'Keterangan atau catatan'}
                       </p>
                     </div>

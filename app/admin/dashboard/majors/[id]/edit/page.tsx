@@ -222,7 +222,7 @@ export default function EditMajorPage() {
           <h3 className="text-sm font-semibold text-gray-900">Informasi Program Keahlian</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Program Keahlian *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Program Keahlian <span className="text-red-500">*</span></label>
               <input type="text" required value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -298,7 +298,7 @@ export default function EditMajorPage() {
 
           {form.detailType === 'EXTERNAL' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Tujuan *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Tujuan <span className="text-red-500">*</span></label>
               <input type="url" value={form.externalUrl}
                 onChange={e => setForm(f => ({ ...f, externalUrl: e.target.value }))}
                 placeholder="https://instagram.com/jurusan_tkj"

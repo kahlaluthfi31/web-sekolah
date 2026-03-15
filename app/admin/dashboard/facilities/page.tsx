@@ -17,6 +17,7 @@ interface Facility {
   category: string
   image: string | null
   quantity: number
+  quantityType?: 'jumlah' | 'kapasitas'
   condition: string
   orderPosition: number
   createdAt: string
@@ -171,8 +172,8 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
 function FacilityFormFields({
   form, setForm, categories, error,
 }: {
-  form: { name: string; description: string; category: string; image: string; quantity: number; condition: string }
-  setForm: React.Dispatch<React.SetStateAction<{ name: string; description: string; category: string; image: string; quantity: number; condition: string }>>
+  form: { name: string; description: string; category: string; image: string; quantity: number; quantityType: 'jumlah' | 'kapasitas'; condition: string }
+  setForm: React.Dispatch<React.SetStateAction<{ name: string; description: string; category: string; image: string; quantity: number; quantityType: 'jumlah' | 'kapasitas'; condition: string }>>
   categories: FacilityCat[]
   error: string
 }) {
@@ -185,7 +186,7 @@ function FacilityFormFields({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Fasilitas *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Fasilitas <span className="text-red-500">*</span></label>
         <input type="text" required value={form.name}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           placeholder="Contoh: Lab Komputer 1"
@@ -202,7 +203,7 @@ function FacilityFormFields({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori <span className="text-red-500">*</span></label>
           <select required value={form.category}
             onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -213,7 +214,7 @@ function FacilityFormFields({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Kondisi *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Kondisi <span className="text-red-500">*</span></label>
           <select required value={form.condition}
             onChange={e => setForm(f => ({ ...f, condition: e.target.value }))}
             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -226,9 +227,20 @@ function FacilityFormFields({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Jumlah / Kapasitas</label>
-        <input type="number" min={1} value={form.quantity}
-          onChange={e => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))}
-          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="inline-flex bg-gray-100 rounded-xl p-1 w-fit">
+            {(['jumlah', 'kapasitas'] as const).map(mode => (
+              <button key={mode} type="button" onClick={() => setForm(f => ({ ...f, quantityType: mode }))}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${form.quantityType === mode ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-white'}`}>
+                {mode === 'jumlah' ? 'Kuantitas' : 'Kapasitas'}
+              </button>
+            ))}
+          </div>
+          <input type="number" min={1} value={form.quantity}
+            onChange={e => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))}
+            className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        </div>
+        <p className="text-xs text-gray-400 mt-1">Pilih jenis angka lalu isi nilai sesuai kebutuhan.</p>
       </div>
 
       <ImageUpload value={form.image} onChange={url => setForm(f => ({ ...f, image: url }))} />
@@ -237,7 +249,7 @@ function FacilityFormFields({
 }
 
 // ─── AddModal ─────────────────────────────────────────────────────────────────
-const BLANK_FORM = { name: '', description: '', category: '', image: '', quantity: 1, condition: 'baik' }
+const BLANK_FORM = { name: '', description: '', category: '', image: '', quantity: 1, quantityType: 'jumlah' as const, condition: 'baik' }
 
 function AddModal({ categories, onClose, onSaved }: {
   categories: FacilityCat[]; onClose: () => void; onSaved: () => void
@@ -261,6 +273,7 @@ function AddModal({ categories, onClose, onSaved }: {
           category: form.category,
           image: form.image || null,
           quantity: form.quantity,
+          quantityType: form.quantityType,
           condition: form.condition,
         }),
       })
@@ -332,6 +345,7 @@ function EditModal({ facilityId, categories, onClose, onSaved }: {
             category: d.category || '',
             image: d.image || '',
             quantity: d.quantity || 1,
+            quantityType: (d.quantityType === 'kapasitas' ? 'kapasitas' : 'jumlah'),
             condition: d.condition || 'baik',
           })
         } else { setError('Gagal memuat data') }
@@ -356,6 +370,7 @@ function EditModal({ facilityId, categories, onClose, onSaved }: {
           category: form.category,
           image: form.image || null,
           quantity: form.quantity,
+          quantityType: form.quantityType,
           condition: form.condition,
         }),
       })
@@ -477,7 +492,7 @@ function CategoryFormModal({
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Kategori *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Kategori <span className="text-red-500">*</span></label>
                   <input type="text" required value={form.name} placeholder="Contoh: Ruang Serbaguna"
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />

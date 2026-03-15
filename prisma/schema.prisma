@@ -364,11 +364,17 @@ model Facility {
   description   String?           @db.Text
   image         String?           @db.VarChar(255)
   quantity      Int               @default(1)
+  quantityType  FacilityQuantityType @default(jumlah) @map("quantity_type")
   condition     FacilityCondition @default(baik)
   orderPosition Int               @default(0) @map("order_position")
   createdAt     DateTime          @default(now()) @map("created_at")
 
   @@map("facilities")
+}
+
+enum FacilityQuantityType {
+  jumlah
+  kapasitas
 }
 
 model FacilityCategoryConfig {

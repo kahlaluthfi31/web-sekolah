@@ -35,6 +35,7 @@ export default function CreateFacilityPage() {
     description: '',
     image: '',
     quantity: 1,
+    quantityType: 'jumlah' as 'jumlah' | 'kapasitas',
     condition: 'baik',
   })
   const fileRef = useRef<HTMLInputElement>(null)
@@ -68,6 +69,7 @@ export default function CreateFacilityPage() {
         description: form.description.trim() || null,
         image: form.image || null,
         quantity: form.quantity,
+        quantityType: form.quantityType,
         condition: form.condition,
       }
       const res = await fetch('/api/facilities', {
@@ -104,7 +106,7 @@ export default function CreateFacilityPage() {
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
         {/* Nama */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Fasilitas *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Fasilitas <span className="text-red-500">*</span></label>
           <input type="text" required value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="Contoh: Lab Komputer 1"
@@ -114,7 +116,7 @@ export default function CreateFacilityPage() {
         {/* Kategori + Kondisi */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori <span className="text-red-500">*</span></label>
             <select value={form.category}
               onChange={e => setForm(f => ({ ...f, category: e.target.value, customCategory: '' }))}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -149,9 +151,20 @@ export default function CreateFacilityPage() {
         {/* Jumlah */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Jumlah / Kapasitas</label>
-          <input type="number" min={1} value={form.quantity}
-            onChange={e => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))}
-            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="inline-flex bg-gray-100 rounded-xl p-1 w-fit">
+              {(['jumlah', 'kapasitas'] as const).map(mode => (
+                <button key={mode} type="button" onClick={() => setForm(f => ({ ...f, quantityType: mode }))}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${form.quantityType === mode ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-white'}`}>
+                  {mode === 'jumlah' ? 'Kuantitas' : 'Kapasitas'}
+                </button>
+              ))}
+            </div>
+            <input type="number" min={1} value={form.quantity}
+              onChange={e => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))}
+              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Pilih jenis angka lalu isi nilai sesuai kebutuhan.</p>
         </div>
 
         {/* Upload Gambar */}

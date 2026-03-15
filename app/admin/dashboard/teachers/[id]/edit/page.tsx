@@ -82,7 +82,7 @@ export default function EditTeacherPage() {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap <span className="text-red-500">*</span></label>
           <input type="text" required value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />

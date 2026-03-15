@@ -27,6 +27,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         category: body.category,
         image: body.image || null,
         quantity: body.quantity,
+        quantityType: body.quantityType === 'kapasitas' ? 'kapasitas' : 'jumlah',
         condition: body.condition,
       },
     })
