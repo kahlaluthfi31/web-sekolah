@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { MessageSquare, Search, MoreVertical, Eye, Check, X, Loader2, RefreshCw, User, Clock, Newspaper } from 'lucide-react'
+import { MessageSquare, Search, MoreVertical, Eye, Check, X, Loader2, User, Clock, Newspaper } from 'lucide-react'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface Comment {
@@ -114,7 +114,9 @@ export default function CommentsPage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchComments() }, [fetchComments])
+  useEffect(() => {
+    fetchComments()
+  }, [fetchComments])
 
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     setUpdating(id)
@@ -165,7 +167,7 @@ export default function CommentsPage() {
 
       {/* Filters — same style as alumni */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -217,7 +219,7 @@ export default function CommentsPage() {
                       {formatDate(c.createdAt)}
                     </span>
                   </div>
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <ActionDropdown
                       status={c.status}
                       loading={updating === c.id}
@@ -230,7 +232,7 @@ export default function CommentsPage() {
 
                 {/* Commenter name */}
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                     <User className="w-3.5 h-3.5 text-blue-600" />
                   </div>
                   <div>
@@ -247,7 +249,7 @@ export default function CommentsPage() {
                 {/* Related article snippet */}
                 {c.contentTitle && (
                   <div className="flex items-start gap-2 border-t border-gray-100 pt-3">
-                    <Newspaper className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <Newspaper className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-xs text-gray-400 mb-0.5">
                         {c.contentType === 'news' ? 'Berita' : c.contentType === 'agenda' ? 'Agenda' : 'Fasilitas'}

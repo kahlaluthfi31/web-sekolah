@@ -6,8 +6,10 @@ import { z } from 'zod'
 const principalHistoryUpdateSchema = z.object({
   teacherId: z.number().optional(),
   role: z.enum(['KEPALA_SEKOLAH', 'WAKIL_KEPALA_SEKOLAH']).optional(),
+  bidang: z.string().optional().nullable(),
   startYear: z.number().min(1900).max(2100).optional(),
   endYear: z.number().min(1900).max(2100).optional().nullable(),
+  endReason: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
 })
 

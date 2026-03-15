@@ -1,118 +1,395 @@
+﻿'use client'
 
-import React, { useState } from 'react';
-import { Search, Linkedin, Mail, Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
+import { GraduationCap, UserCircle2, ChevronRight, ChevronLeft, ArrowRight } from 'lucide-react'
 
-const FacultyPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+//  Types 
+interface StructureGroup {
+  positionName: string
+  groupOrder: number
+  members: {
+    id: number
+    name: string
+    photo: string | null
+    education: string | null
+    nip: string | null
+    orderPosition: number
+  }[]
+}
 
-  const facultyMembers = [
-    { name: "Dr. Marcus Thompson", title: "Professor of Computer Science", school: "School of Technology", tags: ["Artificial Intelligence", "Data Science"], img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. Sophia Chang", title: "Associate Professor of Biology", school: "Department of Life Sciences", tags: ["Marine Biology", "Ecology"], img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. James Anderson", title: "Assistant Professor of Physics", school: "Department of Physical Sciences", tags: ["Quantum Computing", "Theoretical Physics"], img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. Rachel Kim", title: "Professor of Psychology", school: "College of Social Sciences", tags: ["Cognitive Psychology", "Behavioral Analysis"], img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. David Wilson", title: "Associate Professor of Economics", school: "Business School", tags: ["Financial Markets", "Economic Policy"], img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. Isabella Martinez", title: "Assistant Professor of Literature", school: "College of Humanities", tags: ["Contemporary Fiction", "Cultural Studies"], img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. Robert Taylor", title: "Professor of Mathematics", school: "Department of Math", tags: ["Pure Mathematics", "Topology"], img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=500" },
-    { name: "Dr. Emily Brown", title: "Associate Professor of Art", school: "School of Fine Arts", tags: ["Sculpture", "Modern Art"], img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=500" }
-  ];
+interface PrincipalHistory {
+  id: number
+  teacherId: number
+  role: 'KEPALA_SEKOLAH' | 'WAKIL_KEPALA_SEKOLAH'
+  bidang: string | null
+  startYear: number
+  endYear: number | null
+  note: string | null
+  endReason: string | null
+  teacher: { id: number; name: string; photo: string | null }
+}
 
-  const filteredFaculty = facultyMembers.filter(f => 
-    f.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    f.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+//  SectionHeader 
+function SectionHeader({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle?: string }) {
+  return (
+    <div className="text-center mb-14">
+      <span className="text-[#0092DD] text-[10px] font-bold uppercase tracking-[0.2em] mb-3 block">{eyebrow}</span>
+      <h2 className="text-3xl font-bold text-gray-900 mb-3">{title}</h2>
+      {subtitle && <p className="max-w-2xl mx-auto text-gray-500 leading-relaxed text-sm">{subtitle}</p>}
+    </div>
+  )
+}
+
+//  Skeleton 
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-gray-200 rounded-xl ${className ?? ''}`} />
+}
+
+//  OrgNode — foto portrait kotak, tanpa mahkota
+function OrgNode({ name, photo }: { name: string; photo: string | null }) {
+  const [broken, setBroken] = React.useState(false)
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {/* Foto portrait kotak rounded */}
+      <div className="w-20 h-24 rounded-xl overflow-hidden border border-gray-200 bg-[#0092DD]/10 shrink-0">
+        {photo && !broken ? (
+          <Image
+            src={photo}
+            alt={name}
+            width={80}
+            height={96}
+            className="w-full h-full object-cover object-top"
+            unoptimized
+            onError={() => setBroken(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-[#0092DD]">
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+      {/* Nama saja */}
+      <p className="text-xs font-semibold text-gray-900 leading-snug text-center max-w-28 line-clamp-2">{name}</p>
+    </div>
+  )
+}
+
+//  Section 1: Struktur Organisasi 
+function StrukturSection() {
+  const [groups, setGroups] = useState<StructureGroup[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/school-structure')
+      .then(r => r.json())
+      .then(j => { if (j.success) setGroups(j.data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
-    <div className="pt-20">
-      <section className="bg-[#0092DD] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">Struktur Sekolah</h1>
-          <p className="max-w-2xl mx-auto text-white/80 text-sm leading-relaxed">
-            Odio et unde deleniti. Deserunt numquam exercitationem. Officiis quo odio sint voluptas consequatur ut a odio voluptatem.
-          </p>
-        </div>
-      </section>
-
-      <div className="bg-gray-100 py-4 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> Struktur Sekolah
-        </div>
-      </div>
-
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-           {/* Search Bar */}
-           <div className="max-w-2xl mx-auto mb-20 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Find faculty by name or expertise..." 
-                className="w-full bg-white border border-gray-200 rounded-full py-4 pl-12 pr-6 shadow-md outline-none focus:ring-2 focus:ring-[#0092DD]/20"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-           </div>
-
-           {/* Featured Faculty */}
-           <div className="mb-24 bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 md:p-12 flex flex-col md:flex-row items-center gap-12">
-              <div className="w-full md:w-1/3">
-                 <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800" className="rounded-2xl shadow-xl w-full h-[350px] object-cover" alt="Featured Faculty" />
-              </div>
-              <div className="w-full md:w-2/3">
-                 <span className="bg-[#0092DD]/10 text-[#0092DD] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 inline-block">Featured Faculty</span>
-                 <h2 className="text-4xl font-bold text-gray-900 mb-2">Dr. Elena Rodriguez</h2>
-                 <p className="text-[#0092DD] text-sm font-bold mb-6">Dean of Engineering & Professor of Mechanical Engineering</p>
-                 <p className="text-gray-500 text-sm leading-relaxed mb-8">
-                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                 </p>
-                 <div className="flex flex-wrap gap-2 mb-8">
-                    {["Robotics", "Renewable Energy", "Sustainable Design"].map(tag => (
-                      <span key={tag} className="bg-gray-100 px-4 py-1 rounded-full text-[10px] text-gray-600 font-bold">{tag}</span>
-                    ))}
-                 </div>
-                 <div className="flex items-center space-x-6">
-                    <button className="bg-[#0092DD] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#77C5F0] hover:text-[#0092DD] transition-colors shadow-lg">Contact</button>
-                    <div className="flex space-x-4 text-gray-400">
-                       <Linkedin className="h-5 w-5 cursor-pointer hover:text-[#0092DD]" />
-                       <Mail className="h-5 w-5 cursor-pointer hover:text-[#0092DD]" />
-                       <Globe className="h-5 w-5 cursor-pointer hover:text-[#0092DD]" />
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          eyebrow="Organisasi Sekolah"
+          title="Struktur Organisasi"
+          subtitle="Susunan organisasi tenaga pendidik dan kependidikan SMK Negeri 1 Ciamis."
+        />
+        {loading ? (
+          <div className="flex flex-col items-center gap-6">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex flex-col items-center gap-3 w-full">
+                <Skeleton className="h-7 w-36 rounded-full" />
+                <div className="flex gap-6 justify-center">
+                  {Array.from({ length: i }).map((_, j) => (
+                    <div key={j} className="flex flex-col items-center gap-2">
+                      <Skeleton className="w-20 h-24 rounded-xl" />
+                      <Skeleton className="h-3 w-20" />
                     </div>
-                 </div>
-              </div>
-           </div>
-
-           {/* Grid 4 columns requested */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {filteredFaculty.map((member, i) => (
-                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-xl transition-all duration-300">
-                   <div className="h-48 overflow-hidden">
-                      <img src={member.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={member.name} />
-                   </div>
-                   <div className="p-6">
-                      <h4 className="font-bold text-gray-900 mb-1">{member.name}</h4>
-                      <p className="text-[#0092DD] text-[10px] font-bold mb-1">{member.title}</p>
-                      <p className="text-gray-400 text-[10px] mb-4">{member.school}</p>
-                      <div className="flex flex-wrap gap-1 mb-6">
-                         {member.tags.map(tag => (
-                           <span key={tag} className="bg-gray-50 px-2 py-0.5 rounded text-[8px] text-gray-500 border border-gray-100">{tag}</span>
-                         ))}
-                      </div>
-                      <button className="text-xs font-bold text-[#0092DD] hover:underline flex items-center">
-                        View Profile <span className="ml-1 text-[10px]">&rarr;</span>
-                      </button>
-                   </div>
+                  ))}
                 </div>
-              ))}
-           </div>
+              </div>
+            ))}
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="text-center py-16">
+            <UserCircle2 className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-400">Belum ada data struktur sekolah.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center">
+            {groups.map((group, gIdx) => {
+              const isLast = gIdx === groups.length - 1
+              const memberCount = group.members.length
 
-           <div className="mt-20 text-center">
-              <button className="border-2 border-gray-200 text-gray-900 px-10 py-3 rounded-full font-bold hover:border-[#0092DD] hover:text-[#0092DD] transition-all">Show More Faculty</button>
-           </div>
+              return (
+                <div key={group.positionName} className="flex flex-col items-center w-full">
+
+                  {/* Garis dari member level atas ke badge — hanya jika bukan level pertama */}
+                  {gIdx > 0 && <div className="w-px h-8 bg-[#0092DD]/30" />}
+
+                  {/* Badge label posisi */}
+                  <div className="px-5 py-1.5 bg-blue-50 border border-[#0092DD]/25 rounded-full text-[11px] font-bold text-[#0092DD] uppercase tracking-wider">
+                    {group.positionName}
+                  </div>
+
+                  {/* Garis dari badge ke member — selalu ada */}
+                  <div className="w-px h-6 bg-[#0092DD]/30" />
+
+                  {/* Row anggota */}
+                  {memberCount === 1 ? (
+                    /* Single member — langsung tanpa garis horizontal */
+                    <OrgNode
+                      name={group.members[0].name}
+                      photo={group.members[0].photo}
+                    />
+                  ) : (
+                    /* Multiple members — T-junction connector yang benar */
+                    <div className="flex flex-col items-center w-full">
+                      {/* Baris garis horizontal — satu baris penuh lebar anggota */}
+                      <div className="flex items-center w-full justify-center">
+                        {group.members.map((m, mIdx) => {
+                          const isFirstMember = mIdx === 0
+                          const isLastMember = mIdx === memberCount - 1
+                          return (
+                            <div key={m.id} className="flex items-center flex-1 justify-center min-w-0">
+                              {/* Garis kiri — invisible di member pertama */}
+                              <div className={`flex-1 h-px ${isFirstMember ? 'invisible' : 'bg-[#0092DD]/30'}`} />
+                              {/* Titik tengah — garis vertikal pendek ke bawah saja */}
+                              <div className="w-px h-4 bg-[#0092DD]/30" />
+                              {/* Garis kanan — invisible di member terakhir */}
+                              <div className={`flex-1 h-px ${isLastMember ? 'invisible' : 'bg-[#0092DD]/30'}`} />
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {/* Row foto & nama */}
+                      <div className="flex justify-center gap-0 w-full">
+                        {group.members.map((m) => (
+                          <div key={m.id} className="flex flex-col items-center px-3 flex-1">
+                            <OrgNode name={m.name} photo={m.photo} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Garis ke level berikutnya — hanya jika bukan level terakhir */}
+                  {!isLast && <div className="w-px h-8 bg-[#0092DD]/30 mt-2" />}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+//  Section 2: Riwayat Kepala Sekolah 
+function RiwayatKepsekSection() {
+  const [histories, setHistories] = useState<PrincipalHistory[]>([])
+  const [loading, setLoading] = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/teachers/principal-history?role=KEPALA_SEKOLAH&limit=100')
+      .then(r => r.json())
+      .then(j => { if (j.success) setHistories(j.data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const checkScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 8)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
+  }
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    checkScroll()
+    el.addEventListener('scroll', checkScroll)
+    window.addEventListener('resize', checkScroll)
+    return () => {
+      el.removeEventListener('scroll', checkScroll)
+      window.removeEventListener('resize', checkScroll)
+    }
+  }, [histories])
+
+  const scroll = (dir: 'left' | 'right') => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: dir === 'left' ? -320 : 320, behavior: 'smooth' })
+  }
+
+  return (
+    <section className="py-16 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header: judul kiri, nav kanan */}
+        <div className="flex items-end justify-between mb-2">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 uppercase tracking-wide">Daftar Kepala Sekolah</h2>
+            <div className="mt-1.5 w-12 h-1 bg-[#0092DD] rounded-full" />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-[#0092DD] hover:text-[#0092DD] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-[#0092DD] hover:text-[#0092DD] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </section>
+
+        {/* Divider */}
+        <div className="w-full h-px bg-gray-200 mb-8" />
+
+        {loading ? (
+          <div className="flex gap-5 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="shrink-0 w-48 rounded-2xl border border-gray-100 overflow-hidden">
+                <Skeleton className="w-full h-56 rounded-none rounded-t-2xl" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-3 w-3/5" />
+                  <Skeleton className="h-3 w-2/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : histories.length === 0 ? (
+          <div className="text-center py-20">
+            <GraduationCap className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-400">Belum ada data riwayat kepala sekolah.</p>
+          </div>
+        ) : (
+          <div className="relative">
+            {/* Scroll container */}
+            <div
+              ref={scrollRef}
+              className="flex gap-5 overflow-x-auto pb-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {histories.map((h) => {
+                const isActive = h.endYear === null
+
+                return (
+                  <div
+                    key={h.id}
+                    className={`shrink-0 w-52 rounded-2xl border overflow-hidden flex flex-col ${
+                      isActive ? 'border-[#0092DD]/30' : 'border-gray-200'
+                    }`}
+                  >
+                    {/* Foto portrait */}
+                    <div className="relative w-full" style={{ aspectRatio: '3/4' }}>
+                      {h.teacher?.photo ? (
+                        <Image
+                          src={h.teacher.photo}
+                          alt={h.teacher.name}
+                          fill
+                          className="object-cover object-top"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className={`w-full h-full flex items-center justify-center text-4xl font-bold ${isActive ? 'bg-[#0092DD]/10 text-[#0092DD]' : 'bg-gray-100 text-gray-300'}`}>
+                          {h.teacher?.name?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info bawah foto */}
+                    <div className="flex flex-col items-center gap-2 p-3.5 flex-1 bg-white text-center">
+                      {/* Nama */}
+                      <p className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 w-full">
+                        {h.teacher?.name}
+                      </p>
+
+                      {/* Periode — soft bg + border + rounded-full */}
+                      <div className="flex items-center justify-center gap-2">
+                        {/* Tahun mulai — biru */}
+                        <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-blue-50 text-blue-500 border border-blue-300">
+                          {h.startYear}
+                        </span>
+                        {/* Tanda pemisah */}
+                        <span className="text-gray-400 text-xs font-bold">-</span>
+                        {/* Tahun selesai */}
+                        {isActive ? (
+                          <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-300">
+                            Sekarang
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-red-50 text-red-400 border border-red-300">
+                            {h.endYear}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Tipe keluar / status */}
+                      <p className="text-[11px] text-gray-500">
+                        {isActive ? 'Aktif Menjabat' : (h.endReason ? h.endReason : 'Pindah Tugas')}
+                      </p>
+
+                      {/* Note / catatan */}
+                      <p className="text-[10px] text-gray-400 leading-snug line-clamp-2 italic">
+                        {h.note ?? 'Keterangan atau catatan'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Fade edge kiri */}
+            {canScrollLeft && (
+              <div className="absolute left-0 top-0 bottom-2 w-16 bg-linear-to-r from-white to-transparent pointer-events-none" />
+            )}
+            {/* Fade edge kanan */}
+            {canScrollRight && (
+              <div className="absolute right-0 top-0 bottom-2 w-16 bg-linear-to-l from-white to-transparent pointer-events-none" />
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+//  Page Root 
+const FacultyPage: React.FC = () => (
+  <div className="pt-20">
+    <section className="bg-[#0092DD] text-white py-14">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 className="text-4xl font-bold mb-3">Struktur Sekolah</h1>
+        <p className="max-w-xl mx-auto text-white/80 text-sm leading-relaxed">
+          Mengenal lebih dekat tenaga pendidik dan pimpinan yang mendedikasikan diri untuk kemajuan sekolah.
+        </p>
+      </div>
+    </section>
+    <div className="bg-gray-100 py-3 border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1.5 text-xs font-medium text-gray-500">
+        <span className="text-[#0092DD] hover:underline cursor-pointer">Home</span>
+        <ChevronRight className="w-3 h-3" />
+        <span>Struktur Sekolah</span>
+      </div>
     </div>
-  );
-};
+    <StrukturSection />
+    <RiwayatKepsekSection />
+  </div>
+)
 
-export default FacultyPage;
-
-
+export default FacultyPage

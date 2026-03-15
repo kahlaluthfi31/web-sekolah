@@ -5,7 +5,8 @@ import Image from 'next/image'
 import {
   Plus, Search, MoreVertical, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X, Save,
-  ArrowLeft, AlertTriangle, Users, BookOpen, Award, Camera,
+  ArrowLeft, AlertTriangle, Users, Award, Camera,
+  GraduationCap, Layers,
 } from 'lucide-react'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
@@ -18,8 +19,12 @@ interface Teacher {
 }
 interface PrincipalHistory {
   id: number; teacherId: number; role: 'KEPALA_SEKOLAH' | 'WAKIL_KEPALA_SEKOLAH'
-  startYear: number; endYear: number | null; note: string | null; createdAt: string
+  bidang: string | null; startYear: number; endYear: number | null
+  endReason: string | null; note: string | null; createdAt: string
   teacher: { id: number; name: string; photo: string | null }
+}
+interface WakilBidang {
+  id: number; name: string; orderPosition: number; isActive: boolean; createdAt: string; updatedAt: string
 }
 interface Position {
   id: number; name: string; description: string | null
@@ -36,6 +41,25 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 const ROLE_MAP: Record<string, { label: string; color: string }> = {
   KEPALA_SEKOLAH:       { label: 'Kepala Sekolah',       color: 'bg-blue-100 text-blue-700' },
   WAKIL_KEPALA_SEKOLAH: { label: 'Wakil Kepala Sekolah', color: 'bg-purple-100 text-purple-700' },
+}
+// Reasons why a term ended — shown only when endYear is filled
+const END_REASON_OPTIONS: Record<'KEPALA_SEKOLAH' | 'WAKIL_KEPALA_SEKOLAH', { value: string; label: string }[]> = {
+  KEPALA_SEKOLAH: [
+    { value: 'PERIODE_HABIS',  label: 'Periode jabatan habis' },
+    { value: 'PENSIUN',        label: 'Pensiun' },
+    { value: 'PINDAH_TUGAS',   label: 'Pindah tugas' },
+  ],
+  WAKIL_KEPALA_SEKOLAH: [
+    { value: 'PERIODE_HABIS',  label: 'Periode jabatan habis' },
+    { value: 'PENSIUN',        label: 'Pensiun' },
+    { value: 'NAIK_JABATAN',   label: 'Pindah tugas' },
+  ],
+}
+const END_REASON_LABEL: Record<string, string> = {
+  PERIODE_HABIS: 'Periode Habis',
+  PENSIUN:       'Pensiun',
+  PINDAH_TUGAS:  'Pindah Tugas',
+  NAIK_JABATAN:  'Naik Jabatan (Kepsek lain)',
 }
 const EDUCATION_OPTIONS = [
   'SMA / SMK / MA', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3', 'Profesi', 'Spesialis',
@@ -360,7 +384,7 @@ function SearchableSelect({
 // =============================================================================
 // TAB 1 – GURU & STAFF
 // =============================================================================
-function TeachersTab() {
+export function TeachersTab() {
   const [data, setData] = useState<Teacher[]>([])
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
@@ -796,53 +820,38 @@ function TeacherFormModal({
 }
 
 // =============================================================================
-// TAB 2 – RIWAYAT JABATAN
+// TAB 2 – RIWAYAT JABATAN  (sub-tabs: Kepsek | Wakepsek | Bidang)
 // =============================================================================
-function HistoryTab() {
+
+// ─── Kepsek History Sub-Tab ──────────────────────────────────────────────────
+function KepsekHistoryTab({
+  teacherList, allData, onDataChange,
+}: {
+  teacherList: { id: number; name: string; photo: string | null }[]
+  allData: PrincipalHistory[]
+  onDataChange: () => void
+}) {
   const [data, setData] = useState<PrincipalHistory[]>([])
-  const [allData, setAllData] = useState<PrincipalHistory[]>([])
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
-  const [teacherList, setTeacherList] = useState<{ id: number; name: string; photo: string | null }[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editItem, setEditItem] = useState<PrincipalHistory | null>(null)
   const [deleteItem, setDeleteItem] = useState<PrincipalHistory | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/teachers?all=true')
-      .then(r => r.json())
-      .then(j => { if (j.success) setTeacherList((j.data as Teacher[]).map(t => ({ id: t.id, name: t.name, photo: t.photo }))) })
-      .catch(() => {})
-  }, [])
-
-  const refreshAllData = async () => {
-    try {
-      const res = await fetch('/api/teachers/principal-history?limit=1000')
-      const json = await res.json()
-      if (json.success) { setAllData(json.data) }
-    } catch { /* ignore */ }
-  }
-
-  useEffect(() => { refreshAllData() }, [])
-
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const p = new URLSearchParams()
+      p.set('role', 'KEPALA_SEKOLAH')
       p.set('page', String(pagination.page))
       if (search) p.set('search', search)
-      if (roleFilter) p.set('role', roleFilter)
       const res = await fetch('/api/teachers/principal-history?' + p)
       const json = await res.json()
-      if (json.success) {
-        setData(json.data as PrincipalHistory[])
-        setPagination(json.pagination)
-      }
+      if (json.success) { setData(json.data); setPagination(json.pagination) }
     } catch (err) { console.error(err) } finally { setLoading(false) }
-  }, [pagination.page, search, roleFilter])
+  }, [pagination.page, search])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -851,7 +860,7 @@ function HistoryTab() {
     try {
       const res = await fetch(`/api/teachers/principal-history/${deleteItem.id}`, { method: 'DELETE' })
       const json = await res.json()
-      if (json.success) { setDeleteItem(null); fetchData(); refreshAllData() }
+      if (json.success) { setDeleteItem(null); fetchData(); onDataChange() }
       else alert(json.message || 'Gagal menghapus')
     } catch { alert('Terjadi kesalahan') } finally { setDeleting(false) }
   }
@@ -865,11 +874,6 @@ function HistoryTab() {
             onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
-        <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
-          className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Semua Jabatan</option>
-          {Object.entries(ROLE_MAP).map(([v, r]) => <option key={v} value={v}>{r.label}</option>)}
-        </select>
         <button onClick={() => { setEditItem(null); setShowForm(true) }}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm shrink-0">
           <Plus className="w-4 h-4" /> Tambah Riwayat
@@ -880,15 +884,15 @@ function HistoryTab() {
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
         ) : data.length === 0 ? (
-          <div className="text-center py-20"><BookOpen className="w-10 h-10 mx-auto text-gray-300 mb-2" /><p className="text-gray-400">Belum ada riwayat jabatan.</p></div>
+          <div className="text-center py-20"><GraduationCap className="w-10 h-10 mx-auto text-gray-300 mb-2" /><p className="text-gray-400">Belum ada riwayat Kepala Sekolah.</p></div>
         ) : (
           <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Guru</th>
-                  <th className="px-6 py-4">Jabatan</th>
+                  <th className="px-6 py-4">Nama Guru</th>
                   <th className="px-6 py-4">Periode</th>
+                  <th className="px-6 py-4">Alasan Berakhir</th>
                   <th className="px-6 py-4">Catatan</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
@@ -908,13 +912,20 @@ function HistoryTab() {
                         <span className="text-sm font-medium text-gray-900">{item.teacher?.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-xs px-2.5 py-1 rounded-full ${ROLE_MAP[item.role]?.color || 'bg-gray-100 text-gray-600'}`}>
-                        {ROLE_MAP[item.role]?.label || item.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                    <td className="px-6 py-4 text-sm text-gray-600 font-medium whitespace-nowrap">
                       {item.startYear} &ndash; {item.endYear ?? 'Sekarang'}
+                      {!item.endYear && (
+                        <span className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Aktif</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {item.endReason ? (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
+                          {END_REASON_LABEL[item.endReason] ?? item.endReason}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{item.note || '-'}</td>
                     <td className="px-6 py-4">
@@ -945,16 +956,18 @@ function HistoryTab() {
       {showForm && (
         <HistoryFormModal
           history={editItem}
+          roleFixed="KEPALA_SEKOLAH"
           teacherList={teacherList}
           allData={allData}
+          bidangList={[]}
           onClose={() => { setShowForm(false); setEditItem(null) }}
-          onSaved={() => { setShowForm(false); setEditItem(null); fetchData(); refreshAllData() }}
+          onSaved={() => { setShowForm(false); setEditItem(null); fetchData(); onDataChange() }}
         />
       )}
       {deleteItem && (
         <DeleteModal
-          title="Hapus Riwayat Jabatan"
-          name={`${ROLE_MAP[deleteItem.role]?.label} \u2013 ${deleteItem.teacher?.name}`}
+          title="Hapus Riwayat Kepala Sekolah"
+          name={`${deleteItem.teacher?.name} (${deleteItem.startYear} – ${deleteItem.endYear ?? 'Sekarang'})`}
           onConfirm={handleDelete}
           onCancel={() => setDeleteItem(null)}
           deleting={deleting}
@@ -964,13 +977,457 @@ function HistoryTab() {
   )
 }
 
-// ─── History Form Modal ────────────────────────────────────────────────────────
-function HistoryFormModal({
-  history, teacherList, allData, onClose, onSaved,
+// ─── Wakepsek History Sub-Tab ─────────────────────────────────────────────────
+function WakepsekHistoryTab({
+  teacherList, allData, bidangList, onDataChange,
 }: {
-  history: PrincipalHistory | null
   teacherList: { id: number; name: string; photo: string | null }[]
   allData: PrincipalHistory[]
+  bidangList: WakilBidang[]
+  onDataChange: () => void
+}) {
+  const [data, setData] = useState<PrincipalHistory[]>([])
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 })
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editItem, setEditItem] = useState<PrincipalHistory | null>(null)
+  const [deleteItem, setDeleteItem] = useState<PrincipalHistory | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const p = new URLSearchParams()
+      p.set('role', 'WAKIL_KEPALA_SEKOLAH')
+      p.set('page', String(pagination.page))
+      if (search) p.set('search', search)
+      const res = await fetch('/api/teachers/principal-history?' + p)
+      const json = await res.json()
+      if (json.success) { setData(json.data); setPagination(json.pagination) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
+  }, [pagination.page, search])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  const handleDelete = async () => {
+    if (!deleteItem) return; setDeleting(true)
+    try {
+      const res = await fetch(`/api/teachers/principal-history/${deleteItem.id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (json.success) { setDeleteItem(null); fetchData(); onDataChange() }
+      else alert(json.message || 'Gagal menghapus')
+    } catch { alert('Terjadi kesalahan') } finally { setDeleting(false) }
+  }
+
+  const BIDANG_COLORS: Record<string, string> = {
+    'Kurikulum': 'bg-blue-100 text-blue-700',
+    'Kesiswaan': 'bg-green-100 text-green-700',
+    'Humas dan Industri (Hubin)': 'bg-purple-100 text-purple-700',
+    'Sarana dan Prasarana': 'bg-orange-100 text-orange-700',
+  }
+  const getBidangColor = (name: string | null) => {
+    if (!name) return 'bg-gray-100 text-gray-600'
+    return BIDANG_COLORS[name] ?? 'bg-indigo-100 text-indigo-700'
+  }
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input type="text" placeholder="Cari nama guru..." value={search}
+            onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <button onClick={() => { setEditItem(null); setShowForm(true) }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm shrink-0">
+          <Plus className="w-4 h-4" /> Tambah Riwayat
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
+        {loading ? (
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
+        ) : data.length === 0 ? (
+          <div className="text-center py-20"><Users className="w-10 h-10 mx-auto text-gray-300 mb-2" /><p className="text-gray-400">Belum ada riwayat Wakil Kepala Sekolah.</p></div>
+        ) : (
+          <div className="overflow-x-auto overflow-y-visible">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Nama Guru</th>
+                  <th className="px-6 py-4">Bidang</th>
+                  <th className="px-6 py-4">Periode</th>
+                  <th className="px-6 py-4">Alasan Berakhir</th>
+                  <th className="px-6 py-4">Catatan</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {data.map(item => (
+                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        {item.teacher?.photo ? (
+                          <Image src={item.teacher.photo} alt={item.teacher.name} width={32} height={32} className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" unoptimized />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-purple-600">{item.teacher?.name?.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
+                        <span className="text-sm font-medium text-gray-900">{item.teacher?.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${getBidangColor(item.bidang)}`}>
+                        {item.bidang || 'Tidak ada bidang'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 font-medium whitespace-nowrap">
+                      {item.startYear} &ndash; {item.endYear ?? 'Sekarang'}
+                      {!item.endYear && (
+                        <span className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Aktif</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {item.endReason ? (
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
+                          {END_REASON_LABEL[item.endReason] ?? item.endReason}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{item.note || '-'}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          onEdit={() => { setEditItem(item); setShowForm(true) }}
+                          onDelete={() => setDeleteItem(item)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+            <p className="text-sm text-gray-500">Halaman {pagination.page} dari {pagination.totalPages}</p>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))} disabled={pagination.page <= 1} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"><ChevronLeft className="w-4 h-4" /></button>
+              <button onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))} disabled={pagination.page >= pagination.totalPages} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showForm && (
+        <HistoryFormModal
+          history={editItem}
+          roleFixed="WAKIL_KEPALA_SEKOLAH"
+          teacherList={teacherList}
+          allData={allData}
+          bidangList={bidangList}
+          onClose={() => { setShowForm(false); setEditItem(null) }}
+          onSaved={() => { setShowForm(false); setEditItem(null); fetchData(); onDataChange() }}
+        />
+      )}
+      {deleteItem && (
+        <DeleteModal
+          title="Hapus Riwayat Wakil Kepala Sekolah"
+          name={`${deleteItem.teacher?.name}${deleteItem.bidang ? ` – ${deleteItem.bidang}` : ''} (${deleteItem.startYear} – ${deleteItem.endYear ?? 'Sekarang'})`}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteItem(null)}
+          deleting={deleting}
+        />
+      )}
+    </>
+  )
+}
+
+// ─── Bidang Sub-Tab (Kelola Bidang Wakepsek) ──────────────────────────────────
+function BidangTab({
+  bidangList, onBidangChange,
+}: {
+  bidangList: WakilBidang[]
+  onBidangChange: () => void
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [editItem, setEditItem] = useState<WakilBidang | null>(null)
+  const [deleteItem, setDeleteItem] = useState<WakilBidang | null>(null)
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!deleteItem) return; setDeleting(true); setDeleteError('')
+    try {
+      const res = await fetch(`/api/wakil-bidang/${deleteItem.id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (json.success) { setDeleteItem(null); setDeleteError(''); onBidangChange() }
+      else setDeleteError(json.message || 'Gagal menghapus bidang')
+    } catch { setDeleteError('Terjadi kesalahan saat menghapus') } finally { setDeleting(false) }
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500">Kelola bidang yang tersedia untuk Wakil Kepala Sekolah.</p>
+        </div>
+        <button onClick={() => { setEditItem(null); setShowForm(true) }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm shrink-0">
+          <Plus className="w-4 h-4" /> Tambah Bidang
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
+        {bidangList.length === 0 ? (
+          <div className="text-center py-20">
+            <Layers className="w-10 h-10 mx-auto text-gray-300 mb-2" />
+            <p className="text-gray-400">Belum ada data bidang.</p>
+            <p className="text-xs text-gray-400 mt-1">Klik &ldquo;Tambah Bidang&rdquo; untuk menambahkan bidang baru.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto overflow-y-visible">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 w-20 text-center">Urutan</th>
+                  <th className="px-6 py-4">Nama Bidang</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {bidangList.map(item => (
+                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-gray-500 text-center">{item.orderPosition}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {item.isActive ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          onEdit={() => { setEditItem(item); setShowForm(true) }}
+                          onDelete={() => { setDeleteItem(item); setDeleteError('') }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {showForm && (
+        <BidangFormModal
+          bidang={editItem}
+          nextOrder={(bidangList.length > 0 ? Math.max(...bidangList.map(b => b.orderPosition)) : 0) + 1}
+          onClose={() => { setShowForm(false); setEditItem(null) }}
+          onSaved={() => { setShowForm(false); setEditItem(null); onBidangChange() }}
+        />
+      )}
+      {deleteItem && (
+        <DeleteModal
+          title="Hapus Bidang"
+          name={deleteItem.name}
+          errorMsg={deleteError}
+          onConfirm={handleDelete}
+          onCancel={() => { setDeleteItem(null); setDeleteError('') }}
+          deleting={deleting}
+        />
+      )}
+    </>
+  )
+}
+
+// ─── Bidang Form Modal ─────────────────────────────────────────────────────────
+function BidangFormModal({
+  bidang, nextOrder, onClose, onSaved,
+}: {
+  bidang: WakilBidang | null
+  nextOrder: number
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const isEdit = !!bidang
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({ name: '', orderPosition: nextOrder, isActive: true })
+
+  useEffect(() => {
+    if (bidang) setForm({ name: bidang.name, orderPosition: bidang.orderPosition, isActive: bidang.isActive })
+    else setForm(f => ({ ...f, orderPosition: nextOrder }))
+  }, [bidang, nextOrder])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim()) { setError('Nama bidang wajib diisi'); return }
+    setSaving(true); setError('')
+    try {
+      const res = await fetch(isEdit ? `/api/wakil-bidang/${bidang!.id}` : '/api/wakil-bidang', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: form.name.trim(), orderPosition: Number(form.orderPosition), isActive: form.isActive }),
+      })
+      const json = await res.json()
+      if (json.success) onSaved(); else setError(json.message || 'Gagal menyimpan')
+    } catch { setError('Terjadi kesalahan') } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 overflow-y-auto">
+        <div className="flex min-h-full items-start justify-center p-4 py-10">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><ArrowLeft className="w-4 h-4" /></button>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Bidang' : 'Tambah Bidang'}</h2>
+                  <p className="text-xs text-gray-500">Bidang Wakil Kepala Sekolah</p>
+                </div>
+              </div>
+              <button type="button" onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
+            </div>
+            {error && <div className="mx-6 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>}
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Bidang <span className="text-red-500">*</span></label>
+                <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Contoh: Kurikulum" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Urutan Tampil</label>
+                <input type="number" min={1} value={form.orderPosition} onChange={e => setForm(f => ({ ...f, orderPosition: Number(e.target.value) }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status Bidang</label>
+                  <p className="text-xs text-gray-400 mt-0.5">Bidang aktif dapat dipilih saat tambah riwayat</p>
+                </div>
+                <button type="button" onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200">Batal</button>
+                <button type="submit" disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? 'Menyimpan...' : isEdit ? 'Perbarui' : 'Simpan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main HistoryTab ───────────────────────────────────────────────────────────
+export function HistoryTab({
+  defaultSubTab = 'kepsek',
+  onSubTabChange,
+}: {
+  defaultSubTab?: 'kepsek' | 'wakepsek' | 'bidang'
+  onSubTabChange?: (tab: 'kepsek' | 'wakepsek' | 'bidang') => void
+}) {
+  const [subTab, setSubTab] = useState<'kepsek' | 'wakepsek' | 'bidang'>(defaultSubTab)
+
+  const handleSubTabChange = useCallback((tab: 'kepsek' | 'wakepsek' | 'bidang') => {
+    setSubTab(tab)
+    onSubTabChange?.(tab)
+  }, [onSubTabChange])
+  const [allData, setAllData] = useState<PrincipalHistory[]>([])
+  const [teacherList, setTeacherList] = useState<{ id: number; name: string; photo: string | null }[]>([])
+  const [bidangList, setBidangList] = useState<WakilBidang[]>([])
+
+  useEffect(() => {
+    fetch('/api/teachers?all=true')
+      .then(r => r.json())
+      .then(j => { if (j.success) setTeacherList((j.data as Teacher[]).map(t => ({ id: t.id, name: t.name, photo: t.photo }))) })
+      .catch(() => {})
+  }, [])
+
+  const refreshAllData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/teachers/principal-history?limit=1000')
+      const json = await res.json()
+      if (json.success) setAllData(json.data)
+    } catch { /* ignore */ }
+  }, [])
+
+  const refreshBidang = useCallback(async () => {
+    try {
+      const res = await fetch('/api/wakil-bidang')
+      const json = await res.json()
+      if (json.success) setBidangList(json.data)
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => {
+    refreshAllData()
+    refreshBidang()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const SUB_TABS = [
+    { key: 'kepsek', label: 'Kepala Sekolah', icon: GraduationCap },
+    { key: 'wakepsek', label: 'Wakil Kepala Sekolah', icon: Users },
+    { key: 'bidang', label: 'Kelola Bidang', icon: Layers },
+  ] as const
+
+  return (
+    <div className="space-y-5">
+      {/* Sub-tab pills */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+        {SUB_TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => handleSubTabChange(key)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+          >
+            <Icon className="w-4 h-4" /> {label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === 'kepsek' && (
+        <KepsekHistoryTab teacherList={teacherList} allData={allData} onDataChange={refreshAllData} />
+      )}
+      {subTab === 'wakepsek' && (
+        <WakepsekHistoryTab teacherList={teacherList} allData={allData} bidangList={bidangList} onDataChange={refreshAllData} />
+      )}
+      {subTab === 'bidang' && (
+        <BidangTab bidangList={bidangList} onBidangChange={refreshBidang} />
+      )}
+    </div>
+  )
+}
+
+// ─── History Form Modal ────────────────────────────────────────────────────────
+function HistoryFormModal({
+  history, roleFixed, teacherList, allData, bidangList, onClose, onSaved,
+}: {
+  history: PrincipalHistory | null
+  roleFixed: 'KEPALA_SEKOLAH' | 'WAKIL_KEPALA_SEKOLAH'
+  teacherList: { id: number; name: string; photo: string | null }[]
+  allData: PrincipalHistory[]
+  bidangList: WakilBidang[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -978,12 +1435,22 @@ function HistoryFormModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const currentYear = new Date().getFullYear()
-  const [form, setForm] = useState({ teacherId: '', role: 'KEPALA_SEKOLAH', startYear: String(currentYear), endYear: '', note: '' })
+  const [form, setForm] = useState({
+    teacherId: '',
+    bidang: '',
+    startYear: String(currentYear),
+    endYear: '',
+    endReason: '',
+    note: '',
+  })
 
   useEffect(() => {
     if (history) setForm({
-      teacherId: String(history.teacherId), role: history.role,
-      startYear: String(history.startYear), endYear: history.endYear ? String(history.endYear) : '',
+      teacherId: String(history.teacherId),
+      bidang: history.bidang || '',
+      startYear: String(history.startYear),
+      endYear: history.endYear ? String(history.endYear) : '',
+      endReason: history.endReason || '',
       note: history.note || '',
     })
   }, [history])
@@ -994,16 +1461,56 @@ function HistoryFormModal({
     if (isNaN(start)) return 'Tahun mulai tidak valid'
     if (end !== null && end < start) return 'Tahun selesai tidak boleh lebih kecil dari tahun mulai'
     if (end !== null && end > currentYear) return `Tahun selesai tidak boleh melebihi tahun ini (${currentYear})`
+
+    const teacherId = parseInt(form.teacherId)
+
+    // Permanent cross-role block: a teacher who has ANY record in the opposite role
+    // (past OR active) cannot switch roles at this school.
+    // • Wakepsek → cannot become Kepsek at the same school
+    // • Kepsek   → cannot become Wakepsek at the same school
+    const oppositeRole = roleFixed === 'KEPALA_SEKOLAH' ? 'WAKIL_KEPALA_SEKOLAH' : 'KEPALA_SEKOLAH'
+    const oppositeHistory = allData.find(
+      h => h.teacherId === teacherId && h.role === oppositeRole && !(isEdit && h.id === history!.id)
+    )
+    if (oppositeHistory) {
+      const oppositeLabel = ROLE_MAP[oppositeRole]?.label ?? oppositeRole
+      const oppositeBidang = oppositeHistory.bidang ? ` Bidang ${oppositeHistory.bidang}` : ''
+      const oppositePeriod = oppositeHistory.endYear === null
+        ? `${oppositeHistory.startYear} – Sekarang`
+        : `${oppositeHistory.startYear} – ${oppositeHistory.endYear}`
+      if (roleFixed === 'KEPALA_SEKOLAH') {
+        return `Guru ini pernah menjabat sebagai ${oppositeLabel}${oppositeBidang} (${oppositePeriod}) di sekolah ini. Wakil Kepala Sekolah tidak dapat diangkat menjadi Kepala Sekolah di sekolah yang sama.`
+      } else {
+        return `Guru ini pernah menjabat sebagai ${oppositeLabel} (${oppositePeriod}) di sekolah ini. Kepala Sekolah tidak dapat menjabat sebagai Wakil Kepala Sekolah di sekolah yang sama.`
+      }
+    }
+
     for (const h of allData) {
       if (isEdit && h.id === history!.id) continue
-      if (h.role !== form.role) continue
+
       const hEnd = h.endYear ?? 9999
       const newEnd = end ?? 9999
-      if (start <= hEnd && newEnd >= h.startYear) {
+      const overlaps = start <= hEnd && newEnd >= h.startYear
+
+      if (!overlaps) continue
+
+      // Simultaneous cross-role overlap (redundant after above check, kept as safety net)
+      if (h.teacherId === teacherId && h.role !== roleFixed) {
+        const otherRole = ROLE_MAP[h.role]?.label ?? h.role
+        const otherBidang = h.bidang ? ` Bidang ${h.bidang}` : ''
+        const otherPeriod = h.endYear === null ? `${h.startYear} – Sekarang` : `${h.startYear} – ${h.endYear}`
+        return `Guru ini aktif sebagai ${otherRole}${otherBidang} (${otherPeriod}) pada periode yang sama.`
+      }
+
+      // Same-role conflict check
+      if (h.role !== roleFixed) continue
+      // For wakepsek, only conflict within same bidang
+      if (roleFixed === 'WAKIL_KEPALA_SEKOLAH' && h.bidang !== (form.bidang || null)) continue
+      if (h.teacherId !== teacherId) {
         if (h.endYear === null) {
-          return `${ROLE_MAP[form.role]?.label} "${h.teacher?.name}" masih aktif menjabat (${h.startYear} \u2013 Sekarang). Edit data tersebut terlebih dahulu untuk mengisi tahun selesai sebelum menambah penerus baru.`
+          return `${ROLE_MAP[roleFixed]?.label}${form.bidang ? ` Bidang ${form.bidang}` : ''} "${h.teacher?.name}" masih aktif menjabat (${h.startYear} \u2013 Sekarang). Edit data tersebut terlebih dahulu.`
         }
-        return `Periode bertabrakan dengan ${ROLE_MAP[form.role]?.label} "${h.teacher?.name}" (${h.startYear} \u2013 ${h.endYear}). Edit masa akhir periode jabatan sebelumnya untuk menghindari duplika data.`
+        return `Periode bertabrakan dengan "${h.teacher?.name}" (${h.startYear} \u2013 ${h.endYear}). Edit masa akhir periode sebelumnya.`
       }
     }
     return ''
@@ -1012,21 +1519,24 @@ function HistoryFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.teacherId) { setError('Pilih guru terlebih dahulu'); return }
+    if (roleFixed === 'WAKIL_KEPALA_SEKOLAH' && !form.bidang) { setError('Pilih bidang terlebih dahulu'); return }
+    if (form.endYear && !form.endReason) { setError('Pilih alasan berakhirnya jabatan'); return }
     const conflict = validateConflict()
     if (conflict) { setError(conflict); return }
     setSaving(true); setError('')
     try {
+      const body: Record<string, unknown> = {
+        teacherId: parseInt(form.teacherId),
+        role: roleFixed,
+        bidang: roleFixed === 'WAKIL_KEPALA_SEKOLAH' ? (form.bidang || null) : null,
+        startYear: parseInt(form.startYear),
+        endYear: form.endYear ? parseInt(form.endYear) : null,
+        endReason: form.endYear ? (form.endReason || null) : null,
+        note: form.note || null,
+      }
       const res = await fetch(
         isEdit ? `/api/teachers/principal-history/${history!.id}` : '/api/teachers/principal-history',
-        {
-          method: isEdit ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            teacherId: parseInt(form.teacherId), role: form.role,
-            startYear: parseInt(form.startYear), endYear: form.endYear ? parseInt(form.endYear) : null,
-            note: form.note || null,
-          }),
-        },
+        { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
       )
       const json = await res.json()
       if (json.success) onSaved(); else setError(json.message || 'Gagal menyimpan')
@@ -1035,18 +1545,63 @@ function HistoryFormModal({
 
   const selectedTeacher = teacherList.find(t => String(t.id) === form.teacherId)
 
-  // IDs guru yang sedang aktif menjabat (endYear === null) di jabatan apapun.
-  // Saat mode Edit: guru yang sedang diedit (teacher + role sama) tetap boleh tampil.
-  const activeTeacherIds = new Set(
+  // Block teachers from the dropdown based on these rules:
+  //
+  // PERMANENT cross-role block (regardless of period):
+  //   • Adding KEPSEK    → block any teacher who has ANY wakepsek record (past or active)
+  //                        Reason: wakepsek cannot become kepsek at the same school
+  //   • Adding WAKEPSEK  → block any teacher who has ANY kepsek record (past or active)
+  //                        Reason: kepsek cannot become wakepsek at the same school
+  //
+  // ACTIVE same-role block:
+  //   • Adding KEPSEK    → block whoever is currently active as kepsek (no two active kepsek)
+  //   • Adding WAKEPSEK  → block whoever is active in the same bidang (no duplicate active bidang)
+  //
+  //   • Edit mode → the teacher being edited always stays in the dropdown
+  const oppositeRoleForBlock = roleFixed === 'KEPALA_SEKOLAH' ? 'WAKIL_KEPALA_SEKOLAH' : 'KEPALA_SEKOLAH'
+
+  // All teachers who have ever held the opposite role (permanent block)
+  const permanentlyBlockedIds = new Set(
+    allData
+      .filter(h => h.role === oppositeRoleForBlock && !(isEdit && h.teacherId === history?.teacherId))
+      .map(h => h.teacherId)
+  )
+
+  // Teachers blocked due to active same-role conflict
+  const activeBlockedIds = new Set(
     allData
       .filter(h => {
-        if (h.endYear !== null) return false                        // sudah selesai, boleh dipilih
-        if (isEdit && h.teacherId === history!.teacherId) return false  // guru yg sedang diedit: tetap tampil
-        return true
+        if (h.endYear !== null) return false
+        if (isEdit && h.id === history!.id) return false
+
+        if (roleFixed === 'KEPALA_SEKOLAH') {
+          // Block: anyone already active as kepsek
+          if (h.role === 'KEPALA_SEKOLAH') {
+            if (isEdit && h.teacherId === history!.teacherId) return false
+            return true
+          }
+        }
+
+        if (roleFixed === 'WAKIL_KEPALA_SEKOLAH') {
+          if (h.role === 'WAKIL_KEPALA_SEKOLAH') {
+            if (isEdit && h.teacherId === history!.teacherId && h.bidang === history!.bidang) return false
+            // Block only if SAME bidang (no duplicate active bidang)
+            if (form.bidang && h.bidang === form.bidang) return true
+            return false
+          }
+        }
+
+        return false
       })
       .map(h => h.teacherId)
   )
-  const availableTeachers = teacherList.filter(t => !activeTeacherIds.has(t.id))
+
+  const crossBlockedIds = new Set([...permanentlyBlockedIds, ...activeBlockedIds])
+  const availableTeachers = teacherList.filter(t => !crossBlockedIds.has(t.id))
+
+  const activeBidangList = bidangList.filter(b => b.isActive)
+
+  const roleLabel = roleFixed === 'KEPALA_SEKOLAH' ? 'Kepala Sekolah' : 'Wakil Kepala Sekolah'
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -1058,8 +1613,8 @@ function HistoryFormModal({
               <div className="flex items-center gap-3">
                 <button type="button" onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><ArrowLeft className="w-4 h-4" /></button>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Riwayat Jabatan' : 'Tambah Riwayat Jabatan'}</h2>
-                  <p className="text-xs text-gray-500">{isEdit ? 'Perbarui data riwayat jabatan' : 'Tambahkan riwayat jabatan pimpinan'}</p>
+                  <h2 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Riwayat' : 'Tambah Riwayat'} {roleLabel}</h2>
+                  <p className="text-xs text-gray-500">{isEdit ? 'Perbarui data riwayat jabatan' : `Tambahkan riwayat ${roleLabel}`}</p>
                 </div>
               </div>
               <button type="button" onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
@@ -1087,22 +1642,16 @@ function HistoryFormModal({
                   placeholder="-- Pilih Guru --"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Jabatan <span className="text-red-500">*</span></label>
-                <select value={form.role} onChange={e => {
-                  const newRole = e.target.value
-                  setForm(f => ({
-                    ...f,
-                    role: newRole,
-                    teacherId: activeTeacherIds.has(Number(f.teacherId)) ? '' : f.teacherId,
-                  }))
-                  setError('')
-                }}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                  <option value="KEPALA_SEKOLAH">Kepala Sekolah</option>
-                  <option value="WAKIL_KEPALA_SEKOLAH">Wakil Kepala Sekolah</option>
-                </select>
-              </div>
+              {roleFixed === 'WAKIL_KEPALA_SEKOLAH' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
+                  <select value={form.bidang} onChange={e => { setForm(f => ({ ...f, bidang: e.target.value })); setError('') }}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">-- Pilih Bidang --</option>
+                    {activeBidangList.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Tahun Mulai <span className="text-red-500">*</span></label>
@@ -1112,28 +1661,40 @@ function HistoryFormModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Tahun Selesai</label>
-                  <input
-                    type="number"
-                    min={1900}
-                    max={currentYear}
-                    value={form.endYear}
+                  <input type="number" min={1900} max={currentYear} value={form.endYear}
                     onChange={e => {
                       const val = e.target.value
                       const num = parseInt(val)
                       if (val !== '' && !isNaN(num) && num > currentYear) return
-                      setForm(f => ({ ...f, endYear: val }))
-                      setError('')
+                      setForm(f => ({ ...f, endYear: val, endReason: val ? f.endReason : '' })); setError('')
                     }}
-                    placeholder="Kosong = Sekarang"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Maksimal tahun {currentYear} kosongkan jika masih menjabat. </p>
+                    placeholder="Kosong = Masih menjabat"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <p className="text-xs text-gray-400 mt-1">Kosongkan jika masih menjabat.</p>
                 </div>
               </div>
+              {form.endYear && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Alasan Berakhir <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={form.endReason}
+                    onChange={e => { setForm(f => ({ ...f, endReason: e.target.value })); setError('') }}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">-- Pilih Alasan --</option>
+                    {END_REASON_OPTIONS[roleFixed].map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan</label>
                 <textarea value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-                  rows={3} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  rows={2} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   placeholder="Catatan tambahan (opsional)" />
               </div>
               <div className="flex gap-3 pt-2">
@@ -1154,7 +1715,7 @@ function HistoryFormModal({
 // =============================================================================
 // TAB 3 – KELOLA JABATAN
 // =============================================================================
-function PositionsTab() {
+export function PositionsTab() {
   const [data, setData] = useState<Position[]>([])
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
@@ -1394,32 +1955,15 @@ function PositionFormModal({
 // PAGE ROOT
 // =============================================================================
 export default function TeachersPage() {
-  const [activeTab, setActiveTab] = useState<'teachers' | 'history' | 'positions'>('teachers')
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Guru &amp; Staff</h2>
-          <p className="text-sm text-gray-500">Kelola data guru, staf, riwayat jabatan pimpinan, dan jabatan</p>
+          <p className="text-sm text-gray-500">Kelola data guru dan staf sekolah</p>
         </div>
       </div>
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
-        <button onClick={() => setActiveTab('teachers')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${activeTab === 'teachers' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-          <Users className="w-4 h-4" /> Guru &amp; Staff
-        </button>
-        <button onClick={() => setActiveTab('history')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${activeTab === 'history' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-          <BookOpen className="w-4 h-4" /> Riwayat Jabatan
-        </button>
-        <button onClick={() => setActiveTab('positions')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${activeTab === 'positions' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-          <Award className="w-4 h-4" /> Kelola Jabatan
-        </button>
-      </div>
-      {activeTab === 'teachers' && <TeachersTab />}
-      {activeTab === 'history' && <HistoryTab />}
-      {activeTab === 'positions' && <PositionsTab />}
+      <TeachersTab />
     </div>
   )
 }

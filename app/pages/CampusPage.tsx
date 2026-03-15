@@ -88,54 +88,6 @@ const CampusPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Hero Stats */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
-          <div className="w-full lg:w-1/2">
-            <h2 className="text-5xl font-bold text-gray-900 mb-8 leading-tight">
-              Inspiring Spaces for Learning
-            </h2>
-            <p className="text-gray-500 mb-10 leading-relaxed">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco.
-            </p>
-            <div className="flex gap-12">
-              <div>
-                <span className="block text-4xl font-black text-[#0092DD]">
-                  150
-                </span>
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                  Acres
-                </span>
-              </div>
-              <div>
-                <span className="block text-4xl font-black text-[#0092DD]">
-                  42
-                </span>
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                  Buildings
-                </span>
-              </div>
-              <div>
-                <span className="block text-4xl font-black text-[#0092DD]">
-                  18k
-                </span>
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-                  Students
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="w-full lg:w-1/2 rounded-3xl overflow-hidden shadow-2xl h-[400px]">
-            <img
-              src="https://media.istockphoto.com/id/2166813256/id/foto/kelompok-mahasiswa-yang-belajar-di-kampus-di-luar-ruangan.jpg?s=1024x1024&w=is&k=20&c=UPD7oftPrzGp5six22YUyQksr3HlkpYQv8HhO9NG_vM="
-              className="w-full h-full object-cover"
-              alt="Main Building"
-            />
-          </div>
-        </div>
-      </section>
 
       {/* World-Class Facilities */}
       <section className="py-24 bg-gray-50">
@@ -303,78 +255,6 @@ const CampusPage: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Address & Map Section */}
-      <section className="py-24 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Navigate Our Campus
-          </h2>
-          <p className="text-sm text-gray-500 max-w-2xl mx-auto">
-            Pellentesque in ipsum id orci porta dapibus. Curabitur non nulla sit
-            amet nisl tempus convallis ac lectus.
-          </p>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8 items-stretch">
-          <div className="w-full lg:w-2/3 rounded-3xl overflow-hidden shadow-xl h-[450px]">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3023.9503398759714!2d-73.99616238459418!3d40.7180295793315!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25a27e023150d%3A0x7d377b25e7902d1b!2sNYU!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-            ></iframe>
-          </div>
-          <div className="w-full lg:w-1/3 bg-white p-10 rounded-3xl shadow-lg flex flex-col justify-between">
-            <div>
-              <h4 className="font-bold text-lg mb-8">Campus Address</h4>
-              <p className="text-xs text-gray-400 mb-10 leading-relaxed">
-                1847 University Drive
-                <br />
-                Brooklyn, NY 11205
-              </p>
-              <div className="space-y-8">
-                <div className="flex items-start">
-                  <MapPin className="h-5 w-5 text-[#0092DD] mr-4 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold">Campus Tours</p>
-                    <p className="text-xs text-gray-400">
-                      Daily at 10 AM & 2 PM
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <Clock className="h-5 w-5 text-[#0092DD] mr-4 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold">Shuttle Service</p>
-                    <p className="text-xs text-gray-400">
-                      Free campus transportation
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <Calendar className="h-5 w-5 text-[#0092DD] mr-4 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold">Parking</p>
-                    <p className="text-xs text-gray-400">
-                      Multiple lots available
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col gap-4">
-              <button className="text-[#0092DD] font-bold text-xs flex items-center hover:underline">
-                Download Campus Map <ArrowRight className="ml-2 h-3 w-3" />
-              </button>
-              <button className="text-[#0092DD] font-bold text-xs flex items-center hover:underline">
-                Get Directions <ArrowRight className="ml-2 h-3 w-3" />
-              </button>
-            </div>
           </div>
         </div>
       </section>

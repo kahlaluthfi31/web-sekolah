@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Settings, Plus, Save, Trash2, X,
   Loader2, Type, ImageIcon, Link2, ToggleLeft,
-  Search, AlertCircle,
+  Search, AlertCircle, Megaphone, Upload, ExternalLink,
 } from 'lucide-react'
+import Image from 'next/image'
 
 interface Setting {
   id: number
@@ -44,6 +45,20 @@ export default function SettingsPage() {
   const [customType, setCustomType] = useState<Setting['settingType']>('text')
   const [deleting, setDeleting] = useState<number | null>(null)
 
+  // Popup state
+  const [popupActive, setPopupActive] = useState(false)
+  const [popupImage, setPopupImage] = useState('')
+  const [popupTitle, setPopupTitle] = useState('')
+  const [popupButtonLabel, setPopupButtonLabel] = useState('Cek Selengkapnya')
+  const [popupButtonUrl, setPopupButtonUrl] = useState('')
+  const [popupButtonType, setPopupButtonType] = useState<'external' | 'internal'>('external')
+  const [popupImgPreview, setPopupImgPreview] = useState<string | null>(null)
+  const [popupImgError, setPopupImgError] = useState(false)
+  const [savingPopup, setSavingPopup] = useState(false)
+  const [popupSaved, setPopupSaved] = useState(false)
+  const [uploadingPopup, setUploadingPopup] = useState(false)
+  const popupFileRef = useRef<HTMLInputElement>(null)
+
   const fetchSettings = useCallback(async () => {
     setLoading(true)
     try {
@@ -58,6 +73,20 @@ export default function SettingsPage() {
   }, [])
 
   useEffect(() => { fetchSettings() }, [fetchSettings])
+
+  // Sync popup fields whenever settings change
+  useEffect(() => {
+    const get = (key: string) => settings.find(s => s.settingKey === key)?.settingValue ?? ''
+    setPopupActive(get('popup_active') === 'true')
+    setPopupTitle(get('popup_title'))
+    setPopupButtonLabel(get('popup_button_label') || 'Cek Selengkapnya')
+    setPopupButtonUrl(get('popup_button_url'))
+    setPopupButtonType((get('popup_button_type') as 'external' | 'internal') || 'external')
+    const img = get('popup_image')
+    setPopupImage(img)
+    setPopupImgPreview(img || null)
+    setPopupImgError(false)
+  }, [settings])
 
   // Get value for a setting key
   const getValue = (key: string) => {
@@ -112,8 +141,54 @@ export default function SettingsPage() {
     }
   }
 
+  // Upload gambar popup
+  const handlePopupImageUpload = async (file: File) => {
+    setUploadingPopup(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const j = await res.json()
+      if (j.success) {
+        setPopupImage(j.data.url)
+        setPopupImgPreview(j.data.url)
+        setPopupImgError(false)
+      } else {
+        alert('Gagal upload gambar: ' + (j.message ?? ''))
+      }
+    } catch { alert('Terjadi kesalahan saat upload.') }
+    finally { setUploadingPopup(false) }
+  }
+
+  // Simpan semua setting popup sekaligus
+  const saveAllPopup = async () => {
+    setSavingPopup(true)
+    try {
+      const pairs: [string, string, Setting['settingType']][] = [
+        ['popup_active', popupActive ? 'true' : 'false', 'boolean'],
+        ['popup_image', popupImage, 'image'],
+        ['popup_title', popupTitle, 'text'],
+        ['popup_button_label', popupButtonLabel, 'text'],
+        ['popup_button_url', popupButtonUrl, 'url'],
+        ['popup_button_type', popupButtonType, 'text'],
+      ]
+      await Promise.all(pairs.map(([k, v, t]) =>
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ settingKey: k, settingValue: v, settingType: t }),
+        })
+      ))
+      setPopupSaved(true)
+      setTimeout(() => setPopupSaved(false), 2500)
+      fetchSettings()
+    } catch { alert('Terjadi kesalahan.') }
+    finally { setSavingPopup(false) }
+  }
+
   // Custom settings (not in DEFAULT_SETTINGS)
-  const defaultKeys = DEFAULT_SETTINGS.map(d => d.key)
+  const popupKeys = ['popup_active', 'popup_image', 'popup_title', 'popup_button_label', 'popup_button_url', 'popup_button_type']
+  const defaultKeys = [...DEFAULT_SETTINGS.map(d => d.key), ...popupKeys]
   const customSettings = settings.filter(s => !defaultKeys.includes(s.settingKey))
 
   // Filter
@@ -255,6 +330,136 @@ export default function SettingsPage() {
           </div>
         </>
       )}
+
+      {/* ── Section: Popup Pengumuman ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Megaphone className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Popup Pengumuman</h3>
+              <p className="text-xs text-gray-400">Tampilkan popup saat pengunjung pertama membuka website</p>
+            </div>
+          </div>
+          {/* Toggle aktif */}
+          <button
+            onClick={() => setPopupActive(v => !v)}
+            className={`relative inline-flex h-7 w-12 rounded-full transition-colors ${popupActive ? 'bg-green-500' : 'bg-gray-200'}`}
+          >
+            <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform mt-1 ${popupActive ? 'translate-x-6 ml-0.5' : 'translate-x-1'}`} />
+          </button>
+        </div>
+
+        <div className={`px-6 py-6 space-y-5 transition-opacity ${popupActive ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+
+          {/* ── Baris atas: Gambar (kiri) + Judul & Tombol (kanan) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* Kolom kiri — Gambar */}
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold text-gray-600">
+                Gambar Popup <span className="text-gray-400 font-normal">(JPG/PNG/WEBP)</span>
+              </label>
+              <input ref={popupFileRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) { setPopupImgPreview(URL.createObjectURL(f)); handlePopupImageUpload(f) } }} />
+
+              {popupImgPreview && !popupImgError ? (
+                <div className="relative rounded-xl overflow-hidden bg-gray-100 h-48 group w-full">
+                  <Image src={popupImgPreview} alt="popup preview" fill unoptimized className="object-cover"
+                    onError={() => setPopupImgError(true)} />
+                  {uploadingPopup && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button type="button" onClick={() => popupFileRef.current?.click()}
+                      className="bg-white text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-gray-50 transition">Ganti</button>
+                    <button type="button" onClick={() => { setPopupImage(''); setPopupImgPreview(null) }}
+                      className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-red-600 transition">Hapus</button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" onClick={() => popupFileRef.current?.click()}
+                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 hover:border-[#0092DD] hover:text-[#0092DD] transition-colors group h-48">
+                  {uploadingPopup ? <Loader2 className="w-7 h-7 animate-spin" /> : <Upload className="w-7 h-7 group-hover:scale-110 transition-transform" />}
+                  <span className="text-xs font-medium">{uploadingPopup ? 'Mengunggah...' : 'Klik untuk pilih gambar'}</span>
+                </button>
+              )}
+
+              <div>
+                <p className="text-[11px] text-gray-400 mb-1.5">Atau masukkan URL gambar langsung:</p>
+                <input type="text" value={popupImage}
+                  onChange={e => { setPopupImage(e.target.value); setPopupImgPreview(e.target.value); setPopupImgError(false) }}
+                  placeholder="https://..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition" />
+              </div>
+            </div>
+
+            {/* Kolom kanan — Judul + Label + URL + Tipe */}
+            <div className="space-y-4">
+              {/* Judul */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Judul <span className="text-gray-400 font-normal">(opsional — tampil jika tidak ada gambar)</span>
+                </label>
+                <input type="text" value={popupTitle} onChange={e => setPopupTitle(e.target.value)}
+                  placeholder="cth: Informasi Penting!"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition" />
+              </div>
+
+              {/* Label Tombol */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Label Tombol</label>
+                <input type="text" value={popupButtonLabel} onChange={e => setPopupButtonLabel(e.target.value)}
+                  placeholder="Cek Selengkapnya"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition" />
+              </div>
+
+              {/* URL Tujuan */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">URL Tujuan</label>
+                <input type="text" value={popupButtonUrl} onChange={e => setPopupButtonUrl(e.target.value)}
+                  placeholder="https://... atau news"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition" />
+              </div>
+
+              {/* Tipe Tombol */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tipe Tombol</label>
+                <div className="flex items-center gap-2">
+                  <button type="button"
+                    onClick={() => setPopupButtonType('external')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${popupButtonType === 'external' ? 'border-[#0092DD] bg-[#0092DD]/10 text-[#0092DD]' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}>
+                    <ExternalLink className="w-3.5 h-3.5" /> External
+                  </button>
+                  <button type="button"
+                    onClick={() => setPopupButtonType('internal')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${popupButtonType === 'internal' ? 'border-[#0092DD] bg-[#0092DD]/10 text-[#0092DD]' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}>
+                    Internal
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5">
+                  {popupButtonType === 'internal' ? '💡 Isi URL dengan nama page: news, about-us, dll.' : '💡 Buka URL di tab baru (link eksternal).'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Simpan Popup */}
+          <div className="pt-2 border-t border-gray-50">
+            <button onClick={saveAllPopup} disabled={savingPopup}
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                popupSaved ? 'bg-green-500 text-white' : 'bg-[#0092DD] hover:bg-[#0077BB] text-white'
+              } disabled:opacity-60`}>
+              {savingPopup ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {popupSaved ? 'Tersimpan ✓' : savingPopup ? 'Menyimpan...' : 'Simpan Pengaturan Popup'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Info */}
       <div className="bg-amber-50 rounded-xl p-4 text-sm text-amber-700 flex items-start gap-3">

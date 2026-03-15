@@ -1,7 +1,8 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, ChevronLeft, ChevronRight, Loader2, MoreVertical, Eye, Check, X, AlertTriangle, GraduationCap, Briefcase, Building2, FileText, Image } from 'lucide-react'
+import NextImage from 'next/image'
+import { Search, ChevronLeft, ChevronRight, Loader2, MoreVertical, Eye, Check, X, AlertTriangle, GraduationCap, Briefcase, Building2, FileText, ImageIcon } from 'lucide-react'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface Alumni {
@@ -72,7 +73,7 @@ function ActionDropdown({ onView, onApprove, onReject, status }: { onView: () =>
 function ConfirmModal({ title, message, onConfirm, onCancel, loading, type }: { title: string; message: string; onConfirm: () => void; onCancel: () => void; loading: boolean; type: 'approve' | 'reject' }) {
   const isApprove = type === 'approve'
   return (
-    <div className="fixed inset-0 z-[60] overflow-hidden">
+    <div className="fixed inset-0 z-60 overflow-hidden">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
@@ -137,7 +138,7 @@ export default function AlumniPage() {
       const json = await res.json()
       if (json.success) {
         setAlumni(json.data || [])
-        setPagination(json.pagination || pagination)
+        setPagination(prev => json.pagination || prev)
       }
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -179,7 +180,7 @@ export default function AlumniPage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -412,9 +413,12 @@ function DetailModal({ alumni, onClose, onApprove, onReject }: { alumni: Alumni;
                 <div>
                   <label className="text-xs font-medium text-gray-500">Foto Ijazah</label>
                   <div className="mt-2">
-                    <img
+                    <NextImage
                       src={diplomaPhotoUrl}
                       alt="Foto Ijazah"
+                      width={800}
+                      height={600}
+                      unoptimized
                       className="w-full max-h-64 object-contain rounded-lg border border-gray-200 bg-white"
                     />
                     <a
@@ -423,7 +427,7 @@ function DetailModal({ alumni, onClose, onApprove, onReject }: { alumni: Alumni;
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline mt-2"
                     >
-                      <Image className="w-4 h-4" />
+                      <ImageIcon className="w-4 h-4" />
                       Lihat Ukuran Penuh
                     </a>
                   </div>

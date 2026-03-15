@@ -144,7 +144,17 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
     { title: 'Mitra Kerja Sama', href: '/admin/dashboard/partners', icon: 'Building2', permission: 'partners.view' },
 
     // Data Master (Superadmin only)
-    { title: 'Guru & Staff', href: '/admin/dashboard/teachers', icon: 'Users', permission: 'teachers.view' },
+    {
+      title: 'Guru & Staff',
+      href: '/admin/dashboard/teachers',
+      icon: 'Users',
+      permission: 'teachers.view',
+      children: [
+        { title: 'Daftar Guru & Staff', href: '/admin/dashboard/teachers', icon: 'Users', permission: 'teachers.view' as const },
+        { title: 'Riwayat Jabatan', href: '/admin/dashboard/teachers/riwayat-jabatan', icon: 'BookOpen', permission: 'teachers.view' as const },
+        { title: 'Kelola Jabatan', href: '/admin/dashboard/teachers/jabatan', icon: 'Award', permission: 'teachers.view' as const },
+      ],
+    },
     { title: 'Program Keahlian', href: '/admin/dashboard/majors', icon: 'BookOpen', permission: 'majors.view' },
     { title: 'Fasilitas', href: '/admin/dashboard/facilities', icon: 'Building2', permission: 'facilities.view' },
     { title: 'Virtual Tour', href: '/admin/dashboard/virtual-tour', icon: 'Camera', permission: 'virtual_tour.view' },

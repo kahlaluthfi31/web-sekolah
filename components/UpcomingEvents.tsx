@@ -216,7 +216,7 @@ const UpcomingEvents: React.FC = () => {
                     alt={featured.title}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
                   {/* Status badge */}
                   <div className="absolute top-4 right-4">
@@ -296,7 +296,7 @@ const UpcomingEvents: React.FC = () => {
                                 {event.location && (
                                   <>
                                     <span className="text-gray-300">·</span>
-                                    <span className="text-xs text-gray-400 truncate max-w-[120px]">{event.location}</span>
+                                    <span className="text-xs text-gray-400 truncate max-w-30">{event.location}</span>
                                   </>
                                 )}
                               </div>
