@@ -4,26 +4,24 @@ import { MessageSquare, Calendar, Clock, Share2, Twitter, Facebook, Linkedin } f
 
 const NewsDetailsPage: React.FC = () => {
   return (
-    <div className="pt-20">
-      <section className="bg-[#0092DD] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">News Details</h1>
-          <p className="max-w-2xl mx-auto text-white/80 text-sm leading-relaxed">
-            Odio et unde deleniti. Deserunt numquam exercitationem. Officiis quo odio sint voluptas consequatur ut a odio voluptatem.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - Breadcrumb */}
+      <section className="pt-24 pb-8 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="hover:text-maroon-600 cursor-pointer">Beranda</span>
+            <span>/</span>
+            <span className="hover:text-maroon-600 cursor-pointer">Berita</span>
+            <span>/</span>
+            <span className="text-gray-900">Detail</span>
+          </div>
         </div>
       </section>
 
-      <div className="bg-gray-100 py-4 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> News Details
-        </div>
-      </div>
-
-      <article className="py-24 bg-white">
+      <article className="pb-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div className="rounded-[40px] overflow-hidden shadow-2xl h-[500px] mb-12">
-              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=1200" className="w-full h-full object-cover" alt="Main Article" />
+           <div className="rounded-2xl overflow-hidden shadow-lg h-125 mb-12">
+              <img src="/images/default-news.svg" className="w-full h-full object-cover" alt="Main Article" />
            </div>
 
            <div className="flex items-center gap-6 mb-8">
@@ -35,7 +33,7 @@ const NewsDetailsPage: React.FC = () => {
 
            <div className="flex items-center justify-between py-6 border-y border-gray-100 mb-12">
               <div className="flex items-center">
-                 <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100" className="w-12 h-12 rounded-full object-cover mr-4" alt="Author" />
+                 <img src="/images/default-faculty.svg" className="w-12 h-12 rounded-full object-cover mr-4" alt="Author" />
                  <div>
                     <h5 className="font-bold text-gray-900">Sarah Anderson</h5>
                     <div className="flex items-center text-[10px] text-gray-400 font-bold gap-4 uppercase">
@@ -64,8 +62,8 @@ const NewsDetailsPage: React.FC = () => {
                  <li>Autonomous Systems and Robotics</li>
               </ul>
 
-              <div className="rounded-3xl overflow-hidden shadow-xl h-[400px] mb-4">
-                 <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" alt="AI Workspace" />
+              <div className="rounded-2xl overflow-hidden shadow-lg h-100 mb-4">
+                 <img src="/images/default-news.svg" className="w-full h-full object-cover" alt="AI Workspace" />
               </div>
               <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-16">AI systems processing and analyzing complex data patterns</p>
 
@@ -81,8 +79,8 @@ const NewsDetailsPage: React.FC = () => {
               <p className="mb-12">As AI continues to evolve, important questions arise about privacy, security, and the ethical implications of increasingly autonomous systems. Addressing these challenges while fostering innovation will be crucial for the sustainable development of AI technologies.</p>
 
               <div className="grid grid-cols-2 gap-8 mb-16">
-                 <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=600" className="rounded-3xl shadow-lg h-64 object-cover" alt="Context 1" />
-                 <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=600" className="rounded-3xl shadow-lg h-64 object-cover" alt="Context 2" />
+                 <img src="/images/default-news.svg" className="rounded-3xl shadow-lg h-64 object-cover" alt="Context 1" />
+                 <img src="/images/default-news.svg" className="rounded-3xl shadow-lg h-64 object-cover" alt="Context 2" />
               </div>
 
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Looking Ahead</h2>

@@ -147,13 +147,13 @@ async function main() {
   // ---- Sample Facilities ----
   const f1 = await prisma.facility.findFirst({ where: { name: 'Laboratorium Komputer' } })
   if (!f1) {
-    await prisma.facility.create({ data: { category: 'lab', name: 'Laboratorium Komputer', description: 'Lab komputer dengan 40 PC', quantity: 2, condition: 'baik', orderPosition: 1 } })
+  await prisma.facility.create({ data: { category: 'lab', name: 'Laboratorium Komputer', description: 'Lab komputer dengan 40 PC', quantity: 2, quantityType: 'kapasitas', condition: 'baik', orderPosition: 1 } })
     console.log('✅ Facility: Laboratorium Komputer')
   }
 
   const f2 = await prisma.facility.findFirst({ where: { name: 'Perpustakaan' } })
   if (!f2) {
-    await prisma.facility.create({ data: { category: 'perpustakaan', name: 'Perpustakaan', description: 'Perpustakaan 5000+ buku', quantity: 1, condition: 'baik', orderPosition: 2 } })
+  await prisma.facility.create({ data: { category: 'perpustakaan', name: 'Perpustakaan', description: 'Perpustakaan 5000+ buku', quantity: 1, quantityType: 'jumlah', condition: 'baik', orderPosition: 2 } })
     console.log('✅ Facility: Perpustakaan')
   }
 

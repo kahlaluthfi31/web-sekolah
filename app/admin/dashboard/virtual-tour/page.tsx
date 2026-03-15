@@ -268,10 +268,9 @@ function SceneModal({
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!isEdit) {
-      setForm(f => ({ ...f, sceneKey: slugify(f.title) }))
-    }
-  }, [form.title, isEdit])
+    // Scene key always follows title changes (even on edit)
+    setForm(f => ({ ...f, sceneKey: slugify(f.title) }))
+  }, [form.title])
 
   const handleUpload = async (file: File) => {
     setUploading(true)
@@ -357,7 +356,7 @@ function SceneModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Judul Scene *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Judul Scene <span className="text-red-500">*</span></label>
             <input
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={form.title}
@@ -468,7 +467,7 @@ function SceneModal({
               </div>
             ) : (
               <div className="flex items-end pb-5">
-                <p className="text-xs text-gray-400 italic">Scene pertama sudah ditentukan ()</p>
+                <p className="text-xs text-gray-400 italic">Scene pertama sudah ditentukan</p>
               </div>
             )}
           </div>
@@ -596,7 +595,7 @@ function HotspotModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Label / Teks *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Label / Teks <span className="text-red-500">*</span></label>
             <textarea
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={2}

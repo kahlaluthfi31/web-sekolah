@@ -116,19 +116,19 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials */}
+          {/* Demo credentials
           <div className="mt-6 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center mb-2">Demo Credentials:</p>
             <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600 space-y-1">
               <p><span className="font-medium text-blue-600">Superadmin:</span> superadmin@smkn1ciamis.com <br />pass : super admin 123</p>
               <p><span className="font-medium text-green-600">Admin:</span> medsos@sekolah.com <br /> pass : admin123</p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-400 mt-6">
-          &copy; {new Date().getFullYear()} SMK — Panel Administrasi
+          &copy; {new Date().getFullYear()} Selenium - SMK Negeri 1 Ciamis. All rights reserved.
         </p>
       </div>
     </div>

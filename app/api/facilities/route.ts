@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         category: body.category,
         image: body.image || null,
         quantity: body.quantity || 1,
+        quantityType: body.quantityType === 'kapasitas' ? 'kapasitas' : 'jumlah',
         condition: body.condition || 'good',
       },
     })

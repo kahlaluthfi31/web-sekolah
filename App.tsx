@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import ProgramKeahlian from '@/components/ProgramKeahlian';
@@ -8,7 +8,7 @@ import StudentLife from '@/components/StudentLife';
 import Testimonials from '@/components/Testimonials';
 import RecentNews from '@/components/RecentNews';
 import UpcomingEvents from '@/components/UpcomingEvents';
-import SocialFeedsVertikal from '@/components/SocialFeeds(vertikal)';
+import SocialFeedsVertikal from '@/components/SocialFeeds';
 import Partners from '@/components/Partners';
 import Footer from '@/components/Footer';
 import AboutPage from '@/app/pages/AboutPage';
@@ -35,6 +35,89 @@ function getInitialPage(): PageType {
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<PageType>(getInitialPage);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioPlayed, setAudioPlayed] = useState(false);
+  const hasTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    // Preload hero video for instant playback
+    const preloadVideo = () => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.src = '/videos/hero-bg.mp4';
+      video.load();
+    };
+
+    // Preload video immediately
+    preloadVideo();
+
+    const playAudioWithFallback = async () => {
+      if (!audioRef.current || hasTriggeredRef.current) return;
+      
+      try {
+        audioRef.current.volume = 0.4;
+        await audioRef.current.play();
+        hasTriggeredRef.current = true;
+        setAudioPlayed(true);
+        console.log('✓ Audio autoplay successful');
+      } catch (error) {
+        console.log('⚠ Autoplay blocked, waiting for valid interaction (click, wheel, or key press)...');
+        
+        // Handler for meaningful user interactions only
+        const playOnInteraction = async (event: Event) => {
+          console.log('🎯 Interaction detected:', event.type);
+          
+          if (!audioRef.current || hasTriggeredRef.current) return;
+          
+          try {
+            audioRef.current.volume = 0.4;
+            await audioRef.current.play();
+            hasTriggeredRef.current = true;
+            setAudioPlayed(true);
+            console.log('✅ Audio playing!');
+            
+            // Clean up all listeners
+            removeAllListeners();
+          } catch (err) {
+            console.log('❌ Still blocked:', err);
+          }
+        };
+        
+        const removeAllListeners = () => {
+          document.removeEventListener('click', playOnInteraction as EventListener);
+          document.removeEventListener('wheel', playOnInteraction as EventListener);
+          document.removeEventListener('touchstart', playOnInteraction as EventListener);
+          document.removeEventListener('keydown', playOnInteraction as EventListener);
+          document.removeEventListener('mousedown', playOnInteraction as EventListener);
+          console.log('🧹 Event listeners removed');
+        };
+        
+        // Only use meaningful interaction events (NOT passive)
+        document.addEventListener('click', playOnInteraction as EventListener);
+        document.addEventListener('wheel', playOnInteraction as EventListener);
+        document.addEventListener('touchstart', playOnInteraction as EventListener);
+        document.addEventListener('keydown', playOnInteraction as EventListener);
+        document.addEventListener('mousedown', playOnInteraction as EventListener);
+        
+        console.log('👂 Waiting for: click, wheel, touch, or keypress');
+      }
+    };
+    
+    // Ensure audio is loaded
+    if (audioRef.current) {
+      audioRef.current.load();
+    }
+    
+    // Try autoplay
+    setTimeout(playAudioWithFallback, 300);
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
 
   const navigateTo = (page: PageType) => {
     sessionStorage.setItem(SESSION_KEY, page);
@@ -47,7 +130,7 @@ const App: React.FC = () => {
       case 'home':
         return (
           <>
-            <Hero />
+            <Hero onNavigate={navigateTo} />
             {/* <QuickStats /> */}
             {/* <div id="about"><AboutSection /></div> */}
             <ProgramKeahlian />
@@ -81,12 +164,19 @@ const App: React.FC = () => {
       case 'contact':
         return <ContactPage />;
       default:
-        return <Hero />;
+        return <Hero onNavigate={navigateTo} />;
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
+      {/* Background Audio - Play once on first visit */}
+      <audio ref={audioRef} preload="auto">
+        <source src="/audio/welcome.aac" type="audio/aac" />
+        <source src="/audio/welcome.mp3" type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+      
       <AnnouncementPopup onNavigate={navigateTo} />
       <Navbar onNavigate={navigateTo} currentPage={currentPage} />
       <main className="grow overflow-x-hidden">

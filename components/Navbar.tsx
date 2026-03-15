@@ -13,14 +13,42 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [inHeroSection, setInHeroSection] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      
+      // Set scrolled state untuk glass effect
+      setScrolled(scrollPosition > 50);
+      
+      // Hero section detection - gunakan hero section yang lebih spesifik per halaman
+      let heroHeight = window.innerHeight; // Default untuk landing page
+      
+      // Jika bukan landing page, gunakan hero section yang lebih kecil
+      if (currentPage !== 'home') {
+        // Hero section untuk halaman lain lebih kecil (sekitar 400px)
+        heroHeight = 400;
+      }
+      
+      setInHeroSection(scrollPosition < heroHeight);
+      
+      // Debug log
+      console.log('Navbar Debug:', {
+        currentPage,
+        scrollPosition,
+        heroHeight,
+        inHeroSection: scrollPosition < heroHeight,
+        scrolled: scrollPosition > 50
+      });
+    };
+    
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -32,7 +60,32 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isNavMaroon = scrolled || currentPage !== 'home';
+  // Determine navbar style based on scroll position
+  // Logic: transparent di atas, glass saat scroll di hero, solid setelah lewati hero
+  let navbarStyle = '';
+  let isSolidWhite = false;
+  
+  if (inHeroSection && !scrolled) {
+    // Transparent di hero section saat tidak di-scroll
+    navbarStyle = 'bg-transparent py-2';
+    isSolidWhite = false;
+  } else if (inHeroSection && scrolled) {
+    // Glass effect saat di-scroll dalam hero section
+    navbarStyle = 'bg-white/10 backdrop-blur-lg shadow-lg py-2';
+    isSolidWhite = false;
+  } else {
+    // Solid background setelah melewati hero section
+    navbarStyle = 'bg-white shadow-md py-2';
+    isSolidWhite = true;
+  }
+  
+  // Debug log untuk navbar style
+  console.log('Navbar Style:', {
+    navbarStyle,
+    isSolidWhite,
+    inHeroSection,
+    scrolled
+  });
 
   const dropdownItems: { name: string; page: PageType }[] = [
     { name: 'Profil Sekolah', page: 'about-us' },
@@ -51,31 +104,35 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
   ];
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${isNavMaroon ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${navbarStyle}`}>
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
+          <div className="shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('home')}>
             <Image
               src="/images/web/logo-smkn1-ciamis.png"
               alt="SMK NEGERI 1 CIAMIS Logo"
-              width={35}
-              height={35}
+              width={40}
+              height={40}
               priority
               className="object-contain"
             />
-            <div className={`text-sm font-bold leading-tight ${isNavMaroon ? 'text-gray-900' : 'text-white'}`}>
-              <div>SMKN 1</div>
-              <div>CIAMIS</div>
+            <div className="flex flex-col">
+              <div className={`text-sm font-bold leading-tight ${isSolidWhite ? 'text-gray-900' : 'text-white'}`}>
+                SMKN 1 CIAMIS
+              </div>
+              <div className={`text-[10px] font-normal leading-tight tracking-[0.08em] ${isSolidWhite ? 'text-gray-600' : 'text-white/80'}`}>
+                Provinsi Jawa Barat
+              </div>
             </div>
           </div>
           <div className="hidden xl:block">
             <div className="ml-10 flex items-center space-x-6">
-              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'home' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
+              <button onClick={() => onNavigate('home')} className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'home' && isSolidWhite ? 'text-[#0268ab]' : isSolidWhite ? 'text-gray-700' : 'text-white'}`}>Beranda</button>
 
               <div className="relative group" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isSolidWhite ? 'text-gray-700' : 'text-white'}`}
                 >
                   Tentang Kami <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                 </button>
@@ -103,7 +160,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                 <button
                   key={item.name}
                   onClick={() => onNavigate(item.page)}
-                  className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                  className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isSolidWhite ? 'text-[#0268ab]' : isSolidWhite ? 'text-gray-700' : 'text-white'}`}
                 >
                   {item.name}
                 </button>
@@ -111,7 +168,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
 
               <button
                 onClick={() => onNavigate('contact')}
-                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'contact' && isNavMaroon ? 'text-[#0268ab]' : isNavMaroon ? 'text-gray-700' : 'text-white'}`}
+                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === 'contact' && isSolidWhite ? 'text-[#0268ab]' : isSolidWhite ? 'text-gray-700' : 'text-white'}`}
               >
                 Kontak
               </button>
@@ -119,7 +176,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
           </div>
 
           <div className="xl:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className={`p-2 rounded-md ${isNavMaroon ? 'text-gray-700' : 'text-white'}`}>
+            <button onClick={() => setIsOpen(!isOpen)} className={`p-2 rounded-md ${isSolidWhite ? 'text-gray-700' : 'text-white'}`}>
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
@@ -128,7 +185,11 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
 
       {/* Mobile menu */}
       {isOpen && (
-        <div className="xl:hidden bg-white shadow-lg animate-in slide-in-from-top duration-300">
+        <div className={`xl:hidden animate-in slide-in-from-top duration-300 ${
+          isSolidWhite 
+            ? 'bg-white shadow-lg' 
+            : 'bg-white/95 backdrop-blur-lg shadow-2xl'
+        }`}>
           <div className="px-2 pt-2 pb-3 space-y-1">
             {mainNavItems.map((item) => (
               <button key={item.name} onClick={() => { onNavigate(item.page); setIsOpen(false); }} className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50">{item.name}</button>
