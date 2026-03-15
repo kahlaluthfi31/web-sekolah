@@ -1,0 +1,7 @@
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="500" height="500" fill="#F3F4F6"/>
+<circle cx="250" cy="200" r="60" fill="#0092DD"/>
+<path d="M200 280H300V320H200V280Z" fill="#0092DD"/>
+<text x="250" y="200" fill="white" text-anchor="middle" font-size="36" font-weight="bold">Faculty</text>
+<text x="250" y="300" fill="white" text-anchor="middle" font-size="16">Professional Staff</text>
+</svg>

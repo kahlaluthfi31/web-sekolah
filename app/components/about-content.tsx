@@ -44,7 +44,7 @@ export default function AboutPage() {
           <div className="relative h-[400px] flex items-center justify-center">
              {/* Center Person - Sarah Chen */}
              <div className="absolute left-0 lg:left-24 max-w-sm bg-white p-6 rounded-2xl shadow-xl flex items-start z-10">
-               <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150" className="w-20 h-20 rounded-full object-cover mr-4" alt="Dr. Sarah Chen" />
+               <img src="/images/default-faculty.svg" className="w-20 h-20 rounded-full object-cover mr-4" alt="Dr. Sarah Chen" />
                <div>
                  <h4 className="font-bold text-gray-900">Dr. Sarah Chen</h4>
                  <p className="text-[#0092DD] text-xs font-bold mb-2 uppercase">Academic Director</p>
@@ -58,7 +58,7 @@ export default function AboutPage() {
 
              {/* Right Person - Michael Rodriguez */}
              <div className="absolute right-0 lg:right-24 max-w-sm bg-white p-6 rounded-2xl shadow-xl flex items-start z-10">
-               <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150" className="w-20 h-20 rounded-full object-cover mr-4" alt="Michael Rodriguez" />
+               <img src="/images/default-faculty.svg" className="w-20 h-20 rounded-full object-cover mr-4" alt="Michael Rodriguez" />
                <div>
                  <h4 className="font-bold text-gray-900">Michael Rodriguez</h4>
                  <p className="text-[#0092DD] text-xs font-bold mb-2 uppercase">Innovation Officer</p>

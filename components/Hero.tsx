@@ -17,14 +17,29 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
     setIsLoaded(true);
     const video = videoRef.current;
     if (video) {
-      video.play().catch(error => {
-        console.log('Video autoplay failed:', error);
-      });
+      // Force video to load and play immediately
+      video.load();
+      
+      const playVideo = () => {
+        video.play().catch(error => {
+          console.log('Video autoplay failed:', error);
+          // Fallback: try to play on user interaction
+          document.addEventListener('click', playVideo, { once: true });
+        });
+      };
+
+      // Try to play immediately
+      playVideo();
 
       video.addEventListener('ended', () => {
         video.currentTime = 0;
         video.play();
       });
+
+      // Remove loading state once video can play
+      video.addEventListener('canplaythrough', () => {
+        setIsLoaded(true);
+      }, { once: true });
     }
   }, []);
 
@@ -38,20 +53,22 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Video */}
-      <video 
-        ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
-        autoPlay 
-        loop 
-        muted 
-        playsInline
-        preload="auto"
-        disablePictureInPicture
-        controlsList="nodownload"
-      >
-        <source src="https://videos.pexels.com/video-files/5200358/5200358-uhd_2560_1440_25fps.mp4" type="video/mp4" />
-        <source src="https://videos.pexels.com/video-files/5200358/5200358-hd_1920_1080_25fps.mp4" type="video/mp4" />
-      </video>
+      <div className="absolute inset-0 w-full h-full bg-black">
+        <video 
+          ref={videoRef}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          controlsList="nodownload"
+          crossOrigin="anonymous"
+        >
+          <source src="/videos/hero-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
       
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/30 to-transparent" />

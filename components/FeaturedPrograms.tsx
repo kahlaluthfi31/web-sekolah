@@ -4,10 +4,10 @@ import { ArrowUpRight, Star, Clock, GraduationCap } from 'lucide-react';
 
 const FeaturedPrograms: React.FC = () => {
   const secondaryPrograms = [
-    { title: "International Business", category: "Business", duration: "3 Years", degree: "Master's", image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=300" },
-    { title: "Medical Technology", category: "Health Sciences", duration: "5 Years", degree: "Bachelor's", image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=300" },
-    { title: "Digital Media & Design", category: "Creative Arts", duration: "3 Years", degree: "Bachelor's", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=300" },
-    { title: "Environmental Studies", category: "Science", duration: "4 Years", degree: "Bachelor's", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=300" }
+    { title: "International Business", category: "Business", duration: "3 Years", degree: "Master's", image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE3MCIgdmlld0JveD0iMCAwIDMwMCAxNzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMTcwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjEyNSA2OEgxNzVWMTAySDEyNVY2OFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzQiIHZpZXdCb3g9IjAgMCA2MCAzNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNy45IDEzLjVIMzIuMVYyMC41SDI3LjlWMTMuNVoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K" },
+    { title: "Medical Technology", category: "Health Sciences", duration: "5 Years", degree: "Bachelor's", image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE3MCIgdmlld0JveD0iMCAwIDMwMCAxNzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMTcwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjEyNSA2OEgxNzVWMTAySDEyNVY2OFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzQiIHZpZXdCb3g9IjAgMCA2MCAzNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNy45IDEzLjVIMzIuMVYyMC41SDI3LjlWMTMuNVoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K" },
+    { title: "Digital Media & Design", category: "Creative Arts", duration: "3 Years", degree: "Bachelor's", image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE3MCIgdmlld0JveD0iMCAwIDMwMCAxNzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMTcwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjEyNSA2OEgxNzVWMTAySDEyNVY2OFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzQiIHZpZXdCb3g9IjAgMCA2MCAzNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNy45IDEzLjVIMzIuMVYyMC41SDI3LjlWMTMuNVoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K" },
+    { title: "Environmental Studies", category: "Science", duration: "4 Years", degree: "Bachelor's", image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE3MCIgdmlld0JveD0iMCAwIDMwMCAxNzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMTcwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjEyNSA2OEgxNzVWMTAySDEyNVY2OFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzQiIHZpZXdCb3g9IjAgMCA2MCAzNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjM0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNy45IDEzLjVIMzIuMVYyMC41SDI3LjlWMTMuNVoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K" }
   ];
 
   return (
@@ -40,7 +40,7 @@ const FeaturedPrograms: React.FC = () => {
             </div>
           </div>
           <div className="rounded-2xl overflow-hidden shadow-xl aspect-video">
-            <img src="https://cdn.antaranews.com/cache/1200x800/2023/04/13/WhatsApp-Image-2023-04-13-at-16.28.02.jpeg" alt="University Campus" className="w-full h-full object-cover" />
+            <img src="/images/default-campus.svg" alt="University Campus" className="w-full h-full object-cover" />
           </div>
         </div>
 
@@ -49,7 +49,14 @@ const FeaturedPrograms: React.FC = () => {
           {/* Main Featured */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 group">
             <div className="relative h-64 overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800" alt="CS & AI" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <Image
+                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMDAgMTgwSDUwMFYyNzBIMzAwVjE4MFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMjAwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSAyNUgxMjVWNDVINzVWMjVaIiBmaWxsPSIjRDFENUVCIiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K"
+                alt="CS & AI"
+                width={800}
+                height={450}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                unoptimized={true}
+              />
               <div className="absolute top-4 left-4 bg-[#2596be] text-white px-3 py-1 rounded text-xs font-bold uppercase tracking-widest flex items-center">
                 <Star className="h-3 w-3 mr-1 fill-white" /> Top Rated
               </div>

@@ -5,11 +5,15 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -24,6 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className="overflow-x-hidden">
+      <head>
+        <link rel="preload" href="/videos/hero-bg.mp4" as="video" type="video/mp4" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >

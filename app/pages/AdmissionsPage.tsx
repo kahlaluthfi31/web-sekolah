@@ -1,25 +1,31 @@
 
 import React from 'react';
+import Image from 'next/image';
 // Fix: added Globe to the imports from lucide-react
 import { CheckCircle, Clock, Calendar, Users, FileText, Search, MessageSquare, Play, Globe } from 'lucide-react';
 
 const AdmissionsPage: React.FC = () => {
   return (
-    <div className="pt-20">
-      <section className="bg-[#0092DD] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">Admissions</h1>
-          <p className="max-w-2xl mx-auto text-white/80 text-sm leading-relaxed">
-            Odio et unde deleniti. Deserunt numquam exercitationem. Officiis quo odio sint voluptas consequatur ut a odio voluptatem.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <section className="pt-24 pb-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-6">
+            <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Penerimaan Siswa Baru</span>
+            <span className="text-xs text-gray-400">04 / 08</span>
+          </div>
+          
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Pendaftaran PPDB
+            </h1>
+            <p className="text-gray-600 text-base md:text-lg leading-relaxed">
+              Bergabunglah dengan SMKN 1 Ciamis dan mulai perjalanan pendidikan yang akan membentuk masa depan Anda. 
+              Proses penerimaan dirancang untuk mengidentifikasi calon siswa yang passionate dan siap berprestasi.
+            </p>
+          </div>
         </div>
       </section>
-
-      <div className="bg-gray-100 py-4 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD]">Home</span> <span className="mx-2">/</span> Admissions
-        </div>
-      </div>
 
       {/* Hero Section */}
       <section className="py-24 bg-white">
@@ -45,7 +51,14 @@ const AdmissionsPage: React.FC = () => {
             </div>
           </div>
           <div className="w-full lg:w-1/2 relative">
-             <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=800" className="rounded-2xl shadow-xl w-full" alt="Students in classroom" />
+             <Image
+             src="/images/default-student.svg"
+             alt="Students in classroom"
+             width={800}
+             height={450}
+             className="rounded-2xl shadow-xl w-full"
+             unoptimized={true}
+           />
              <div className="absolute top-4 right-4 bg-[#0092DD] text-white px-4 py-2 rounded-full text-xs font-bold flex items-center">
                 <Users className="h-3 w-3 mr-2" /> Join 12,000+ Alumni
              </div>
@@ -99,7 +112,7 @@ const AdmissionsPage: React.FC = () => {
                 { title: "Application Fee", desc: "$75 processing fee (waived for qualified students)" }
               ].map((req, i) => (
                 <li key={i} className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-[#0092DD] mt-0.5 mr-4 flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-maroon-600 mt-0.5 mr-4 shrink-0" />
                   <div>
                     <h5 className="font-bold text-sm">{req.title}</h5>
                     <p className="text-xs text-gray-400">{req.desc}</p>
@@ -212,8 +225,8 @@ const AdmissionsPage: React.FC = () => {
               </form>
            </div>
            <div>
-              <div className="relative rounded-2xl overflow-hidden h-[400px] shadow-xl group">
-                 <img src="https://media.istockphoto.com/id/1273875907/id/foto/profesor-senior-menunjukkan-mahasiswa-barunya-di-sekitar-kampus.jpg?s=1024x1024&w=is&k=20&c=CeFSAhOrZmIWPF_lNCgLxgjyazmyP201xOIB17OqPxE=" className="w-full h-full object-cover" alt="Campus tour" />
+              <div className="relative rounded-2xl overflow-hidden h-100 shadow-xl group">
+                 <img src="/images/default-campus.svg" className="w-full h-full object-cover" alt="Campus tour" />
                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <button className="bg-white/90 backdrop-blur text-gray-900 px-6 py-3 rounded-full font-bold flex items-center shadow-xl hover:bg-white transition-colors">
                        <Play className="h-5 w-5 mr-3 fill-[#0092DD] text-[#0092DD]" /> Virtual Campus Tour

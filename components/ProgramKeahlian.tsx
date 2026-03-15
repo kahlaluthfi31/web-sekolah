@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+
 import React, { useEffect, useState } from 'react'
 import {
   Building2, DollarSign, ShoppingCart, HandCoins,
@@ -111,14 +113,16 @@ const ProgramKeahlian: React.FC = () => {
                   {/* Logo / Icon */}
                   <div className="shrink-0">
                     {(major.icon || major.image) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={major.icon || major.image!}
-                        alt={major.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-14 h-14 rounded-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
+                      <div className="relative w-14 h-14 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300">
+                        <Image
+                          src={major.icon || major.image!}
+                          alt={major.name}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                          loading="lazy"
+                        />
+                      </div>
                     ) : (
                       <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
                         <IconComponent className="w-7 h-7" strokeWidth={2} />

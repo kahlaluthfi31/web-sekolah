@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 interface AlumniTestimonial {
@@ -15,7 +16,7 @@ interface AlumniTestimonial {
 
 const Testimonials: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [allTestimonials, setAllTestimonials] = useState<any[]>([]);
+  const [allTestimonials, setAllTestimonials] = useState<AlumniTestimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 3;
@@ -89,15 +90,18 @@ const Testimonials: React.FC = () => {
                 className="group bg-white rounded-2xl p-6 flex flex-col items-center text-center border border-transparent hover:border-[#0268ab] transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative overflow-hidden"
               >
                 {/* Avatar */}
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-gray-100 mb-4 shrink-0">
-                  <img
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-gray-100 mb-4 shrink-0">
+                  <Image
                     src={
                       alumni.photo ||
                       "https://media.istockphoto.com/vectors/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-vector-id1130884625?k=6&m=1130884625&s=170667a&w=0&h=b4ICEL-2imqnsT-m2tYGxZdxlgD1yKxmoDA-PmPc2-A="
                     }
                     alt={alumni.alumniName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                    loading="lazy"
+                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                       const target = e.target as HTMLImageElement;
                       target.src =
                         "https://media.istockphoto.com/vectors/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-vector-id1130884625?k=6&m=1130884625&s=170667a&w=0&h=b4ICEL-2imqnsT-m2tYGxZdxlgD1yKxmoDA-PmPc2-A=";

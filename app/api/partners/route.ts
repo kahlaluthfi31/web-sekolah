@@ -26,7 +26,12 @@ export async function GET(request: NextRequest) {
     ])
 
     return apiPagination(data, page, limit, total)
-  } catch (error) {
+  } catch (error: any) {
+    // Handle case when partners table doesn't exist yet
+    if (error?.code === 'P2021') {
+      console.warn('Partners table does not exist. Returning empty data.')
+      return apiPagination([], 1, 20, 0)
+    }
     return handleError(error)
   }
 }

@@ -22,8 +22,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   event: "Event",
 };
 
-const PLACEHOLDER =
-  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=500";
+const PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjI4MCIgdmlld0JveD0iMCAwIDUwMCAyODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iMjgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjIwMCAxMTBIMzAwVjE3MEgyMDBWMTEwWiIgZmlsbD0iI0QxRDVEQiIvPgo8c3ZnIHdpZHRoPSIxMDAiIGhlaWdodD0iNTYiIHZpZXdCb3g9IjAgMCAxMDAgNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTYiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iTTQ2LjUgMjFINjEuNVYzNS41SDQ2LjVWMjFaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K';
 
 function formatTanggal(dateStr: string): string {
   const d = new Date(dateStr);
@@ -73,13 +72,21 @@ function NewsCard({ item }: { item: NewsItem }) {
 const RecentNews: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [translateX, setTranslateX] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const maxScrollRef = useRef(0);
   const currentXRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const targetXRef = useRef(0);
+
+  // Detect touch device
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   useEffect(() => {
     fetch("/api/news?published=true&limit=10&page=1")
@@ -97,12 +104,18 @@ const RecentNews: React.FC = () => {
   useEffect(() => {
     const track = trackRef.current;
     const section = sectionRef.current;
-    if (!track || !section) return;
-    maxScrollRef.current = track.scrollWidth - section.clientWidth;
+    if (!track || !section || news.length === 0) return;
+    
+    const maxScroll = track.scrollWidth - section.clientWidth;
+    maxScrollRef.current = Math.max(0, maxScroll);
+    
+    console.log('Max scroll:', maxScrollRef.current, 'News length:', news.length);
   }, [news, loading]);
 
-  // Smooth lerp animation loop
+  // Smooth lerp animation loop (only for non-touch devices)
   useEffect(() => {
+    if (isTouchDevice) return; // Skip for touch devices
+
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
     const tick = () => {
@@ -122,6 +135,9 @@ const RecentNews: React.FC = () => {
       const max = maxScrollRef.current;
       if (max <= 0) return;
 
+      // Pause auto-scroll when user interacts
+      setIsAutoScrolling(false);
+
       const dirDown = e.deltaY > 0;
 
       // Lepas scroll vertikal jika sudah di ujung
@@ -137,6 +153,11 @@ const RecentNews: React.FC = () => {
       if (!rafRef.current) {
         rafRef.current = requestAnimationFrame(tick);
       }
+
+      // Resume auto-scroll after 5 seconds of inactivity
+      setTimeout(() => {
+        setIsAutoScrolling(true);
+      }, 5000);
     };
 
     const section = sectionRef.current;
@@ -146,7 +167,54 @@ const RecentNews: React.FC = () => {
       section.removeEventListener("wheel", onWheel);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [news, loading]);
+  }, [news, loading, isTouchDevice]);
+
+  // Auto-scroll functionality
+  useEffect(() => {
+    if (isTouchDevice || !isAutoScrolling || isHovered) {
+      console.log('Auto-scroll paused:', { isTouchDevice, isAutoScrolling, isHovered });
+      return;
+    }
+
+    console.log('Auto-scroll started');
+
+    const autoScrollInterval = setInterval(() => {
+      const max = maxScrollRef.current;
+      if (max <= 0) {
+        console.log('No scroll available, max:', max);
+        return;
+      }
+
+      // If reached the end, reset to start
+      if (targetXRef.current >= max) {
+        targetXRef.current = 0;
+        console.log('Reset to start');
+      } else {
+        // Scroll by one card width (approximately 300px including gap)
+        targetXRef.current = Math.min(max, targetXRef.current + 300);
+        console.log('Scrolling to:', targetXRef.current);
+      }
+
+      // Direct update for auto-scroll (no animation loop needed)
+      currentXRef.current = targetXRef.current;
+      setTranslateX(-targetXRef.current);
+    }, 3000); // Auto-scroll every 3 seconds
+
+    return () => {
+      clearInterval(autoScrollInterval);
+      console.log('Auto-scroll cleaned up');
+    };
+  }, [isAutoScrolling, isHovered, isTouchDevice]);
+
+  // Resume auto-scroll when hover ends
+  useEffect(() => {
+    if (!isHovered) {
+      const timeout = setTimeout(() => {
+        setIsAutoScrolling(true);
+      }, 1000); // Resume 1 second after hover ends
+      return () => clearTimeout(timeout);
+    }
+  }, [isHovered]);
 
   return (
     <>
@@ -173,15 +241,21 @@ const RecentNews: React.FC = () => {
         <div
           ref={sectionRef}
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="relative overflow-hidden rounded-2xl">
-            {/* Fade masks */}
-            <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
+          <div className={`relative rounded-2xl ${isTouchDevice ? '' : 'overflow-hidden'}`}>
+            {/* Fade masks - only show on non-touch devices */}
+            {!isTouchDevice && (
+              <>
+                <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
+              </>
+            )}
 
             {/* Skeleton loading */}
             {loading && (
-              <div className="flex gap-5 py-2">
+              <div className={`flex gap-5 py-2 ${isTouchDevice ? 'overflow-x-auto scrollbar-hide' : ''}`}>
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="w-72 shrink-0 bg-white rounded-2xl overflow-hidden animate-pulse">
                     <div className="aspect-video bg-gray-200" />
@@ -196,15 +270,24 @@ const RecentNews: React.FC = () => {
               </div>
             )}
 
-            {/* Slider track — digeser dengan transform */}
+            {/* Slider track */}
             {!loading && news.length > 0 && (
               <div
                 ref={trackRef}
-                className="flex gap-5 py-2 will-change-transform"
-                style={{ transform: `translateX(${translateX}px)` }}
+                className={`flex gap-5 py-2 ${
+                  isTouchDevice 
+                    ? 'overflow-x-auto scrollbar-hide snap-x snap-mandatory touch-pan-x' 
+                    : 'will-change-transform'
+                }`}
+                style={!isTouchDevice ? { 
+  transform: `translateX(${translateX}px)`,
+  transition: 'transform 0.5s ease-in-out'
+} : undefined}
               >
                 {news.map((item) => (
-                  <NewsCard key={item.id} item={item} />
+                  <div key={item.id} className={isTouchDevice ? 'snap-start' : ''}>
+                    <NewsCard item={item} />
+                  </div>
                 ))}
               </div>
             )}
