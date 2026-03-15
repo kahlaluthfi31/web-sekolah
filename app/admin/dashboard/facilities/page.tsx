@@ -249,12 +249,22 @@ function FacilityFormFields({
 }
 
 // ─── AddModal ─────────────────────────────────────────────────────────────────
-const BLANK_FORM = { name: '', description: '', category: '', image: '', quantity: 1, quantityType: 'jumlah' as const, condition: 'baik' }
+type FacilityFormState = {
+  name: string
+  description: string
+  category: string
+  image: string
+  quantity: number
+  quantityType: 'jumlah' | 'kapasitas'
+  condition: string
+}
+
+const BLANK_FORM: FacilityFormState = { name: '', description: '', category: '', image: '', quantity: 1, quantityType: 'jumlah', condition: 'baik' }
 
 function AddModal({ categories, onClose, onSaved }: {
   categories: FacilityCat[]; onClose: () => void; onSaved: () => void
 }) {
-  const [form, setForm] = useState({ ...BLANK_FORM })
+  const [form, setForm] = useState<FacilityFormState>({ ...BLANK_FORM })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -327,7 +337,7 @@ function AddModal({ categories, onClose, onSaved }: {
 function EditModal({ facilityId, categories, onClose, onSaved }: {
   facilityId: number; categories: FacilityCat[]; onClose: () => void; onSaved: () => void
 }) {
-  const [form, setForm] = useState({ ...BLANK_FORM })
+  const [form, setForm] = useState<FacilityFormState>({ ...BLANK_FORM })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -737,8 +747,6 @@ function FacilitiesTab({ categories }: { categories: FacilityCat[] }) {
     } catch (err) { console.error(err) }
     finally { setDeleting(false) }
   }
-
-  const activeFilters = (search ? 1 : 0) + (categoryFilter ? 1 : 0)
 
   // Map category name to color
   const catColor = (name: string) => {

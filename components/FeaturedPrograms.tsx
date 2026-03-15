@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Image from 'next/image';
 import { ArrowUpRight, Star, Clock, GraduationCap } from 'lucide-react';
 
 const FeaturedPrograms: React.FC = () => {
@@ -39,8 +40,15 @@ const FeaturedPrograms: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="rounded-2xl overflow-hidden shadow-xl aspect-video">
-            <img src="/images/default-campus.svg" alt="University Campus" className="w-full h-full object-cover" />
+          <div className="rounded-2xl overflow-hidden shadow-xl aspect-video relative">
+            <Image
+              src="/images/default-campus.svg"
+              alt="University Campus"
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
           </div>
         </div>
 
@@ -68,7 +76,7 @@ const FeaturedPrograms: React.FC = () => {
               
               <div className="flex items-center space-x-6 text-sm text-gray-500 mb-6">
                 <div className="flex items-center"><Clock className="h-4 w-4 mr-1" /> 4 Years</div>
-                <div className="flex items-center"><GraduationCap className="h-4 w-4 mr-1" /> Bachelor's</div>
+                <div className="flex items-center"><GraduationCap className="h-4 w-4 mr-1" /> Bachelor&apos;s</div>
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-gray-100">
@@ -82,10 +90,17 @@ const FeaturedPrograms: React.FC = () => {
           <div className="space-y-4">
             {secondaryPrograms.map((prog, idx) => (
               <div key={idx} className="bg-white rounded-xl p-4 flex items-center shadow-md border border-gray-100 group cursor-pointer hover:shadow-lg transition-shadow">
-                <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                  <img src={prog.image} alt={prog.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 relative">
+                  <Image
+                    src={prog.image}
+                    alt={prog.title}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    sizes="96px"
+                    unoptimized
+                  />
                 </div>
-                <div className="ml-6 flex-grow">
+                <div className="ml-6 grow">
                   <span className="text-[#2596be] text-[10px] font-bold uppercase tracking-widest">{prog.category}</span>
                   <h5 className="font-bold text-gray-900 group-hover:text-[#2596be] transition-colors">{prog.title}</h5>
                   <div className="flex space-x-4 text-xs text-gray-500 mt-1">
