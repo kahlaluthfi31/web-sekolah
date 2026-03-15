@@ -25,7 +25,10 @@ jobs:
             ssh-add ~/.ssh/wisnu
             cd web
             git pull origin main
+            npx prisma generate
             npm install
+            npm run db:push
+            npm run db:seed
             npm run build
-            npx pm2 restart web-sekolah
+            npx pm2 restart web-sekolah 
         "
