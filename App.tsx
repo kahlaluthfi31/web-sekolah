@@ -8,7 +8,7 @@ import StudentLife from '@/components/StudentLife';
 import Testimonials from '@/components/Testimonials';
 import RecentNews from '@/components/RecentNews';
 import UpcomingEvents from '@/components/UpcomingEvents';
-import SocialFeedsVertikal from '@/components/SocialFeeds(vertikal)';
+import SocialFeedsVertikal from '@/components/SocialFeeds';
 import Partners from '@/components/Partners';
 import Footer from '@/components/Footer';
 import AboutPage from '@/app/pages/AboutPage';
