@@ -1,0 +1,6 @@
+<svg width="800" height="450" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="800" height="450" fill="#F3F4F6"/>
+<path d="M300 180H500V270H300V180Z" fill="#0092DD"/>
+<text x="400" y="225" fill="white" text-anchor="middle" font-size="32" font-weight="bold">Student Life</text>
+<text x="400" y="255" fill="white" text-anchor="middle" font-size="18">Activities & Programs</text>
+</svg>

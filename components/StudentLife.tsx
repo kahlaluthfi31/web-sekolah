@@ -259,8 +259,8 @@ const StudentLife: React.FC = () => {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/eskul-activities?limit=5&page=1").then((r) => r.json()),
-      fetch("/api/achievements?status=approved&limit=6&page=1").then((r) => r.json()),
+      fetch("/api/eskul-activities?limit=4&page=1").then((r) => r.json()),
+      fetch("/api/achievements?status=approved&limit=4&page=1").then((r) => r.json()),
     ])
       .then(([actJson, achieveJson]) => {
         if (actJson.success) {
@@ -277,86 +277,196 @@ const StudentLife: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-20 bg-gray-50 overflow-hidden">
+    <section className="py-12 md:py-16 lg:py-20 bg-gray-50 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Top label row */}
-        <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
-          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Kehidupan Siswa</span>
-          <span className="text-xs text-gray-400">06 / 08</span>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 md:mb-12 border-b border-gray-200 pb-4 md:pb-6">
+          <span className="text-[10px] md:text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Kehidupan Siswa</span>
+          <span className="text-[10px] md:text-xs text-gray-400">06 / 08</span>
         </div>
 
-        {/*  Skeleton  */}
+        {/* Skeleton */}
         {loading && (
-          <div className="animate-pulse grid grid-cols-2 gap-6">
-            {[0, 1].map((col) => (
-              <div key={col} className="flex flex-col gap-3">
-                <div className="rounded-2xl bg-gray-200" style={{ height: 300 }} />
-                <div className="grid grid-cols-2 gap-3" style={{ height: 180 }}>
-                  <div className="rounded-2xl bg-gray-200" />
-                  <div className="rounded-2xl bg-gray-100" />
+          <div className="animate-pulse">
+            {/* Desktop skeleton */}
+            <div className="hidden lg:grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-gray-200 rounded" />
+                <div className="grid grid-cols-2 grid-rows-2 gap-4 h-96">
+                  <div className="col-span-2 row-span-1 rounded-2xl bg-gray-200" />
+                  <div className="col-span-1 row-span-1 rounded-2xl bg-gray-200" />
+                  <div className="col-span-1 row-span-1 rounded-2xl bg-gray-200" />
                 </div>
               </div>
-            ))}
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-gray-200 rounded" />
+                <div className="grid grid-cols-2 grid-rows-2 gap-4 h-96">
+                  <div className="col-span-1 row-span-1 rounded-2xl bg-gray-200" />
+                  <div className="col-span-1 row-span-1 rounded-2xl bg-gray-200" />
+                  <div className="col-span-2 row-span-1 rounded-2xl bg-gray-200" />
+                </div>
+              </div>
+            </div>
+            {/* Tablet skeleton */}
+            <div className="hidden md:grid lg:hidden gap-4 md:gap-6">
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
+                <div className="h-3 w-24 bg-gray-200 rounded" />
+                <div className="h-3 w-24 bg-gray-200 rounded" />
+              </div>
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="h-64 md:h-80 rounded-2xl bg-gray-200" />
+                <div className="h-64 md:h-80 rounded-2xl bg-gray-200" />
+                <div className="h-56 md:h-64 rounded-2xl bg-gray-200" />
+                <div className="h-56 md:h-64 rounded-2xl bg-gray-200" />
+              </div>
+            </div>
+            {/* Mobile skeleton */}
+            <div className="grid md:hidden grid-cols-1 gap-8">
+              <div className="space-y-3">
+                <div className="h-3 w-24 bg-gray-200 rounded" />
+                <div className="space-y-3">
+                  <div className="h-64 rounded-2xl bg-gray-200" />
+                  <div className="h-52 rounded-2xl bg-gray-200" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="h-3 w-24 bg-gray-200 rounded" />
+                <div className="space-y-3">
+                  <div className="h-64 rounded-2xl bg-gray-200" />
+                  <div className="h-52 rounded-2xl bg-gray-200" />
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Content */}
         {!loading && (
-          <div className="space-y-0">
+          <div className="space-y-8">
 
-            {/* ── Label baris ── */}
-            <div className="grid grid-cols-2 gap-6 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Ekstrakurikuler
-                </span>
-                {totalActivity > 0 && (
-                  <span className="ml-auto text-[10px] font-semibold text-[#0268ab] bg-blue-50 px-2 py-0.5 rounded-full">
-                    {totalActivity} kegiatan
+            {/* Desktop: 2 columns side by side with headers */}
+            <div className="hidden lg:grid grid-cols-2 gap-6">
+              
+              {/* LEFT: Kegiatan Ekstrakurikuler */}
+              <div className="space-y-4">
+                {/* Header Ekstrakurikuler */}
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Ekstrakurikuler
                   </span>
-                )}
+                </div>
+                {/* Bento Grid */}
+                <div className="grid grid-cols-2 grid-rows-2 gap-4 h-96">
+                  {/* Activity 1 - Wide 2×1 */}
+                  <div className="col-span-2 row-span-1">
+                    <ActivityCard act={activities[0]} size="large" />
+                  </div>
+                  {/* Activity 2 - Small 1×1 */}
+                  <div className="col-span-1 row-span-1">
+                    <ActivityCard act={activities[1]} size="normal" />
+                  </div>
+                  {/* Activity 3 - Small 1×1 */}
+                  <div className="col-span-1 row-span-1">
+                    <ActivityCard act={activities[2]} size="normal" />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Prestasi Siswa
-                </span>
-                {totalAchievement > 0 && (
-                  <span className="ml-auto text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                    {totalAchievement}+ prestasi
+
+              {/* RIGHT: Prestasi Siswa */}
+              <div className="space-y-4">
+                {/* Header Prestasi */}
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Prestasi Siswa
                   </span>
-                )}
+                </div>
+                {/* Bento Grid */}
+                <div className="grid grid-cols-2 grid-rows-2 gap-4 h-96">
+                  {/* Achievement 1 - Small 1×1 */}
+                  <div className="col-span-1 row-span-1">
+                    <AchievementCard item={achievements[0]} size="normal" />
+                  </div>
+                  {/* Achievement 2 - Small 1×1 */}
+                  <div className="col-span-1 row-span-1">
+                    <AchievementCard item={achievements[1]} size="normal" />
+                  </div>
+                  {/* Achievement 3 - Wide 2×1 */}
+                  <div className="col-span-2 row-span-1">
+                    <AchievementCard item={achievements[2]} size="large" />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Tablet: 2 columns simplified */}
+            <div className="hidden md:grid lg:hidden gap-4 md:gap-6">
+              {/* Headers for tablet */}
+              <div className="grid grid-cols-2 gap-4 md:gap-6 mb-3">
+                <div>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Ekstrakurikuler
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Prestasi Siswa
+                  </span>
+                </div>
+              </div>
+              {/* Grid */}
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="h-64 md:h-80">
+                  <ActivityCard act={activities[0]} size="large" />
+                </div>
+                <div className="h-64 md:h-80">
+                  <AchievementCard item={achievements[0]} size="large" />
+                </div>
+                <div className="h-56 md:h-64">
+                  <ActivityCard act={activities[1]} size="normal" />
+                </div>
+                <div className="h-56 md:h-64">
+                  <AchievementCard item={achievements[1]} size="normal" />
+                </div>
               </div>
             </div>
 
-            {/* ── 2 kolom berdampingan — grid identik ── */}
-            <div className="grid grid-cols-2 gap-6">
-
-              {/* ═══ KOLOM KIRI: Kegiatan ═══ */}
-              <div className="flex flex-col gap-3">
-                {/* Baris 1: card besar */}
-                <div style={{ height: 300 }}>
-                  <ActivityCard act={activities[0]} size="large" />
+            {/* Mobile: Single column */}
+            <div className="grid md:hidden grid-cols-1 gap-8">
+              {/* Ekstrakurikuler Section */}
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Ekstrakurikuler
+                  </span>
                 </div>
-                {/* Baris 2: 2 card kecil berdampingan */}
-                <div className="grid grid-cols-2 gap-3" style={{ height: 180 }}>
-                  <ActivityCard act={activities[1]} size="normal" />
-                  <ActivityCard act={activities[2]} size="normal" />
-                </div>
-              </div>
-
-              {/* ═══ KOLOM KANAN: Prestasi ═══ */}
-              <div className="flex flex-col gap-3">
-                {/* Baris 1: card besar */}
-                <div style={{ height: 300 }}>
-                  <AchievementCard item={achievements[0]} size="large" />
-                </div>
-                {/* Baris 2: 2 card kecil berdampingan */}
-                <div className="grid grid-cols-2 gap-3" style={{ height: 180 }}>
-                  <AchievementCard item={achievements[1]} size="normal" />
-                  <AchievementCard item={achievements[2]} size="normal" />
+                <div className="space-y-3">
+                  <div className="h-64">
+                    <ActivityCard act={activities[0]} size="large" />
+                  </div>
+                  <div className="h-52">
+                    <ActivityCard act={activities[1]} size="normal" />
+                  </div>
                 </div>
               </div>
-
+              
+              {/* Prestasi Section */}
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Prestasi Siswa
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-64">
+                    <AchievementCard item={achievements[0]} size="large" />
+                  </div>
+                  <div className="h-52">
+                    <AchievementCard item={achievements[1]} size="normal" />
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>

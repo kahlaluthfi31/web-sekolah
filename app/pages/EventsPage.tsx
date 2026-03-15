@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, ChevronRight, Search, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, ChevronRight, Search, Filter, Users, CalendarDays, Map, Ticket, Star } from 'lucide-react';
 
 const EventsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -9,56 +9,56 @@ const EventsPage: React.FC = () => {
       id: 1,
       month: "Feb",
       day: "15",
-      year: "2026",
-      category: "Academic",
-      title: "Science Fair Exhibition",
-      description: "Annual science fair showcasing student innovations and research projects from all departments.",
-      time: "09:00 AM - 03:00 PM",
-      location: "Main Auditorium",
-      organizer: "Science Department",
-      participants: "120+ Students",
+      year: "2024",
+      category: "Akademik",
+      title: "Science Fair Exhibition SMKN 1 Ciamis",
+      description: "Pameran sains tahunan yang menampilkan inovasi dan proyek penelitian siswa dari semua jurusan.",
+      time: "09:00 - 15:00",
+      location: "Auditorium Utama",
+      organizer: "Jurusan IPA",
+      participants: "120+ Siswa",
       color: "bg-blue-500",
     },
     {
       id: 2,
       month: "Mar",
       day: "10",
-      year: "2026",
-      category: "Sports",
-      title: "Annual Sports Day",
-      description: "School-wide sports competition featuring athletics, team sports, and traditional games.",
-      time: "08:30 AM - 05:00 PM",
-      location: "School Sports Ground",
-      organizer: "Physical Education Dept",
-      participants: "All Students",
+      year: "2024",
+      category: "Olahraga",
+      title: "Hari Olahraga Tahunan",
+      description: "Kompetisi olahraga sekolah yang menampilkan atletik, olahraga tim, dan permainan tradisional.",
+      time: "08:30 - 17:00",
+      location: "Lapangan Olahraga",
+      organizer: "Jurusan Penjaskes",
+      participants: "Semua Siswa",
       color: "bg-green-500",
     },
     {
       id: 3,
       month: "Apr",
       day: "22",
-      year: "2026",
-      category: "Arts",
-      title: "Spring Music Concert",
-      description: "Evening performance by school orchestra and choir featuring classical and modern music.",
-      time: "06:30 PM - 08:30 PM",
-      location: "Performing Arts Center",
-      organizer: "Music Department",
-      participants: "50+ Performers",
+      year: "2024",
+      category: "Seni",
+      title: "Konser Musik Musim Semi",
+      description: "Pertunjukan malam oleh orkestra dan paduan suara sekolah yang menampilkan musik klasik dan modern.",
+      time: "18:30 - 20:30",
+      location: "Pusat Seni Pertunjukan",
+      organizer: "Jurusan Seni Musik",
+      participants: "50+ Penampil",
       color: "bg-pink-500",
     },
     {
       id: 4,
       month: "May",
       day: "08",
-      year: "2026",
-      category: "Community",
-      title: "Parent-Teacher Conference",
-      description: "Quarterly meeting to discuss student progress, academic performance, and development plans.",
-      time: "01:00 PM - 07:00 PM",
-      location: "Various Classrooms",
-      organizer: "Administration",
-      participants: "Parents & Teachers",
+      year: "2024",
+      category: "Komunitas",
+      title: "Konferensi Orang Tua-Guru",
+      description: "Pertemuan triwulanan untuk membahas kemajuan siswa, prestasi akademik, dan rencana pengembangan.",
+      time: "13:00 - 19:00",
+      location: "Berbagai Ruang Kelas",
+      organizer: "Administrasi",
+      participants: "Orang Tua & Guru",
       color: "bg-orange-500",
     }
   ];
@@ -68,242 +68,341 @@ const EventsPage: React.FC = () => {
       id: 5,
       month: "Jan",
       day: "20",
-      year: "2026",
-      category: "Academic",
-      title: "New Year Academic Orientation",
-      description: "Opening ceremony and orientation for the spring semester with keynote speeches.",
-      time: "10:00 AM - 12:00 PM",
-      location: "Main Hall",
-      organizer: "Administration",
-      participants: "All Students",
+      year: "2024",
+      category: "Akademik",
+      title: "Orientasi Akademik Tahun Baru",
+      description: "Upacara pembukaan dan orientasi untuk semester musim semi dengan pidato kunci.",
+      time: "10:00 - 12:00",
+      location: "Aula Utama",
+      organizer: "Administrasi",
+      participants: "Semua Siswa",
       color: "bg-purple-500",
-      attendees: "850+ Participants",
-      status: "Completed"
+      attendees: "850+ Peserta",
+      status: "Selesai"
     },
     {
       id: 6,
       month: "Jan",
       day: "15",
-      year: "2026",
-      category: "Competition",
-      title: "Inter-School Debate Championship",
-      description: "Regional debate competition with teams from 10 different schools competing.",
-      time: "09:00 AM - 04:00 PM",
-      location: "Conference Hall",
-      organizer: "Language Department",
-      participants: "40 Debaters",
+      year: "2024",
+      category: "Kompetisi",
+      title: "Kejuaraan Debat Antar Sekolah",
+      description: "Kompetisi debat regional dengan tim dari 10 sekolah berbeda yang berkompetisi.",
+      time: "09:00 - 16:00",
+      location: "Ruang Konferensi",
+      organizer: "Jurusan Bahasa",
+      participants: "40 Debatir",
       color: "bg-indigo-500",
-      attendees: "200+ Audience",
-      status: "Completed"
-    },
-    {
-      id: 7,
-      month: "Dec",
-      day: "18",
-      year: "2025",
-      category: "Cultural",
-      title: "Winter Arts & Culture Festival",
-      description: "Three-day festival celebrating art, music, dance, and cultural diversity.",
-      time: "All Day Event",
-      location: "School Campus",
-      organizer: "Cultural Committee",
-      participants: "Entire School",
-      color: "bg-red-500",
-      attendees: "1000+ Visitors",
-      status: "Completed"
-    },
-    {
-      id: 8,
-      month: "Dec",
-      day: "10",
-      year: "2025",
-      category: "Workshop",
-      title: "Career Guidance Workshop",
-      description: "Professional development workshop with industry experts and career counselors.",
-      time: "02:00 PM - 05:00 PM",
-      location: "Seminar Room B",
-      organizer: "Career Counseling",
-      participants: "Senior Students",
-      color: "bg-teal-500",
-      attendees: "150+ Students",
-      status: "Completed"
+      attendees: "200+ Penonton",
+      status: "Selesai"
     }
   ];
 
   const currentEvents = activeTab === 'upcoming' ? upcomingEvents : pastEvents;
 
   return (
-    <div className="pt-20">
-      {/* Page Header */}
-      <section className="bg-[#0092DD] text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4">Agenda & Events</h1>
-          <p className="max-w-2xl mx-auto text-white/90 text-lg leading-relaxed">
-            Explore our upcoming events and discover what's happening at our school. Join us in creating memorable experiences!
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - Contact Page Style */}
+      <section className="pt-24 pb-16 relative overflow-hidden">
+        {/* Background dengan gradien opacity dari atas ke bawah menggunakan warna primary */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
+        
+        {/* Dotted pattern overlay */}
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-0 left-0 w-full h-full" 
+               style={{
+                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3Ccircle cx='10' cy='10' r='1.5'/%3E%3Ccircle cx='50' cy='10' r='1.5'/%3E%3Ccircle cx='10' cy='50' r='1.5'/%3E%3Ccircle cx='50' cy='50' r='1.5'/%3E%3C/g%3E%3C/svg%3E")`,
+                 backgroundSize: '60px 60px'
+               }} />
+        </div>
+        
+        {/* School-related floating elements */}
+        <div className="absolute top-10 right-20 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-10 left-20 w-48 h-48 bg-white opacity-5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+        
+        {/* Event-related illustrations */}
+        <div className="absolute top-20 left-10 text-white/10">
+          <Calendar className="w-16 h-16" strokeWidth={1} />
+        </div>
+        <div className="absolute top-32 right-16 text-white/10">
+          <CalendarDays className="w-12 h-12" strokeWidth={1} />
+        </div>
+        <div className="absolute bottom-20 left-32 text-white/10">
+          <MapPin className="w-14 h-14" strokeWidth={1} />
+        </div>
+        <div className="absolute top-1/3 right-32 text-white/10">
+          <Clock className="w-10 h-10" strokeWidth={1} />
+        </div>
+        
+        {/* School elements */}
+        <div className="absolute bottom-32 right-20 text-white/8">
+          <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 3L1 9L12 15L23 9L12 3Z" />
+            <path d="M12 15L12 21" />
+            <path d="M8 17L8 21" />
+            <path d="M16 17L16 21" />
+            <path d="M1 9L1 21L23 21L23 9" />
+          </svg>
+        </div>
+        <div className="absolute top-40 left-40 text-white/8">
+          <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3H5C3.89 3 3 3.89 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.89 20.1 3 19 3ZM19 5V19H5V5H19Z" />
+            <path d="M12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7ZM12 15C14.67 15 17 16.17 17 17.5V19H7V17.5C7 16.17 9.33 15 12 15Z" />
+          </svg>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              Agenda & Kegiatan 
+              <span className="block text-5xl md:text-6xl lg:text-7xl font-light mt-2">SMKN 1 Ciamis</span>
+            </h1>
+            <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+              Jangan lewatkan berbagai agenda dan kegiatan menarik di SMKN 1 Ciamis. 
+              Rencanakan partisipasi Anda dalam setiap momen berharga bersama kami.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Upcoming Events Section - Timeline Style */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
+            <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Acara Mendatang</span>
+            <span className="text-xs text-gray-400">01 / 03</span>
+          </div>
+          
+          <p className="text-gray-600 text-lg max-w-2xl mb-16">
+            Acara-acara penting yang akan datang di SMKN 1 Ciamis
           </p>
-        </div>
-      </section>
-
-      {/* Breadcrumb */}
-      <div className="bg-gray-100 py-4 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD] cursor-pointer">Home</span> <span className="mx-2">/</span> Events
-        </div>
-      </div>
-
-      {/* Tabs & Filters */}
-      <section className="py-12 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            {/* Tabs */}
-            <div className="flex bg-gray-100 rounded-full p-1">
-              <button
-                onClick={() => setActiveTab('upcoming')}
-                className={`px-8 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
-                  activeTab === 'upcoming'
-                    ? 'bg-[#0092DD] text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Upcoming Events
-              </button>
-              <button
-                onClick={() => setActiveTab('past')}
-                className={`px-8 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
-                  activeTab === 'past'
-                    ? 'bg-[#0092DD] text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Past Events
-              </button>
-            </div>
-
-            {/* Search & Filter */}
-            <div className="flex gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search events..."
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0092DD] outline-none"
-                />
-              </div>
-              <select className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0092DD] outline-none">
-                <option>All Categories</option>
-                <option>Academic</option>
-                <option>Sports</option>
-                <option>Arts</option>
-                <option>Community</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Events Grid */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Stats Banner */}
-          <div className="mb-12 bg-white rounded-2xl shadow-sm p-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <span className="block text-3xl font-bold text-[#0092DD] mb-2">
-                {activeTab === 'upcoming' ? upcomingEvents.length : pastEvents.length}
-              </span>
-              <span className="text-sm text-gray-500 font-semibold">
-                {activeTab === 'upcoming' ? 'Upcoming Events' : 'Past Events'}
-              </span>
-            </div>
-            <div className="text-center">
-              <span className="block text-3xl font-bold text-gray-900 mb-2">12+</span>
-              <span className="text-sm text-gray-500 font-semibold">Events This Year</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-3xl font-bold text-gray-900 mb-2">5000+</span>
-              <span className="text-sm text-gray-500 font-semibold">Total Participants</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-3xl font-bold text-gray-900 mb-2">8</span>
-              <span className="text-sm text-gray-500 font-semibold">Event Categories</span>
-            </div>
+          
+          {/* Tabs */}
+          <div className="flex bg-gray-100 rounded-full p-1 mb-16 max-w-md">
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={`flex-1 px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
+                activeTab === 'upcoming'
+                  ? 'bg-[#0268ab] text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Acara Mendatang
+            </button>
+            <button
+              onClick={() => setActiveTab('past')}
+              className={`flex-1 px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
+                activeTab === 'past'
+                  ? 'bg-[#0268ab] text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Acara Selesai
+            </button>
           </div>
 
-          {/* Events List */}   
-          <div className="space-y-6">
-            {currentEvents.map((event) => (
-              <div
-                key={event.id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Date Card */}
-                  <div className="lg:col-span-1 bg-[#0092DD] text-white p-8 flex flex-col items-center justify-center relative">
-                    <div className="absolute top-4 right-4">
-                      <span className={`${event.color} text-white px-3 py-1 rounded-full text-xs font-bold`}>
-                        {event.category}
-                      </span>
+          {/* Timeline Layout */}
+          <div className="relative">
+            {/* Vertical Line */}
+            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#0268ab] via-[#0268ab]/50 to-transparent"></div>
+            
+            {/* Timeline Events */}
+            <div className="space-y-8">
+              {currentEvents.map((event, index) => (
+                <div key={event.id} className="relative flex items-start gap-6 md:gap-8">
+                  {/* Timeline Dot */}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-[#0268ab] to-[#014a8f] flex items-center justify-center shadow-md relative z-10">
+                      <Calendar className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
-                    <span className="text-sm font-bold uppercase tracking-widest opacity-80">{event.month}</span>
-                    <span className="text-6xl font-black my-2">{event.day}</span>
-                    <span className="text-sm opacity-80">{event.year}</span>
+                    {/* Connecting Line */}
+                    {index < currentEvents.length - 1 && (
+                      <div className="absolute top-12 md:top-14 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-gradient-to-b from-[#0268ab]/30 to-transparent"></div>
+                    )}
                   </div>
 
-                  {/* Event Details */}
-                  <div className="lg:col-span-2 p-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-[#0092DD] transition-colors">
-                      {event.title}
-                    </h3>
-                    <p className="text-gray-600 mb-6 leading-relaxed">{event.description}</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="h-5 w-5 text-[#0092DD] mr-3" />
-                        <span className="text-sm">{event.time}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="h-5 w-5 text-[#0092DD] mr-3" />
-                        <span className="text-sm">{event.location}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="h-5 w-5 text-[#0092DD] mr-3" />
-                        <span className="text-sm">{event.organizer}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <svg className="h-5 w-5 text-[#0092DD] mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        <span className="text-sm">{event.participants}</span>
-                      </div>
-                    </div>
-
-                    {activeTab === 'past' && 'attendees' in event && (
-                      <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r">
-                        <div className="flex items-center">
-                          <span className="text-green-700 font-semibold text-sm mr-2">✓ {(event as unknown as { status: string }).status}</span>
-                          <span className="text-gray-600 text-sm">• {(event as unknown as { attendees: string }).attendees}</span>
+                  {/* Event Card */}
+                  <div className="flex-1 min-w-0">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
+                      {/* Event Header with Date Badge */}
+                      <div className="relative bg-gradient-to-r from-[#0268ab]/5 to-[#0268ab]/2 p-4 md:p-5">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="bg-[#0268ab] text-white text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
+                                {event.category}
+                              </span>
+                              <span className="text-xs text-gray-500">{event.year}</span>
+                            </div>
+                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1 group-hover:text-[#0268ab] transition-colors">
+                              {event.title}
+                            </h3>
+                            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                              {event.description}
+                            </p>
+                          </div>
+                          
+                          {/* Date Card */}
+                          <div className="flex-shrink-0">
+                            <div className="bg-white rounded-lg shadow-sm p-3 text-center min-w-[80px]">
+                              <div className="text-xs font-bold uppercase tracking-widest text-[#0268ab] mb-0.5">
+                                {event.month}
+                              </div>
+                              <div className="text-xl md:text-2xl font-black text-gray-900 leading-none">
+                                {event.day}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
 
-                    <div className="flex gap-3">
-                      {activeTab === 'upcoming' ? (
-                        <>
-                          <button className="text-[#0092DD] font-semibold text-sm flex items-center hover:gap-2 transition-all">
-                            View Details <ChevronRight className="h-4 w-4 ml-1" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-gray-200 transition-all duration-300">
-                            View Gallery
-                          </button>
-                          <button className="text-[#0092DD] font-semibold text-sm flex items-center hover:gap-2 transition-all">
-                            Read Summary <ChevronRight className="h-4 w-4 ml-1" />
-                          </button>
-                        </>
-                      )}
+                      {/* Event Details */}
+                      <div className="p-4 md:p-5">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <div className="w-8 h-8 rounded-full bg-[#0268ab]/10 flex items-center justify-center flex-shrink-0">
+                              <Clock className="w-4 h-4 text-[#0268ab]" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500">Waktu</div>
+                              <div className="text-sm font-medium">{event.time}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <div className="w-8 h-8 rounded-full bg-[#0268ab]/10 flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-4 h-4 text-[#0268ab]" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500">Lokasi</div>
+                              <div className="text-sm font-medium">{event.location}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <div className="w-8 h-8 rounded-full bg-[#0268ab]/10 flex items-center justify-center flex-shrink-0">
+                              <Users className="w-4 h-4 text-[#0268ab]" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500">Peserta</div>
+                              <div className="text-sm font-medium">{event.participants}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Organizer Info */}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+                              <Calendar className="w-3.5 h-3.5 text-gray-600" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500">Penyelenggara</div>
+                              <div className="text-sm font-medium text-gray-900">{event.organizer}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex gap-2">
+                            {activeTab === 'upcoming' ? (
+                              <>
+                                <button className="flex items-center gap-1 text-[#0268ab] text-xs font-semibold hover:translate-x-1 transition-transform">
+                                  Detail <ChevronRight className="h-3 w-3" />
+                                </button>
+                                <button className="bg-[#0268ab] text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-[#014a8f] transition-all duration-300">
+                                  Daftar
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-gray-200 transition-all duration-300">
+                                  Galeri
+                                </button>
+                                <button className="flex items-center gap-1 text-[#0268ab] text-xs font-semibold hover:translate-x-1 transition-transform">
+                                  Ringkasan <ChevronRight className="h-3 w-3" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Past Event Status */}
+                        {activeTab === 'past' && 'attendees' in event && (
+                          <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-500 rounded-r">
+                            <div className="flex items-center">
+                              <span className="text-green-700 font-semibold text-xs mr-2">✓ {(event as unknown as { status: string }).status}</span>
+                              <span className="text-gray-600 text-xs">• {(event as unknown as { attendees: string }).attendees}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Event Categories Section */}
+      <section className="py-16 lg:py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
+            <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Kategori Acara</span>
+            <span className="text-xs text-gray-400">02 / 03</span>
+          </div>
+          
+          <p className="text-gray-600 text-lg max-w-2xl mb-16">
+            Berbagai jenis acara yang diselenggarakan di SMKN 1 Ciamis
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: Calendar,
+                title: "Academik",
+                desc: "Olimpiade, kompetisi sains, dan kegiatan akademik lainnya",
+                color: "from-blue-500 to-blue-600"
+              },
+              {
+                icon: Star,
+                title: "Seni & Budaya",
+                desc: "Festival seni, konser musik, dan pertunjukan budaya",
+                color: "from-purple-500 to-purple-600"
+              },
+              {
+                icon: Users,
+                title: "Olahraga",
+                desc: "Kompetisi olahraga, hari olahraga, dan kegiatan fisik",
+                color: "from-green-500 to-green-600"
+              },
+              {
+                icon: Map,
+                title: "Komunitas",
+                desc: "Konferensi orang tua, workshop, dan kegiatan sosial",
+                color: "from-orange-500 to-orange-600"
+              }
+            ].map((category, i) => (
+              <div key={i} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+                {/* Logo SMKN 1 Ciamis - Pojok Bawah Kanan BNW - Half Visible - Larger & More Visible */}
+                <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img 
+                      src="/images/logosmeabnw.svg" 
+                      alt="SMKN 1 Ciamis Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0268ab]/10 to-[#0268ab]/5 flex items-center justify-center mb-6">
+                    <category.icon className="w-8 h-8 text-[#0268ab]" />
+                  </div>
+                  <h4 className="font-bold text-xl text-gray-900 mb-3">{category.title}</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">{category.desc}</p>
                 </div>
               </div>
             ))}
@@ -311,16 +410,59 @@ const EventsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-[#0092DD] text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Want to Organize an Event?</h2>
-          <p className="text-white/90 mb-8 leading-relaxed">
-            Have an idea for a school event? We'd love to hear from you! Submit your event proposal and join us in creating memorable experiences.
+      {/* Event Registration Section */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
+            <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Informasi Pendaftaran</span>
+            <span className="text-xs text-gray-400">03 / 03</span>
+          </div>
+          
+          <p className="text-gray-600 text-lg max-w-2xl mb-16">
+            Cara mendaftar dan berpartisipasi dalam acara sekolah
           </p>
-          <button className="bg-white text-[#0092DD] px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 shadow-lg">
-            Submit Event Proposal
-          </button>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Ticket,
+                title: "Pendaftaran Online",
+                desc: "Daftar secara online melalui website sekolah",
+                steps: ["Isi formulir pendaftaran", "Upload dokumen yang diperlukan", "Konfirmasi pembayaran"]
+              },
+              {
+                icon: Calendar,
+                title: "Pendaftaran Offline",
+                desc: "Datang langsung ke sekolah untuk mendaftar",
+                steps: ["Kunjungi ruang administrasi", "Bawa dokumen asli", "Selesaikan pendaftaran di tempat"]
+              },
+              {
+                icon: Users,
+                title: "Syarat & Ketentuan",
+                desc: "Persyaratan yang harus dipenuhi peserta",
+                steps: ["Siswa aktif SMKN 1 Ciamis", "Melampirkan izin orang tua", "Mematuhi peraturan acara"]
+              }
+            ].map((info, i) => (
+              <div key={i} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0268ab]/10 to-[#0268ab]/5 flex items-center justify-center mb-6">
+                  <info.icon className="w-8 h-8 text-[#0268ab]" />
+                </div>
+                <h4 className="font-bold text-xl text-gray-900 mb-3">{info.title}</h4>
+                <p className="text-sm text-gray-600 mb-6">{info.desc}</p>
+                <div className="space-y-3">
+                  {info.steps.map((step, j) => (
+                    <div key={j} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-[#0268ab]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-[#0268ab]">{j + 1}</span>
+                      </div>
+                      <span className="text-sm text-gray-600">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>

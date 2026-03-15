@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 interface Partner {
   id: number;
@@ -104,11 +105,16 @@ const Partners: React.FC = () => {
                       className="flex-shrink-0 flex items-center justify-center w-32 h-20 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100"
                     >
                       {partner.logoUrl ? (
-                        <img
-                          src={partner.logoUrl}
-                          alt={partner.name}
-                          className="max-h-14 max-w-full object-contain"
-                        />
+                        <div className="relative w-full h-14">
+                          <Image
+                            src={partner.logoUrl}
+                            alt={partner.name}
+                            fill
+                            sizes="128px"
+                            className="object-contain"
+                            loading="lazy"
+                          />
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-400">{partner.name}</span>
                       )}
@@ -125,11 +131,16 @@ const Partners: React.FC = () => {
                         className="flex-shrink-0 flex items-center justify-center w-32 h-20 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100"
                       >
                         {partner.logoUrl ? (
-                          <img
-                            src={partner.logoUrl}
-                            alt={partner.name}
-                            className="max-h-14 max-w-full object-contain"
-                          />
+                          <div className="relative w-full h-14">
+                            <Image
+                              src={partner.logoUrl}
+                              alt={partner.name}
+                              fill
+                              sizes="128px"
+                              className="object-contain"
+                              loading="lazy"
+                            />
+                          </div>
                         ) : (
                           <span className="text-xs text-gray-400">{partner.name}</span>
                         )}
