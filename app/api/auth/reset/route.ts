@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // @ts-expect-error Prisma client needs regenerate after schema change
     const reset = await prisma.passwordResetToken.findFirst({ where: { userId: user.id, tokenHash } })
 
     if (!reset || reset.usedAt || reset.expiresAt < now) {
@@ -53,14 +52,12 @@ export async function POST(request: NextRequest) {
       data: { password: hashedPassword, status: 'active' },
     })
 
-    // @ts-expect-error Prisma client needs regenerate after schema change
     await prisma.passwordResetToken.update({
       where: { id: reset.id },
       data: { usedAt: now },
     })
 
     // Invalidate other tokens for this user
-    // @ts-expect-error Prisma client needs regenerate after schema change
     await prisma.passwordResetToken.deleteMany({
       where: { userId: user.id, usedAt: null, id: { not: reset.id } },
     })

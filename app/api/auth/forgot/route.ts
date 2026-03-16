@@ -36,9 +36,7 @@ export async function POST(request: NextRequest) {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 menit
 
     // One active token per user
-    // @ts-expect-error Prisma client needs regenerate after schema change
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } })
-    // @ts-expect-error Prisma client needs regenerate after schema change
     await prisma.passwordResetToken.create({
       data: {
         userId: user.id,

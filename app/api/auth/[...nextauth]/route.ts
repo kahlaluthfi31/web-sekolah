@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import NextAuth from 'next-auth'
+import type { Account, Profile, Session, User } from 'next-auth'
+import type { JWT } from 'next-auth/jwt'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
@@ -52,16 +54,16 @@ if (!googleClientId || !googleClientSecret) {
   console.warn('Google OAuth tidak diaktifkan: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET belum di-set')
 }
 
-const handler = NextAuth({
+const authConfig = {
   providers,
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   pages: {
     signIn: '/login',
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: { user: User; account?: Account | null; profile?: Profile | null }) {
       if (account?.provider === 'google') {
         const email = user.email
         if (!email) return false
@@ -92,13 +94,13 @@ const handler = NextAuth({
 
       return true
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User | null }) {
       if (user) {
         token.role = (user as { role?: string }).role || 'user'
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       try {
         const userRole = (token as { role?: string }).role || 'user'
         const sessionUser = session.user || {}
@@ -120,10 +122,13 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET || 'dev-secret-change-me',
   trustHost: true,
   logger: {
-    error(error) {
+    error(error: unknown) {
       console.error('NextAuth error', error)
     },
   },
-})
+}
 
-export { handler as GET, handler as POST }
+const authHandler = NextAuth(authConfig)
+
+export const { GET, POST } = authHandler.handlers
+export const { auth } = authHandler
