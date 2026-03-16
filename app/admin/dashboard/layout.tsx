@@ -5,9 +5,9 @@ import { AdminShell } from './components/AdminShell'
 export const metadata = {
   title: 'Admin Dashboard - SMKN 1 CIAMIS',
   icons: {
-    icon: [{ url: '/images/web/logo-smkn1-ciamis.png', type: 'image/png' }],
-    shortcut: [{ url: '/images/web/logo-smkn1-ciamis.png', type: 'image/png' }],
-    apple: [{ url: '/images/web/logo-smkn1-ciamis.png', type: 'image/png' }],
+    icon: [{ url: '/images/web/logo.png', type: 'image/png' }],
+    shortcut: [{ url: '/images/web/logo.png', type: 'image/png' }],
+    apple: [{ url: '/images/web/logo.png', type: 'image/png' }],
   },
 }
 

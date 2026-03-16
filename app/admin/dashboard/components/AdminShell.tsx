@@ -353,7 +353,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
                 <School className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-gray-900 text-sm truncate">SMK Admin</p>
+                <p className="font-bold text-gray-900 text-sm truncate">Admin SMKN 1 CIAMIS</p>
                 <p className="text-xs text-gray-400 truncate capitalize">{user.role}</p>
               </div>
             </div>
@@ -403,7 +403,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="font-bold text-gray-900 text-sm truncate">SMK Admin</p>
+              <p className="font-bold text-gray-900 text-sm truncate">Admin SMKN 1 CIAMIS</p>
               <p className="text-xs text-gray-400 truncate capitalize">{user.role}</p>
             </div>
           )}

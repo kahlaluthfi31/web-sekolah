@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   title: "SMKN 1 CIAMIS - Official Site",
   description: "Official Site",
   icons: {
-    icon: "/images/web/logo-smkn1-ciamis.png",
-    shortcut: "/images/web/logo-smkn1-ciamis.png",
-    apple: "/images/web/logo-smkn1-ciamis.png",
+    icon: "/images/web/logo.png",
+    shortcut: "/images/web/logo.png",
+    apple: "/images/web/logo.png",
   },
 };
 
