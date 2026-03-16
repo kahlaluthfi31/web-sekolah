@@ -81,7 +81,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           const settings = json.data as { settingKey: string; settingValue: string | null }[]
           const getVal = (key: string) => settings.find(s => s.settingKey === key)?.settingValue || ''
           setHeroText({
-            title: getVal('hero_title') || 'Membangun Generasi Unggul & Berkarakter',
+            title: getVal('hero_title') || 'Jokowi & Prabowo Resmikan SMK Digital Pertama di Indonesiar',
             subtitle: getVal('hero_subtitle') || 'Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami',
           })
           setHeroStats(s => ({
