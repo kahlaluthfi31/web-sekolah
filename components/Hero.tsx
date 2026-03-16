@@ -14,7 +14,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [videoSrc, setVideoSrc] = useState('/videos/hero-bg.mp4')
   const [heroText, setHeroText] = useState({
-    title: 'Jokowi & Prabowo Resmikan SMK Digital Pertama di Indonesia',
+    title: 'Membangun Generasi Unggul & Berkarakter',
     subtitle: 'Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami',
   })
   const [heroStats, setHeroStats] = useState({
@@ -81,7 +81,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           const settings = json.data as { settingKey: string; settingValue: string | null }[]
           const getVal = (key: string) => settings.find(s => s.settingKey === key)?.settingValue || ''
           setHeroText({
-            title: getVal('hero_title') || 'Jokowi & Prabowo Resmikan SMK Digital Pertama di Indonesiar',
+            title: getVal('hero_title') || 'Membangun Generasi Unggul & Berkarakter',
             subtitle: getVal('hero_subtitle') || 'Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami',
           })
           setHeroStats(s => ({
