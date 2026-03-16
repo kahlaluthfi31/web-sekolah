@@ -128,8 +128,6 @@ const authConfig = {
   },
 }
 
-const { handlers, auth } = NextAuth(authConfig)
+const handler = NextAuth(authConfig)
 
-export const GET = handlers.GET
-export const POST = handlers.POST
-export { auth }
+export { handler as GET, handler as POST }
