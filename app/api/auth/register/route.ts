@@ -37,14 +37,14 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         role: 'user',
-        status: 'inactive', // User menunggu verifikasi admin sebelum diaktifkan
+        status: 'active', // langsung aktif tanpa verifikasi admin
       },
       select: { id: true, name: true, email: true, role: true, status: true },
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Registrasi berhasil. Akun Anda menunggu verifikasi admin.',
+      message: 'Registrasi berhasil. Akun Anda sudah aktif, silakan login.',
       user,
     }, { status: 201 })
 

@@ -167,7 +167,6 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
 
     // Website Settings (Superadmin only)
     { title: 'Menu Navigasi', href: '/admin/dashboard/navigation', icon: 'Menu', permission: 'navigation.view' },
-    { title: 'Halaman Utama', href: '/admin/dashboard/homepage', icon: 'Home', permission: 'homepage.view' },
     { title: 'Profil Sekolah', href: '/admin/dashboard/school-profile', icon: 'School', permission: 'school_profile.view' },
     { title: 'Pengaturan', href: '/admin/dashboard/settings', icon: 'Settings', permission: 'settings.view' },
   ]

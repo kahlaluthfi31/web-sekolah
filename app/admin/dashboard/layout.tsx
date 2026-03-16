@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth'
 import { AdminShell } from './components/AdminShell'
 
 export const metadata = {
-  title: 'Admin Dashboard - SMK',
+  title: 'Admin Dashboard - SMKN 1 CIAMIS',
 }
 
 export default async function DashboardLayout({

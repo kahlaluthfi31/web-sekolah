@@ -5,10 +5,11 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { 
   ChevronLeft, ChevronRight, CalendarDays, Loader2,
-  Users, Briefcase, TrendingUp, Award, GraduationCap, Target, Building2,
-  Heart, HandshakeIcon, Lightbulb, Network, Trophy, Star, CheckCircle, ArrowRight
+  Users, Briefcase, Award, GraduationCap,
+  Heart, HandshakeIcon, Trophy, ArrowRight
 } from 'lucide-react'
 import Testimonials from '@/components/Testimonials'
+import { usePageHeader } from '@/lib/usePageHeader'
 
 // Types
 interface AgendaCategory {
@@ -48,7 +49,6 @@ const STATUS_ORDER: Record<string, number> = {
 }
 
 const FALLBACK_IMAGE_UNOPTIMIZED = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMDAgMTgwSDUwMFYyNzBIMzAwVjE4MFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMjAwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSAyNUgxMjVWNDVINzVWMjVaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K'
-const FALLBACK_IMAGE_UNOPTIMIZED_UNOPTIMIZED = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMDAgMTgwSDUwMFYyNzBIMzAwVjE4MFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMjAwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSAyNUgxMjVWNDVINzVWMjVaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K'
 
 // Helper functions
 function formatDate(dateStr: string | null): string {
@@ -101,6 +101,7 @@ function sortAgendas(list: Agenda[]): Agenda[] {
 }
 
 const AlumniPage: React.FC = () => {
+  const header = usePageHeader('alumni')
   // Calendar state
   const todayObj = new Date()
   const todayStr = todayObj.toISOString().substring(0, 10)
@@ -165,9 +166,9 @@ const AlumniPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="pt-24 pb-16 relative overflow-hidden">
+  <section className="pt-24 pb-16 relative overflow-hidden">
         {/* Background dengan gradien opacity dari atas ke bawah menggunakan warna primary */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
+  <div className="absolute inset-0 bg-linear-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
         
         {/* Dotted pattern overlay */}
         <div className="absolute inset-0 opacity-15">
@@ -216,13 +217,14 @@ const AlumniPage: React.FC = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              Portal Alumni 
-              <span className="block text-5xl md:text-6xl lg:text-7xl font-light mt-2">SMKN 1 Ciamis</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line">
+              {header.displayTitle || header.title}
             </h1>
-            <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
-              Terhubung dengan sesama alumni dan berkontribusi pada pengembangan almamater
-            </p>
+            {header.subtitle && (
+              <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+                {header.subtitle}
+              </p>
+            )}
           </div>
         </div>
       </section>

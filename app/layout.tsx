@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+// @ts-expect-error Next.js global CSS import is handled by the framework
 import "./globals.css";
+import { AuthSessionProvider } from "@/components/AuthSessionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +19,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Website Sekolah",
-  description: "Website Sekolah dengan Next.js",
+  title: "SMKN 1 CIAMIS - Official Site",
+  description: "Official Site",
+  icons: {
+    icon: "/images/web/logo-smkn1-ciamis.png",
+    shortcut: "/images/web/logo-smkn1-ciamis.png",
+    apple: "/images/web/logo-smkn1-ciamis.png",
+  },
 };
 
 export default function RootLayout({
@@ -34,7 +41,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
-        {children}
+        <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>
   );

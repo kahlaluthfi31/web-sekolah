@@ -1,14 +1,110 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { usePageHeader } from '@/lib/usePageHeader';
+
+type ContactInfoState = {
+  address?: string
+  phoneMain?: string
+  phoneAlt?: string
+  emailMain?: string
+  emailAlt?: string
+  hours?: {
+    weekday?: string
+    friday?: string
+    saturday?: string
+    sunday?: string
+  }
+}
 
 const ContactPage: React.FC = () => {
+  const header = usePageHeader('contact')
+  const [info, setInfo] = useState<ContactInfoState>({})
+  const [loadingInfo, setLoadingInfo] = useState(true)
+  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
+  const [sending, setSending] = useState(false)
+  const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [formMessage, setFormMessage] = useState('')
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchInfo = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const json = await res.json()
+        if (!isMounted || !json?.success) return
+        const map = (json.data as { settingKey: string; settingValue: string }[]).reduce<Record<string, string | undefined>>((acc, cur) => {
+          acc[cur.settingKey] = cur.settingValue ?? undefined
+          return acc
+        }, {})
+
+        setInfo({
+          address: map['contact_address'],
+          phoneMain: map['contact_phone_main'],
+          phoneAlt: map['contact_phone_alt'],
+          emailMain: map['contact_email_main'],
+          emailAlt: map['contact_email_alt'],
+          hours: {
+            weekday: map['contact_hours_weekday'],
+            friday: map['contact_hours_friday'],
+            saturday: map['contact_hours_saturday'],
+            sunday: map['contact_hours_sunday'],
+          },
+        })
+      } catch (error) {
+        console.error('Gagal memuat kontak', error)
+      } finally {
+        if (isMounted) setLoadingInfo(false)
+      }
+    }
+    fetchInfo()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSending(true)
+    setFormStatus('idle')
+    setFormMessage('')
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          subject: form.subject,
+          message: form.message,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setFormStatus('success')
+        setFormMessage('Pesan terkirim. Terima kasih!')
+        setForm({ name: '', email: '', phone: '', subject: '', message: '' })
+      } else {
+        setFormStatus('error')
+        setFormMessage(json.message || 'Gagal mengirim pesan')
+      }
+    } catch (error) {
+      console.error(error)
+      setFormStatus('error')
+      setFormMessage('Terjadi kesalahan. Coba lagi nanti.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="pt-24 pb-16 relative overflow-hidden">
         {/* Background dengan gradien opacity dari atas ke bawah menggunakan warna primary */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
+  <div className="absolute inset-0 bg-linear-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
         
         {/* Dotted pattern overlay */}
         <div className="absolute inset-0 opacity-15">
@@ -57,14 +153,23 @@ const ContactPage: React.FC = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              Mari Terhubung dengan 
-              <span className="block text-5xl md:text-6xl lg:text-7xl font-light mt-2">Kami</span>
-            </h1>
-            <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
-              Kami siap membantu Anda dengan pertanyaan, informasi pendaftaran, atau kebutuhan lainnya. 
-              Hubungi kami melalui formulir atau informasi kontak yang tersedia.
-            </p>
+            {header.loading ? (
+              <div className="space-y-4">
+                <div className="h-10 w-3/4 bg-white/20 rounded-lg animate-pulse" />
+                <div className="h-4 w-2/3 bg-white/15 rounded-lg animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line">
+                  {header.displayTitle || header.title}
+                </h1>
+                {header.subtitle && (
+                  <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+                    {header.subtitle}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -83,7 +188,18 @@ const ContactPage: React.FC = () => {
                   </p>
                 </div>
 
-                <form className="space-y-6">
+                <form className="space-y-6" onSubmit={handleSubmit}>
+                  {formStatus !== 'idle' && (
+                    <div
+                      className={`rounded-lg border px-4 py-3 text-sm ${
+                        formStatus === 'success'
+                          ? 'bg-green-50 border-green-200 text-green-700'
+                          : 'bg-red-50 border-red-200 text-red-700'
+                      }`}
+                    >
+                      {formMessage}
+                    </div>
+                  )}
                   {/* Name & Email Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
@@ -93,7 +209,10 @@ const ContactPage: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Masukkan nama lengkap"
+                        value={form.name}
+                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                         className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        required
                       />
                     </div>
                     <div>
@@ -103,7 +222,10 @@ const ContactPage: React.FC = () => {
                       <input
                         type="email"
                         placeholder="nama@email.com"
+                        value={form.email}
+                        onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                         className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        required
                       />
                     </div>
                   </div>
@@ -117,6 +239,8 @@ const ContactPage: React.FC = () => {
                       <input
                         type="tel"
                         placeholder="08xx-xxxx-xxxx"
+                        value={form.phone}
+                        onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                         className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
                     </div>
@@ -124,7 +248,12 @@ const ContactPage: React.FC = () => {
                       <label className="block text-sm font-semibold text-gray-900 mb-2">
                         Subjek <span className="text-red-500">*</span>
                       </label>
-                      <select className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                      <select
+                        value={form.subject}
+                        onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+                        required
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      >
                         <option value="" className="text-gray-400">Pilih subjek</option>
                         <option value="ppdb">Informasi PPDB</option>
                         <option value="umum">Informasi Umum</option>
@@ -143,7 +272,10 @@ const ContactPage: React.FC = () => {
                     <textarea
                       rows={6}
                       placeholder="Tulis pesan Anda di sini..."
+                      value={form.message}
+                      onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                      required
                     />
                   </div>
 
@@ -151,10 +283,11 @@ const ContactPage: React.FC = () => {
                   <div className="pt-2">
                     <button
                       type="submit"
-                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#0268ab] text-white text-sm font-semibold rounded-lg hover:bg-[#014a8f] hover:shadow-lg transition-all duration-200"
+                      disabled={sending}
+                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#0268ab] text-white text-sm font-semibold rounded-lg hover:bg-[#014a8f] hover:shadow-lg transition-all duration-200 disabled:opacity-60"
                     >
                       <Send className="w-4 h-4" />
-                      Kirim Pesan
+                      {sending ? 'Mengirim...' : 'Kirim Pesan'}
                     </button>
                   </div>
                 </form>
@@ -177,9 +310,13 @@ const ContactPage: React.FC = () => {
                   </div>
                   <div className="grow">
                     <h3 className="text-xs font-semibold text-gray-900 mb-1.5">Alamat</h3>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Jl. Pending No. 93, Kecamatan Ciamis, Kabupaten Ciamis, Jawa Barat 46211
-                    </p>
+                    {loadingInfo ? (
+                      <div className="h-4 w-48 bg-gray-100 rounded animate-pulse" />
+                    ) : (
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        {info.address || 'Belum ada data'}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -190,8 +327,20 @@ const ContactPage: React.FC = () => {
                   </div>
                   <div className="grow">
                     <h3 className="text-xs font-semibold text-gray-900 mb-1.5">Telepon</h3>
-                    <p className="text-xs text-gray-600 mb-1">(0265) 771234</p>
-                    <p className="text-xs text-gray-600">+62 812-3456-7890</p>
+                    {loadingInfo ? (
+                      <div className="space-y-2">
+                        <div className="h-3 w-28 bg-gray-100 rounded animate-pulse" />
+                        <div className="h-3 w-32 bg-gray-100 rounded animate-pulse" />
+                      </div>
+                    ) : (
+                      <>
+                        {info.phoneMain && <p className="text-xs text-gray-600 mb-1">{info.phoneMain}</p>}
+                        {info.phoneAlt && <p className="text-xs text-gray-600">{info.phoneAlt}</p>}
+                        {!info.phoneMain && !info.phoneAlt && (
+                          <p className="text-xs text-gray-500">Belum ada data</p>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -202,8 +351,20 @@ const ContactPage: React.FC = () => {
                   </div>
                   <div className="grow">
                     <h3 className="text-xs font-semibold text-gray-900 mb-1.5">Email</h3>
-                    <p className="text-xs text-gray-600 mb-1">info@smkn1ciamis.sch.id</p>
-                    <p className="text-xs text-gray-600">admin@smkn1ciamis.sch.id</p>
+                    {loadingInfo ? (
+                      <div className="space-y-2">
+                        <div className="h-3 w-36 bg-gray-100 rounded animate-pulse" />
+                        <div className="h-3 w-32 bg-gray-100 rounded animate-pulse" />
+                      </div>
+                    ) : (
+                      <>
+                        {info.emailMain && <p className="text-xs text-gray-600 mb-1">{info.emailMain}</p>}
+                        {info.emailAlt && <p className="text-xs text-gray-600">{info.emailAlt}</p>}
+                        {!info.emailMain && !info.emailAlt && (
+                          <p className="text-xs text-gray-500">Belum ada data</p>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -214,24 +375,32 @@ const ContactPage: React.FC = () => {
                   </div>
                   <div className="grow">
                     <h3 className="text-xs font-semibold text-gray-900 mb-3">Jam Pelayanan</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600">Senin - Kamis</span>
-                        <span className="font-medium text-gray-900">07:00 - 15:00</span>
+                    {loadingInfo ? (
+                      <div className="space-y-2">
+                        {[...Array(4)].map((_, idx) => (
+                          <div key={idx} className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                        ))}
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600">Jumat</span>
-                        <span className="font-medium text-gray-900">07:00 - 11:30</span>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600">Senin - Kamis</span>
+                          <span className="font-medium text-gray-900">{info.hours?.weekday || '-'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600">Jumat</span>
+                          <span className="font-medium text-gray-900">{info.hours?.friday || '-'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600">Sabtu</span>
+                          <span className="font-medium text-gray-900">{info.hours?.saturday || '-'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs pt-2 mt-2 border-t border-gray-100">
+                          <span className="text-gray-600">Minggu & Libur</span>
+                          <span className="font-medium text-red-600">{info.hours?.sunday || 'Tutup'}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600">Sabtu</span>
-                        <span className="font-medium text-gray-900">07:00 - 13:00</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs pt-2 mt-2 border-t border-gray-100">
-                        <span className="text-gray-600">Minggu & Libur</span>
-                        <span className="font-medium text-red-600">Tutup</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>

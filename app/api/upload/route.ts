@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, stat, unlink } from 'fs/promises'
 import path from 'path'
+import ffmpeg from 'fluent-ffmpeg'
+import ffmpegStatic from 'ffmpeg-static'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,30 +16,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-    if (!allowedTypes.includes(file.type)) {
+    const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+    const videoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+    const isImage = imageTypes.includes(file.type)
+    const isVideo = videoTypes.includes(file.type)
+
+    if (!isImage && !isVideo) {
       return NextResponse.json(
-        { success: false, message: 'Tipe file tidak didukung. Gunakan JPG, PNG, GIF, WEBP, atau SVG.' },
+        { success: false, message: 'Tipe file tidak didukung. Gunakan gambar (JPG, PNG, GIF, WEBP, SVG) atau video (MP4, WebM).' },
         { status: 400 }
       )
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024
+    // Size guard: images 5MB, video 80MB pre-compress (recommended kompres di client juga)
+    const maxSize = isVideo ? 80 * 1024 * 1024 : 5 * 1024 * 1024
     if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, message: 'Ukuran file melebihi 5MB' },
+        { success: false, message: isVideo ? 'Video terlalu besar (maks 80MB sebelum kompres). Kompres dulu lalu upload.' : 'Ukuran file melebihi 5MB' },
         { status: 400 }
       )
     }
 
     // Create upload directory
-    const uploadDir = path.join(process.cwd(), 'public', 'images', 'uploads')
+    const uploadDir = isVideo
+      ? path.join(process.cwd(), 'public', 'videos', 'uploads')
+      : path.join(process.cwd(), 'public', 'images', 'uploads')
     await mkdir(uploadDir, { recursive: true })
 
+    const tempDir = path.join(process.cwd(), '.tmp', 'uploads')
+    if (isVideo) await mkdir(tempDir, { recursive: true })
+
     // Generate unique filename
-    const ext = path.extname(file.name) || '.jpg'
+    const ext = isVideo ? '.mp4' : (path.extname(file.name) || '.jpg')
     const timestamp = Date.now()
     const safeName = file.name
       .replace(ext, '')
@@ -50,21 +60,56 @@ export async function POST(request: NextRequest) {
     // Write file
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const filePath = path.join(uploadDir, filename)
-    await writeFile(filePath, buffer)
 
-    // Return public URL
-    const publicUrl = `/images/uploads/${filename}`
+    if (!isVideo) {
+      const filePath = path.join(uploadDir, filename)
+      await writeFile(filePath, buffer)
+      const publicUrl = `/images/uploads/${filename}`
+      return NextResponse.json({
+        success: true,
+        data: { url: publicUrl, filename, size: file.size, type: file.type },
+        message: 'File berhasil diupload',
+      })
+    }
+
+    // Video branch: save temp, compress with ffmpeg, enforce <=10s & mute
+    ffmpeg.setFfmpegPath(ffmpegStatic as string)
+    const tempInput = path.join(tempDir, `${timestamp}-${safeName}${path.extname(file.name) || '.mp4'}`)
+    await writeFile(tempInput, buffer)
+
+    const outputFilename = `${timestamp}-${safeName}.mp4`
+    const outputPath = path.join(uploadDir, outputFilename)
+
+    const runFfmpeg = () => new Promise<void>((resolve, reject) => {
+      ffmpeg(tempInput)
+        .outputOptions([
+          '-an',              // remove audio
+          '-t', '10',         // cap duration 10s
+          '-preset', 'veryfast',
+          '-crf', '23',       // quality/bitrate balance
+          '-movflags', '+faststart',
+          '-vf', 'scale=1280:-2', // keep aspect, max width 1280
+        ])
+        .on('end', () => resolve())
+  .on('error', (err: unknown) => reject(err))
+        .save(outputPath)
+    })
+
+    await runFfmpeg()
+    await unlink(tempInput).catch(() => {})
+
+    const stats = await stat(outputPath)
+    const publicUrl = `/videos/uploads/${outputFilename}`
 
     return NextResponse.json({
       success: true,
       data: {
         url: publicUrl,
-        filename,
-        size: file.size,
-        type: file.type,
+        filename: outputFilename,
+        size: stats.size,
+        type: 'video/mp4',
       },
-      message: 'File berhasil diupload',
+      message: 'Video dikompres dan diupload',
     })
   } catch (error) {
     console.error('Upload error:', error)

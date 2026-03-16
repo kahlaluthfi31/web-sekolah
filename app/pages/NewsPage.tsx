@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User, Tag, Clock, TrendingUp, Newspaper, FileText } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User, TrendingUp, Newspaper, FileText } from 'lucide-react';
+import { usePageHeader } from '@/lib/usePageHeader';
 
 const NewsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Top stories');
+  const header = usePageHeader('news');
 
   const newsCategories = ['Top stories', 'Trending News', 'Latest News'];
 
@@ -152,14 +154,14 @@ const NewsPage: React.FC = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              Berita Terkini dari 
-              <span className="block text-5xl md:text-6xl lg:text-7xl font-light mt-2">SMKN 1 Ciamis</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line">
+              {header.displayTitle || header.title}
             </h1>
-            <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
-              Ikuti perkembangan terbaru seputar kegiatan, prestasi, dan informasi penting dari SMKN 1 Ciamis. 
-              Tetap update dengan berita-berita terkini seputar dunia pendidikan dan pencapaian siswa kami.
-            </p>
+            {header.subtitle && (
+              <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+                {header.subtitle}
+              </p>
+            )}
           </div>
         </div>
       </section>

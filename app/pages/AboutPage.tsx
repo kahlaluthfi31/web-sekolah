@@ -78,6 +78,28 @@ const AboutPage: React.FC = () => {
     title: 'Profil Sekolah',
     subtitle: 'Mengenal lebih dekat SMK Negeri 1 Ciamis - Sejarah, Visi Misi, dan Keunggulan kami.',
   });
+  const [videoUrl, setVideoUrl] = useState<string>('https://www.youtube.com/embed/jWq8hHCOJkg?si=d1OGiF0YyHodW1PW');
+
+  const normalizeYoutubeUrl = (url: string): string => {
+    if (!url) return url;
+    try {
+      const trimmed = url.trim();
+      // youtu.be short link
+      const shortMatch = trimmed.match(/^https?:\/\/youtu\.be\/([^?&]+)/i);
+      if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
+
+      // watch?v= links
+      const watchMatch = trimmed.match(/[?&]v=([^&]+)/i);
+      if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
+
+      // already embed
+      if (/\/embed\//i.test(trimmed)) return trimmed;
+
+      return trimmed;
+    } catch {
+      return url;
+    }
+  }
 
   useEffect(() => {
     // Fetch sejarah
@@ -120,6 +142,18 @@ const AboutPage: React.FC = () => {
       .then(r => r.json())
       .then(json => {
         if (json.success && json.data) setPageHeader(json.data);
+      })
+      .catch(() => {});
+
+    // Fetch video URL setting
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const settings = (json.data ?? []) as { settingKey: string; settingValue?: string | null }[]
+          const setting = settings.find(s => s.settingKey === 'about_video_url')
+          if (setting?.settingValue) setVideoUrl(normalizeYoutubeUrl(setting.settingValue))
+        }
       })
       .catch(() => {});
   }, []);
@@ -169,7 +203,7 @@ const AboutPage: React.FC = () => {
             <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gray-900 aspect-video">
               <iframe
                 className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/jWq8hHCOJkg?si=d1OGiF0YyHodW1PW"
+                src={videoUrl}
                 title="Video Profil SMK Negeri 1 Ciamis"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
