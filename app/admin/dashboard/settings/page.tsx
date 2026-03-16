@@ -57,7 +57,7 @@ const DEFAULT_SETTINGS = [
     key: "hero_title",
     label: "Hero Title",
     type: "text" as const,
-    placeholder: "Membangun Generasi Unggul & Berkarakter",
+    placeholder: "Jokowi & Prabowo Resmikan SMK Digital Pertama di Indonesia",
   },
   {
     key: "hero_subtitle",
