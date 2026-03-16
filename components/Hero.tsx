@@ -14,7 +14,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [videoSrc, setVideoSrc] = useState('/videos/hero-bg.mp4')
   const [heroText, setHeroText] = useState({
-    title: 'Membangun Generasi Unggul & Berkarakter',
+    title: 'Jokowi & Prabowo Resmikan SMK Digital Pertama di Indonesia',
     subtitle: 'Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami',
   })
   const [heroStats, setHeroStats] = useState({
