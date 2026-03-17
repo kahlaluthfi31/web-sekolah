@@ -128,9 +128,6 @@ const authConfig = {
   },
 }
 
-const authHandler = NextAuth(authConfig)
-const handlers = authHandler.handlers || {}
+const handler = NextAuth(authConfig)
 
-export const GET = handlers.GET ?? (() => new Response('Auth handler not available', { status: 500 }))
-export const POST = handlers.POST ?? (() => new Response('Auth handler not available', { status: 500 }))
-export const auth = authHandler.auth
+export { handler as GET, handler as POST }
