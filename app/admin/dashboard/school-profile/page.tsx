@@ -1688,7 +1688,7 @@ function PageHeaderTab() {
       <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-5">
         <div className="flex items-center gap-2 mb-3">
           <h3 className="text-sm font-bold text-gray-900">
-            Tambah Header Halaman
+            Tambah Header Halaman (Ini fitur sementara, untuk developer saja)
           </h3>
         </div>
         {availableKeys.length === 0 ? (
