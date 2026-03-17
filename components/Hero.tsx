@@ -29,34 +29,36 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
   })
 
   useEffect(() => {
-    setIsLoaded(true);
     const video = videoRef.current;
-    if (video) {
-      // Force video to load and play immediately
-      video.load();
-      
-      const playVideo = () => {
-        video.play().catch(error => {
-          console.log('Video autoplay failed:', error);
-          // Fallback: try to play on user interaction
-          document.addEventListener('click', playVideo, { once: true });
-        });
-      };
+    if (!video) return;
+    setIsLoaded(false);
 
-      // Try to play immediately
-      playVideo();
-
-      video.addEventListener('ended', () => {
-        video.currentTime = 0;
-        video.play();
+    const playVideo = () => {
+      video.play().catch(error => {
+        console.log('Video autoplay failed:', error);
+        document.addEventListener('click', playVideo, { once: true });
       });
+    };
 
-      // Remove loading state once video can play
-      video.addEventListener('canplaythrough', () => {
-        setIsLoaded(true);
-      }, { once: true });
-    }
-  }, []);
+    const handleEnded = () => {
+      video.currentTime = 0;
+      video.play();
+    };
+
+    const handleCanPlayThrough = () => {
+      setIsLoaded(true);
+    };
+
+    video.addEventListener('ended', handleEnded);
+    video.addEventListener('canplaythrough', handleCanPlayThrough, { once: true });
+    video.load();
+    playVideo();
+
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('canplaythrough', handleCanPlayThrough);
+    };
+  }, [videoSrc]);
 
   const formatCount = (n: number | null | undefined, fallback: string) => {
     if (typeof n !== 'number' || Number.isNaN(n)) return fallback

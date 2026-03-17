@@ -19,8 +19,6 @@ import {
   MonitorSmartphone,
 } from "lucide-react";
 import Image from "next/image";
-import type { FFmpeg } from "@ffmpeg/ffmpeg";
-
 interface Setting {
   id: number;
   settingKey: string;
@@ -163,18 +161,13 @@ export default function SettingsPage() {
   const [customType, setCustomType] = useState<Setting["settingType"]>("text");
   // Hero background video
   const [heroVideoUploading, setHeroVideoUploading] = useState(false);
-  const [heroVideoCompressing, setHeroVideoCompressing] = useState(false);
-  const [heroVideoCompressedUrl, setHeroVideoCompressedUrl] = useState<string | null>(null);
-  const [heroVideoCompressedBlob, setHeroVideoCompressedBlob] = useState<Blob | null>(null);
-  const [heroVideoCompressionNote, setHeroVideoCompressionNote] = useState("");
+  const [heroVideoSaving, setHeroVideoSaving] = useState(false);
+  const [heroVideoSaved, setHeroVideoSaved] = useState(false);
+  const [pendingHeroVideoUrl, setPendingHeroVideoUrl] = useState<string | null>(null);
   const [heroVideoError, setHeroVideoError] = useState("");
   const [heroDurationError, setHeroDurationError] = useState("");
   const [heroSizeError, setHeroSizeError] = useState("");
-  const [heroResolutionError, setHeroResolutionError] = useState("");
   const [heroAudioError, setHeroAudioError] = useState("");
-  const ffmpegRef = useRef<FFmpeg | null>(null);
-  const fetchFileRef = useRef<((file: File | string | ArrayBuffer) => Promise<Uint8Array>) | null>(null);
-  const [ffmpegReady, setFfmpegReady] = useState(false);
 
   // Popup state
   const [popupActive, setPopupActive] = useState(false);
@@ -209,65 +202,24 @@ export default function SettingsPage() {
     fetchSettings();
   }, [fetchSettings]);
 
-  // Cleanup compressed preview URL on unmount
-  useEffect(() => {
-    return () => {
-      if (heroVideoCompressedUrl) URL.revokeObjectURL(heroVideoCompressedUrl);
-    };
-  }, [heroVideoCompressedUrl]);
-
-  const ensureFfmpegLoaded = useCallback(async () => {
-    if (ffmpegReady && ffmpegRef.current && fetchFileRef.current) return ffmpegRef.current;
-
-    try {
-      if (typeof window !== "undefined" && !window.crossOriginIsolated) {
-        throw new Error(
-          "Browser belum cross-origin isolated. Pastikan header COOP/COEP aktif dan akses langsung domain (bukan dalam iframe)."
-        );
-      }
-
-  const { FFmpeg: FFmpegClass, fetchFile } = await import("@ffmpeg/ffmpeg");
-      fetchFileRef.current = fetchFile;
-
-      if (!FFmpegClass || !fetchFile) {
-        throw new Error("FFmpeg module gagal dimuat");
-      }
-
-      if (!ffmpegRef.current) {
-        ffmpegRef.current = new FFmpegClass();
-      }
-
-      if (ffmpegRef.current && !ffmpegRef.current.isLoaded()) {
-        await ffmpegRef.current.load({
-          coreURL: "/ffmpeg/ffmpeg-core.js",
-          wasmURL: "/ffmpeg/ffmpeg-core.wasm",
-        });
-      }
-
-      setFfmpegReady(true);
-      return ffmpegRef.current;
-    } catch (error) {
-      setFfmpegReady(false);
-      throw error;
-    }
-  }, [ffmpegReady]);
-
-  const clearCompressedPreview = useCallback(() => {
-    if (heroVideoCompressedUrl) URL.revokeObjectURL(heroVideoCompressedUrl);
-    setHeroVideoCompressedUrl(null);
-    setHeroVideoCompressedBlob(null);
-    setHeroVideoCompressionNote("");
-  }, [heroVideoCompressedUrl]);
-
   const readVideoMetadata = (file: File) =>
-    new Promise<{ duration: number; width: number; height: number }>((resolve, reject) => {
+    new Promise<{ duration: number; width: number; height: number; hasAudio: boolean }>((resolve, reject) => {
       const objectUrl = URL.createObjectURL(file);
       const videoEl = document.createElement("video");
       videoEl.preload = "metadata";
       videoEl.src = objectUrl;
 
       videoEl.onloadedmetadata = () => {
-        resolve({ duration: videoEl.duration, width: videoEl.videoWidth, height: videoEl.videoHeight });
+        const typedVideo = videoEl as HTMLVideoElement & {
+          mozHasAudio?: boolean;
+          webkitAudioDecodedByteCount?: number;
+          audioTracks?: { length: number };
+        };
+        const mozHasAudio = typeof typedVideo.mozHasAudio === "boolean" ? typedVideo.mozHasAudio : undefined;
+        const hasAudioTrack = typeof typedVideo.audioTracks?.length === "number" ? typedVideo.audioTracks.length > 0 : undefined;
+        const webkitAudioCount = typeof typedVideo.webkitAudioDecodedByteCount === "number" ? typedVideo.webkitAudioDecodedByteCount : undefined;
+        const hasAudio = mozHasAudio ?? hasAudioTrack ?? (typeof webkitAudioCount === "number" ? webkitAudioCount > 0 : false);
+        resolve({ duration: videoEl.duration, width: videoEl.videoWidth, height: videoEl.videoHeight, hasAudio });
         URL.revokeObjectURL(objectUrl);
       };
 
@@ -344,116 +296,78 @@ export default function SettingsPage() {
     setHeroVideoError("");
     setHeroDurationError("");
     setHeroSizeError("");
-  setHeroResolutionError("");
     setHeroAudioError("");
-    setHeroVideoCompressionNote("");
-    clearCompressedPreview();
+    setHeroVideoSaved(false);
+    setPendingHeroVideoUrl(null);
 
     if (!file.type.startsWith("video/")) {
       setHeroVideoError("File harus berupa video (mp4/webm).");
       return;
     }
     if (file.size > 3 * 1024 * 1024) {
-      setHeroSizeError("Ukuran video maksimal 3MB (Kompres video sebelum di upload).");
+      setHeroSizeError("Ukuran video maksimal 3MB. Kurangi ukuran sebelum unggah.");
       return;
     }
 
-    setHeroVideoCompressing(true);
-
+    let metadata;
     try {
-      const meta = await readVideoMetadata(file);
-
-      if (meta.duration > 10.1) {
-        setHeroDurationError("Durasi maksimal 10 detik.");
-        return;
-      }
-
-      const ffmpeg = await ensureFfmpegLoaded();
-      const fetchFile = fetchFileRef.current;
-      if (!ffmpeg || !fetchFile) {
-        throw new Error("FFmpeg belum siap");
-      }
-
-      ffmpeg.FS("writeFile", "input.mp4", await fetchFile(file));
-
-      const scaleFilter = "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease";
-
-      await ffmpeg.run(
-        "-i",
-        "input.mp4",
-        "-an",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "veryfast",
-        "-crf",
-        "28",
-        "-movflags",
-        "+faststart",
-        "-pix_fmt",
-        "yuv420p",
-        "-vf",
-        scaleFilter,
-        "output.mp4"
-      );
-
-      const data = ffmpeg.FS("readFile", "output.mp4");
-      const blob = new Blob([data.buffer], { type: "video/mp4" });
-      const url = URL.createObjectURL(blob);
-
-      setHeroVideoCompressedBlob(blob);
-      setHeroVideoCompressedUrl(url);
-      setHeroVideoCompressionNote(
-        `Hasil kompresi: ${(blob.size / 1024 / 1024).toFixed(2)} MB (asal ${(file.size / 1024 / 1024).toFixed(2)} MB). Audio dihapus otomatis.`
-      );
+      metadata = await readVideoMetadata(file);
     } catch (error) {
       console.error(error);
-      const msg = error instanceof Error ? error.message : "";
-      setHeroVideoError(
-        msg ||
-          "Kompresi gagal atau browser tidak mendukung FFmpeg/SharedArrayBuffer. Pastikan COOP/COEP aktif dan coba lagi."
-      );
-    } finally {
-      try {
-        ffmpegRef.current?.FS("unlink", "input.mp4");
-        ffmpegRef.current?.FS("unlink", "output.mp4");
-      } catch {
-        // ignore
-      }
-      setHeroVideoCompressing(false);
-    }
-  };
-
-  const handleSaveCompressed = async () => {
-    if (!heroVideoCompressedBlob) {
-      setHeroVideoError("Belum ada video terkompres. Silakan unggah dan tunggu proses kompresi selesai.");
+      setHeroVideoError("Tidak dapat membaca metadata video. Pastikan video valid dan coba lagi.");
       return;
     }
 
-    setHeroVideoError("");
+    if (metadata.duration > 10) {
+      setHeroDurationError("Durasi maksimal 10 detik.");
+      return;
+    }
+
+    if (metadata.hasAudio) {
+      setHeroAudioError("Video harus tanpa audio.");
+      return;
+    }
+
     setHeroVideoUploading(true);
     try {
-      const compressedFile = new File([heroVideoCompressedBlob], "hero-compressed.mp4", { type: "video/mp4" });
       const formData = new FormData();
-      formData.append("file", compressedFile);
-
+      formData.append("file", file);
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
       const j = await res.json();
       if (j.success) {
-        await saveSetting("hero_video_url", j.data.url, "url");
-        fetchSettings();
-        clearCompressedPreview();
+        setPendingHeroVideoUrl(j.data.url);
+        setHeroVideoError("");
+        setHeroVideoSaved(false);
       } else {
-        setHeroVideoError(j.message || "Gagal mengunggah video terkompres");
+        setHeroVideoError(j.message || "Gagal mengunggah video hero.");
       }
     } catch (error) {
       console.error(error);
-      setHeroVideoError("Gagal mengunggah video terkompres. Coba lagi.");
+      setHeroVideoError("Gagal mengunggah video hero. Coba lagi.");
     } finally {
       setHeroVideoUploading(false);
+    }
+  };
+
+  const handleSaveHeroVideo = async () => {
+    if (!pendingHeroVideoUrl) {
+      return;
+    }
+
+    setHeroVideoSaving(true);
+    try {
+      await saveSetting("hero_video_url", pendingHeroVideoUrl, "url");
+      fetchSettings();
+      setHeroVideoSaved(true);
+      setPendingHeroVideoUrl(null);
+      setHeroVideoError("");
+    } catch (error) {
+      setHeroVideoError("Gagal menyimpan video hero. Coba lagi.");
+    } finally {
+      setHeroVideoSaving(false);
     }
   };
 
@@ -586,17 +500,14 @@ export default function SettingsPage() {
       {/* Hero background video */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">Hero Background Video</h3>
-              <p className="text-xs text-gray-500">Durasi &le;10 detik, tanpa audio, &le; 3MB. Kompres sebelum upload.</p>
-            </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Hero Background Video</h3>
+            <p className="text-xs text-gray-500">Durasi ≤ 10 detik, tanpa audio, dan ukuran ≤ 3MB.</p>
           </div>
-          {(heroVideoCompressing || heroVideoUploading) && (
+          {heroVideoUploading && (
             <span className="text-xs text-blue-600 flex items-center gap-1">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              {heroVideoCompressing ? "Mengompres..." : "Mengunggah..."}
+              Mengunggah...
             </span>
           )}
         </div>
@@ -618,31 +529,45 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {heroVideoCompressedUrl && (
+            {pendingHeroVideoUrl && (
               <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden min-h-45 flex flex-col">
                 <div className="px-4 pt-3 pb-2 text-xs font-semibold text-blue-700 flex items-center gap-2">
-                  <Video className="w-4 h-4" /> Preview hasil kompresi (belum disimpan)
+                  <Video className="w-4 h-4" /> Preview video baru (belum disimpan)
                 </div>
                 <div className="flex-1 flex items-center justify-center">
-                  <video src={heroVideoCompressedUrl} controls className="w-full h-full object-cover" />
+                  <video
+                    src={pendingHeroVideoUrl}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="border-t border-blue-100 px-3 py-2 text-xs text-blue-700">
+                  Video ini akan langsung menjadi background hero setelah Anda menyimpan.
                 </div>
               </div>
             )}
+
             {heroVideoError && (
               <div className="text-xs text-red-600 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" /> {heroVideoError}
               </div>
             )}
-            {heroVideoCompressionNote && (
-              <div className="text-[11px] text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                {heroVideoCompressionNote}
+            {heroVideoSaved && (
+              <div className="text-xs text-green-600 flex items-center gap-2">
+                <Megaphone className="w-4 h-4" /> Video hero berhasil disimpan dan akan digunakan di halaman utama.
               </div>
             )}
           </div>
 
           <div className="space-y-3">
             <label className="block text-xs font-semibold text-gray-700">Upload video baru</label>
-            <label className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 px-4 text-sm cursor-pointer transition ${heroVideoUploading ? 'border-gray-200 text-gray-400 bg-gray-50' : 'border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600'}`}>
+            <label
+              className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 px-4 text-sm cursor-pointer transition ${
+                heroVideoUploading
+                  ? "border-gray-200 text-gray-400 bg-gray-50"
+                  : "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600"
+              }`}
+            >
               <input
                 type="file"
                 accept="video/mp4,video/webm"
@@ -651,37 +576,42 @@ export default function SettingsPage() {
                   if (f) handleHeroVideoUpload(f);
                 }}
                 className="absolute inset-0 opacity-0 cursor-pointer"
-                disabled={heroVideoCompressing || heroVideoUploading}
+                disabled={heroVideoUploading}
               />
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <UploadCloud className="w-5 h-5 text-blue-600" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-gray-800">Pilih file MP4/WebM</p>
-                <p className="text-[11px] text-gray-500">Klik untuk unggah</p>
+                <p className="text-[11px] text-gray-500">
+                  {heroVideoUploading ? "Mengunggah video hero..." : "Video perlu disimpan agar jadi background hero."}
+                </p>
               </div>
             </label>
 
-            <button
-              onClick={handleSaveCompressed}
-              disabled={!heroVideoCompressedBlob || heroVideoCompressing || heroVideoUploading}
-              className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
-                !heroVideoCompressedBlob || heroVideoCompressing || heroVideoUploading
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-              }`}
-            >
-              {heroVideoCompressing || heroVideoUploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Simpan video terkompres
-            </button>
+            {pendingHeroVideoUrl && (
+              <button
+                type="button"
+                onClick={handleSaveHeroVideo}
+                disabled={heroVideoSaving || heroVideoUploading}
+                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
+                  heroVideoSaving || heroVideoUploading
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                }`}
+              >
+                {heroVideoSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Simpan video hero
+              </button>
+            )}
 
             <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-600">
               <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                <Clock3 className="w-3.5 h-3.5 text-blue-500" /> Durasi &le; 10s
+                <Clock3 className="w-3.5 h-3.5 text-blue-500" /> Durasi ≤ 10s
               </div>
               <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
                 <VolumeX className="w-3.5 h-3.5 text-blue-500" /> Tanpa audio
@@ -693,14 +623,10 @@ export default function SettingsPage() {
                 <MonitorSmartphone className="w-3.5 h-3.5 text-blue-500" /> Disarankan 1920x1080
               </div>
             </div>
-            <div className="space-y-1">
-              {heroDurationError && <p className="text-xs text-red-600">Durasi maksimal 10 detik.</p>}
-              {heroSizeError && <p className="text-xs text-red-600">Ukuran video maksimal 3MB.</p>}
-              {heroResolutionError && <p className="text-xs text-red-600">{heroResolutionError}</p>}
-              {heroAudioError && <p className="text-xs text-red-600">{heroAudioError}</p>}
-              {!ffmpegReady && !heroVideoError && !heroVideoCompressing && (
-                <p className="text-[11px] text-gray-500">FFmpeg akan diunduh saat Anda memilih video.</p>
-              )}
+            <div className="space-y-1 text-xs text-red-600">
+              {heroDurationError && <p>Durasi maksimal 10 detik.</p>}
+              {heroSizeError && <p>Ukuran video maksimal 3MB.</p>}
+              {heroAudioError && <p>Video harus tanpa audio.</p>}
             </div>
           </div>
         </div>
