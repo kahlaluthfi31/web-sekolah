@@ -19,10 +19,79 @@ import {
   CalendarDays,
   Tag,
   Clock,
+  CalendarCheck,
+  CalendarClock,
+  ClipboardCheck,
+  ClipboardList,
+  Clapperboard,
+  Leaf,
+  Bot,
+  Compass,
+  Cpu,
+  Droplets,
+  FlaskConical,
+  Gift,
   MapPin,
+  HeartPulse,
+  Map,
+  MapPinned,
+  Medal,
+  Microscope,
+  Monitor,
+  Mountain,
   Users,
+  Music,
   Eye,
   Upload,
+  PartyPopper,
+  Recycle,
+  Rocket,
+  School,
+  Server,
+  Smartphone,
+  Megaphone,
+  TabletSmartphone,
+  TestTube,
+  Trophy,
+  BookOpen,
+  Ticket,
+  GraduationCap,
+  Umbrella,
+  Handshake,
+  Video,
+  Palette,
+  Mic,
+  Star,
+  Activity,
+  AlarmClock,
+  Atom,
+  Award,
+  Briefcase,
+  Building2,
+  BusFront,
+  Camera,
+  Church,
+  Code,
+  CookingPot,
+  Dumbbell,
+  Film,
+  Flag,
+  Gamepad2,
+  HeartHandshake,
+  Library,
+  Lightbulb,
+  Music2,
+  Paintbrush,
+  PenTool,
+  ShieldCheck,
+  Stethoscope,
+  Theater,
+  Trees,
+  Volleyball,
+  Wifi,
+  Sparkles,
+  Laptop,
+  Globe2,
 } from "lucide-react";
 import { useDropdownPosition } from "@/lib/useDropdownPosition";
 
@@ -30,7 +99,10 @@ interface AgendaCategory {
   id: number;
   name: string;
   color: string | null;
+  description: string | null;
+  icon: string | null;
   isActive: boolean;
+  showInCategorySection: boolean;
 }
 interface Agenda {
   id: number;
@@ -42,12 +114,22 @@ interface Agenda {
   timeEndText: string | null;
   location: string | null;
   organizer: string | null;
+  participants: string | null;
+  hasRegistration: boolean;
+  registrationUrl: string | null;
   categoryId: number | null;
   status: string;
   isPublished: boolean;
   image: string | null;
   createdAt: string;
   category: AgendaCategory | null;
+}
+interface RegistrationInfo {
+  id: string;
+  title: string;
+  desc: string;
+  icon: string;
+  steps: string[];
 }
 interface Pagination {
   page: number;
@@ -97,6 +179,106 @@ const STATUS_OPTIONS = [
   },
   { value: "completed", label: "Selesai", color: "bg-gray-100 text-gray-700" },
 ];
+
+const PARTICIPANT_OPTIONS = [
+  "Semua Siswa",
+  "Orang Tua & Guru",
+  "Umum",
+  "Lainnya",
+];
+
+const ICON_MAP = {
+  calendar: CalendarDays,
+  calendarClock: CalendarClock,
+  calendarCheck: CalendarCheck,
+  megaphone: Megaphone,
+  trophy: Trophy,
+  medal: Medal,
+  book: BookOpen,
+  graduation: GraduationCap,
+  school: School,
+  handshake: Handshake,
+  palette: Palette,
+  mic: Mic,
+  star: Star,
+  activity: Activity,
+  alarm: AlarmClock,
+  atom: Atom,
+  award: Award,
+  clipboardList: ClipboardList,
+  clipboardCheck: ClipboardCheck,
+  briefcase: Briefcase,
+  building: Building2,
+  bus: BusFront,
+  map: Map,
+  mapPinned: MapPinned,
+  camera: Camera,
+  clapperboard: Clapperboard,
+  video: Video,
+  church: Church,
+  code: Code,
+  cooking: CookingPot,
+  fitness: Dumbbell,
+  film: Film,
+  gift: Gift,
+  flag: Flag,
+  ticket: Ticket,
+  game: Gamepad2,
+  heartHandshake: HeartHandshake,
+  library: Library,
+  lightbulb: Lightbulb,
+  music: Music,
+  music2: Music2,
+  partyPopper: PartyPopper,
+  paintbrush: Paintbrush,
+  pen: PenTool,
+  shield: ShieldCheck,
+  stethoscope: Stethoscope,
+  heartPulse: HeartPulse,
+  flask: FlaskConical,
+  testTube: TestTube,
+  microscope: Microscope,
+  theater: Theater,
+  trees: Trees,
+  leaf: Leaf,
+  mountain: Mountain,
+  umbrella: Umbrella,
+  droplets: Droplets,
+  recycle: Recycle,
+  volleyball: Volleyball,
+  compass: Compass,
+  globe: Globe2,
+  cpu: Cpu,
+  server: Server,
+  smartphone: Smartphone,
+  tablet: TabletSmartphone,
+  monitor: Monitor,
+  bot: Bot,
+  rocket: Rocket,
+  wifi: Wifi,
+  sparkles: Sparkles,
+  laptop: Laptop,
+} as const;
+
+const REGISTRATION_ICON_OPTIONS = [
+  { key: "ticket", label: "Ticket", Icon: Ticket },
+  { key: "calendar", label: "Kalender", Icon: Calendar },
+  { key: "users", label: "Peserta", Icon: Users },
+  { key: "megaphone", label: "Pengumuman", Icon: Megaphone },
+  { key: "star", label: "Highlight", Icon: Star },
+  { key: "clipboardCheck", label: "Checklist", Icon: ClipboardCheck },
+  { key: "handshake", label: "Kerja Sama", Icon: Handshake },
+  { key: "book", label: "Panduan", Icon: BookOpen },
+];
+
+type IconKey = keyof typeof ICON_MAP;
+
+function renderIcon(icon: string | null | undefined, className = "w-5 h-5") {
+  if (!icon) return <span className="text-xs text-gray-400">-</span>;
+  const IconComp = ICON_MAP[icon as IconKey];
+  if (IconComp) return <IconComp className={className} />;
+  return <span className="text-xs text-gray-600">{icon}</span>;
+}
 
 function getStatusLabel(status: string): string {
   const found = STATUS_OPTIONS.find((s) => s.value === status);
@@ -256,7 +438,7 @@ function DeleteModal({
 }
 
 export default function AgendasPage() {
-  const [activeTab, setActiveTab] = useState<"agendas" | "categories">(
+  const [activeTab, setActiveTab] = useState<"agendas" | "categories" | "info">(
     "agendas",
   );
   const [agendas, setAgendas] = useState<Agenda[]>([]);
@@ -295,6 +477,31 @@ export default function AgendasPage() {
     null,
   );
   const [deleting, setDeleting] = useState(false);
+  const [registrationInfos, setRegistrationInfos] = useState<RegistrationInfo[]>([
+    {
+      id: "reg-1",
+      icon: "ticket",
+      title: "Pendaftaran Online",
+      desc: "Daftar secara online melalui website sekolah",
+      steps: ["Isi formulir pendaftaran", "Upload dokumen yang diperlukan", "Konfirmasi pembayaran"],
+    },
+    {
+      id: "reg-2",
+      icon: "calendar",
+      title: "Pendaftaran Offline",
+      desc: "Datang langsung ke sekolah untuk mendaftar",
+      steps: ["Kunjungi ruang administrasi", "Bawa dokumen asli", "Selesaikan pendaftaran di tempat"],
+    },
+    {
+      id: "reg-3",
+      icon: "users",
+      title: "Syarat & Ketentuan",
+      desc: "Persyaratan yang harus dipenuhi peserta",
+      steps: ["Siswa aktif SMKN 1 Ciamis", "Melampirkan izin orang tua", "Mematuhi peraturan acara"],
+    },
+  ]);
+  const [regLoading, setRegLoading] = useState(false);
+  const [regSaving, setRegSaving] = useState(false);
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
@@ -306,6 +513,48 @@ export default function AgendasPage() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "info") return;
+    let mounted = true;
+    setRegLoading(true);
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((json) => {
+        if (!mounted) return;
+        if (json?.success && Array.isArray(json.data)) {
+          const raw = (json.data as { settingKey: string; settingValue: string | null }[]).find(
+            (s) => s.settingKey === "events_registration_info",
+          )?.settingValue;
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const sanitized = parsed.map((item, idx) => {
+                  const steps = Array.isArray(item?.steps) && item.steps.length > 0 ? item.steps.map((s: unknown) => String(s || "")) : [""];
+                  return {
+                    id: item?.id ? String(item.id) : `reg-${idx + 1}`,
+                    title: String(item?.title || ""),
+                    desc: String(item?.desc || ""),
+                    icon: String(item?.icon || "ticket"),
+                    steps,
+                  } as RegistrationInfo;
+                });
+                setRegistrationInfos(sanitized);
+              }
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setRegLoading(false));
+
+    return () => {
+      mounted = false;
+    };
+  }, [activeTab]);
 
   const fetchAgendas = useCallback(async () => {
     setLoading(true);
@@ -489,6 +738,77 @@ export default function AgendasPage() {
     return start + (end ? " - " + end + " WIB" : " WIB");
   };
 
+  const addRegistrationCard = () => {
+    setRegistrationInfos((prev) => [
+      ...prev,
+      {
+        id: `reg-${Date.now()}`,
+        title: "",
+        desc: "",
+        icon: "ticket",
+        steps: [""],
+      },
+    ]);
+  };
+
+  const updateRegistrationCard = (id: string, patch: Partial<RegistrationInfo>) => {
+    setRegistrationInfos((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
+
+  const updateRegistrationStep = (id: string, idx: number, value: string) => {
+    setRegistrationInfos((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const steps = [...item.steps];
+        steps[idx] = value;
+        return { ...item, steps };
+      }),
+    );
+  };
+
+  const addRegistrationStep = (id: string) => {
+    setRegistrationInfos((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, steps: [...item.steps, ""] } : item,
+      ),
+    );
+  };
+
+  const removeRegistrationStep = (id: string, idx: number) => {
+    setRegistrationInfos((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        if (item.steps.length <= 1) return item;
+        const steps = item.steps.filter((_, i) => i !== idx);
+        return { ...item, steps: steps.length > 0 ? steps : [""] };
+      }),
+    );
+  };
+
+  const removeRegistrationCard = (id: string) => {
+    setRegistrationInfos((prev) => (prev.length <= 1 ? prev : prev.filter((item) => item.id !== id)));
+  };
+
+  const saveRegistrationCards = async () => {
+    setRegSaving(true);
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settingKey: "events_registration_info",
+          settingValue: JSON.stringify(registrationInfos),
+          settingType: "text",
+        }),
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menyimpan info pendaftaran");
+    } finally {
+      setRegSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -521,6 +841,17 @@ export default function AgendasPage() {
           }
         >
           <Tag className="w-4 h-4" /> Kategori
+        </button>
+        <button
+          onClick={() => setActiveTab("info")}
+          className={
+            "px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 " +
+            (activeTab === "info"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-600 hover:text-gray-900")
+          }
+        >
+          <ClipboardList className="w-4 h-4" /> Info Daftar
         </button>
       </div>
 
@@ -789,7 +1120,9 @@ export default function AgendasPage() {
                   <thead>
                     <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       <th className="px-6 py-4">Nama Kategori</th>
+                      <th className="px-6 py-4">Icon</th>
                       <th className="px-6 py-4">Warna</th>
+                      <th className="px-6 py-4">Tampil di Kategori Acara</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4 text-right">Aksi</th>
                     </tr>
@@ -806,6 +1139,14 @@ export default function AgendasPage() {
                           </p>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 text-gray-700 text-sm">
+                            {renderIcon(item.icon, "w-5 h-5")}
+                            {item.icon && !(item.icon in ICON_MAP) && (
+                              <span className="text-xs text-gray-500">{item.icon}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
                           {item.color ? (
                             <div className="flex items-center gap-2">
                               <div
@@ -819,6 +1160,18 @@ export default function AgendasPage() {
                           ) : (
                             <span className="text-xs text-gray-400">-</span>
                           )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={
+                              "text-xs px-2.5 py-1 rounded-full " +
+                              (item.showInCategorySection
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-100 text-gray-600")
+                            }
+                          >
+                            {item.showInCategorySection ? "Ditampilkan" : "Disembunyikan"}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span
@@ -876,6 +1229,143 @@ export default function AgendasPage() {
             )}
           </div>
         </>
+      )}
+
+      {activeTab === "info" && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50">
+            <div className="flex items-center gap-3">
+              
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">Informasi Pendaftaran (Halaman Events)</h3>
+                <p className="text-xs text-gray-400">Atur kartu informasi + poin langkah yang akan muncul di section Informasi Pendaftaran</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={addRegistrationCard}
+                disabled={regLoading}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-blue-600 bg-blue-200 rounded-xl hover:bg-blue-100 disabled:opacity-60"
+              >
+                <Plus className="w-4 h-4" /> Tambah Kartu
+              </button>
+              <button
+                type="button"
+                onClick={saveRegistrationCards}
+                disabled={regSaving || regLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-60"
+              >
+                {regSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Simpan
+              </button>
+            </div>
+          </div>
+
+          {regLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            </div>
+          ) : (
+            <div className="px-6 py-6 space-y-6">
+              {registrationInfos.map((info) => (
+                <div key={info.id} className="border border-gray-100 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                        {(() => {
+                          const Selected = REGISTRATION_ICON_OPTIONS.find((o) => o.key === info.icon)?.Icon || Ticket;
+                          return <Selected className="w-5 h-5 text-blue-600" />;
+                        })()}
+                      </div>
+                      <input
+                        value={info.title}
+                        onChange={(e) => updateRegistrationCard(info.id, { title: e.target.value })}
+                        className="text-base font-semibold text-gray-900 focus:outline-none"
+                        placeholder="Nama informasi"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeRegistrationCard(info.id)}
+                      className="text-red-500 hover:text-red-600 text-sm inline-flex items-center gap-1"
+                      disabled={registrationInfos.length <= 1}
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Hapus</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-3">
+                      <label className="block text-xs font-semibold text-gray-500">Deskripsi</label>
+                      <textarea
+                        value={info.desc}
+                        onChange={(e) => updateRegistrationCard(info.id, { desc: e.target.value })}
+                        rows={2}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Tuliskan deskripsi singkat"
+                      />
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-gray-500">Poin langkah</span>
+                          <button
+                            type="button"
+                            onClick={() => addRegistrationStep(info.id)}
+                            className="text-blue-600 text-xs font-semibold inline-flex items-center gap-1"
+                          >
+                            <Plus className="w-4 h-4" /> Tambah Poin
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {info.steps.map((step, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                value={step}
+                                onChange={(e) => updateRegistrationStep(info.id, idx, e.target.value)}
+                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder={`Poin ${idx + 1}`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeRegistrationStep(info.id, idx)}
+                                className="text-gray-400 hover:text-red-500"
+                                disabled={info.steps.length <= 1}
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-gray-500">Icon</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {REGISTRATION_ICON_OPTIONS.map(({ key, label, Icon }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => updateRegistrationCard(info.id, { icon: key })}
+                            className={`flex items-center gap-2 border rounded-lg px-3 py-2 text-sm hover:border-blue-500 ${info.icon === key ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                          >
+                            <Icon className="w-4 h-4 text-blue-600" />
+                            <span className="truncate">{label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {registrationInfos.length === 0 && (
+                <div className="text-sm text-gray-500">Belum ada kartu. Klik &quot;Tambah Kartu&quot; untuk menambahkan.</div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {showAgendaForm && (
@@ -962,7 +1452,10 @@ export default function AgendasPage() {
                     <span className="text-gray-700">
                       {detailAgenda.eventDate
                         ? (() => {
-                            const rawDate = detailAgenda.eventDate.substring(0, 10);
+                            const rawDate = detailAgenda.eventDate.substring(
+                              0,
+                              10,
+                            );
                             const [y, mo, d] = rawDate.split("-").map(Number);
                             // Buat Date dengan komponen lokal agar toLocaleDateString tidak geser hari
                             return new Date(y, mo - 1, d).toLocaleDateString(
@@ -988,6 +1481,25 @@ export default function AgendasPage() {
                     <span className="text-gray-500">Penyelenggara</span>
                     <span className="text-gray-700">
                       {detailAgenda.organizer || "-"}
+                    </span>
+                    <span className="text-gray-500">Peserta</span>
+                    <span className="text-gray-700">
+                      {detailAgenda.participants || "-"}
+                    </span>
+                    <span className="text-gray-500">Link Daftar</span>
+                    <span className="text-gray-700">
+                      {detailAgenda.hasRegistration && detailAgenda.registrationUrl ? (
+                        <a
+                          href={detailAgenda.registrationUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline break-all"
+                        >
+                          {detailAgenda.registrationUrl}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
                     </span>
                     <span className="text-gray-500">Kategori</span>
                     <span>
@@ -1107,6 +1619,32 @@ export default function AgendasPage() {
                         {detailCategory.isActive ? "Aktif" : "Nonaktif"}
                       </span>
                     </span>
+                    <span className="text-gray-500">Icon</span>
+                    <span className="flex items-center gap-2 font-medium text-gray-900">
+                      {renderIcon(detailCategory.icon, "w-5 h-5")}
+                      {detailCategory.icon && !(detailCategory.icon in ICON_MAP) && (
+                        <span className="text-xs text-gray-500">{detailCategory.icon}</span>
+                      )}
+                    </span>
+                    <span className="text-gray-500">Deskripsi</span>
+                    <span className="text-gray-700 whitespace-pre-wrap">
+                      {detailCategory.description || (
+                        <span className="text-gray-400">Tidak ada deskripsi</span>
+                      )}
+                    </span>
+                    <span className="text-gray-500">Tampil di Kategori Acara</span>
+                    <span>
+                      <span
+                        className={
+                          "text-xs px-2.5 py-1 rounded-full " +
+                          (detailCategory.showInCategorySection
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-600")
+                        }
+                      >
+                        {detailCategory.showInCategorySection ? "Ditampilkan" : "Disembunyikan"}
+                      </span>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1137,6 +1675,10 @@ function AgendaFormModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const today = new Date().toISOString().split("T")[0];
   const [useTimeEndText, setUseTimeEndText] = useState(false);
+  const [participantOption, setParticipantOption] = useState(
+    PARTICIPANT_OPTIONS[0],
+  );
+  const [participantCustom, setParticipantCustom] = useState("");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -1150,12 +1692,19 @@ function AgendaFormModal({
     status: "upcoming",
     isPublished: true,
     image: "",
+    hasRegistration: false,
+    registrationUrl: "",
   });
 
   // Hitung status otomatis dari tanggal + jam mulai
   // Hitung status otomatis berdasarkan tanggal + jam mulai + jam selesai
   // hasTimeEnd = false berarti jam selesai tidak diketahui → tidak bisa auto-complete
-  function computeStatus(date: string, time: string, timeEnd: string, hasTimeEnd: boolean): string {
+  function computeStatus(
+    date: string,
+    time: string,
+    timeEnd: string,
+    hasTimeEnd: boolean,
+  ): string {
     if (!date) return "upcoming";
     const [y, m, d] = date.split("-").map(Number);
     const [hh, mm] = time ? time.split(":").map(Number) : [0, 0];
@@ -1169,8 +1718,8 @@ function AgendaFormModal({
     if (hasTimeEnd && timeEnd) {
       const [ehh, emm] = timeEnd.split(":").map(Number);
       const eventEndMs = new Date(y, m - 1, d, ehh, emm).getTime();
-      if (nowMs < eventEndMs) return "ongoing";   // sedang berlangsung
-      return "completed";                          // sudah selesai
+      if (nowMs < eventEndMs) return "ongoing"; // sedang berlangsung
+      return "completed"; // sudah selesai
     }
 
     // Jam selesai tidak diketahui → minimal "berlangsung" sejak jam mulai
@@ -1178,11 +1727,17 @@ function AgendaFormModal({
     return "ongoing";
   }
 
-  // Update status otomatis setiap kali tanggal/jam berubah
+  // Update status otomatis hanya jika jam selesai diketahui (mode otomatis)
   useEffect(() => {
+    if (useTimeEndText) return; // manual mode → jangan override pilihan admin
     setForm((f) => ({
       ...f,
-      status: computeStatus(f.eventDate, f.eventTime, f.timeEnd, !useTimeEndText),
+      status: computeStatus(
+        f.eventDate,
+        f.eventTime,
+        f.timeEnd,
+        !useTimeEndText,
+      ),
     }));
   }, [form.eventDate, form.eventTime, form.timeEnd, useTimeEndText]);
 
@@ -1211,7 +1766,9 @@ function AgendaFormModal({
     if (agenda) {
       const hasTimeEndText = !!agenda.timeEndText;
       setUseTimeEndText(hasTimeEndText);
-      const eDate = agenda.eventDate ? agenda.eventDate.substring(0, 10) : today;
+      const eDate = agenda.eventDate
+        ? agenda.eventDate.substring(0, 10)
+        : today;
       const eTime = parseTimeToHHmm(agenda.eventTime) || getCurrentTime();
       const eTimeEnd = parseTimeToHHmm(agenda.timeEnd) || getOneHourLater();
       setForm({
@@ -1224,10 +1781,30 @@ function AgendaFormModal({
         location: agenda.location || "",
         organizer: agenda.organizer || "",
         categoryId: agenda.categoryId ? String(agenda.categoryId) : "",
-        status: computeStatus(eDate, eTime, eTimeEnd, !hasTimeEndText),
-        isPublished: agenda.isPublished !== undefined ? agenda.isPublished : true,
+        status: hasTimeEndText
+          ? agenda.status
+          : computeStatus(eDate, eTime, eTimeEnd, !hasTimeEndText),
+        isPublished:
+          agenda.isPublished !== undefined ? agenda.isPublished : true,
         image: agenda.image || "",
+        hasRegistration: agenda.hasRegistration ?? false,
+        registrationUrl: agenda.registrationUrl || "",
       });
+      const storedParticipants = agenda.participants || "";
+      if (
+        storedParticipants &&
+        PARTICIPANT_OPTIONS.includes(storedParticipants) &&
+        storedParticipants !== "Lainnya"
+      ) {
+        setParticipantOption(storedParticipants);
+        setParticipantCustom("");
+      } else if (storedParticipants) {
+        setParticipantOption("Lainnya");
+        setParticipantCustom(storedParticipants);
+      } else {
+        setParticipantOption(PARTICIPANT_OPTIONS[0]);
+        setParticipantCustom("");
+      }
       if (agenda.image) setImagePreview(agenda.image);
     }
   }, [agenda, today]);
@@ -1263,6 +1840,18 @@ function AgendaFormModal({
       setError("Nama kegiatan wajib diisi");
       return;
     }
+    if (participantOption === "Lainnya" && !participantCustom.trim()) {
+      setError("Silakan jelaskan peserta kegiatan saat memilih 'Lainnya'");
+      return;
+    }
+    if (form.hasRegistration && !form.registrationUrl.trim()) {
+      setError("Mohon isi URL pendaftaran atau matikan toggle pendaftaran");
+      return;
+    }
+    const participantsValue =
+      participantOption === "Lainnya"
+        ? participantCustom.trim()
+        : participantOption;
     setSaving(true);
     setError("");
     try {
@@ -1276,9 +1865,12 @@ function AgendaFormModal({
         timeEndText: useTimeEndText ? "Selesai" : null,
         location: form.location || null,
         organizer: form.organizer || null,
+        participants: participantsValue || null,
         categoryId: form.categoryId ? parseInt(form.categoryId) : null,
         status: form.status,
         isPublished: form.isPublished,
+        hasRegistration: form.hasRegistration,
+        registrationUrl: form.hasRegistration ? form.registrationUrl || null : null,
         image: form.image || null,
       };
       const res = await fetch(url, {
@@ -1394,21 +1986,38 @@ function AgendaFormModal({
                   </button>
                 )}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Nama Kegiatan <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={form.title}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, title: e.target.value }))
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Contoh: Upacara Bendera"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Nama Kegiatan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, title: e.target.value }))
+                    }
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Contoh: Upacara Bendera"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Tanggal <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <input
+                      type="date"
+                      value={form.eventDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, eventDate: e.target.value }))
+                      }
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -1427,22 +2036,6 @@ function AgendaFormModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Tanggal <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    <input
-                      type="date"
-                      value={form.eventDate}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, eventDate: e.target.value }))
-                      }
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Jam Mulai <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -1457,43 +2050,44 @@ function AgendaFormModal({
                     />
                   </div>
                 </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Jam Selesai
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useTimeEndText}
-                      onChange={(e) => setUseTimeEndText(e.target.checked)}
-                      className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    Tidak dapat ditentukan
-                  </label>
-                </div>
-                {useTimeEndText ? (
-                  <input
-                    type="text"
-                    value="Selesai"
-                    readOnly
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
-                  />
-                ) : (
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    <input
-                      type="time"
-                      value={form.timeEnd}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, timeEnd: e.target.value }))
-                      }
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Jam Selesai
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useTimeEndText}
+                        onChange={(e) => setUseTimeEndText(e.target.checked)}
+                        className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      Tidak dapat ditentukan
+                    </label>
                   </div>
-                )}
+                  {useTimeEndText ? (
+                    <input
+                      type="text"
+                      value="Selesai"
+                      readOnly
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                  ) : (
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="time"
+                        value={form.timeEnd}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, timeEnd: e.target.value }))
+                        }
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -1530,7 +2124,39 @@ function AgendaFormModal({
                   </div>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Peserta
+                  </label>
+                  <div className="space-y-2">
+                    <select
+                      value={participantOption}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setParticipantOption(value);
+                        if (value !== "Lainnya") setParticipantCustom("");
+                      }}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {PARTICIPANT_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    {participantOption === "Lainnya" && (
+                      <input
+                        type="text"
+                        value={participantCustom}
+                        onChange={(e) => setParticipantCustom(e.target.value)}
+                        placeholder="Jelaskan jenis peserta lainnya"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    )}
+                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Kategori
@@ -1549,6 +2175,55 @@ function AgendaFormModal({
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between py-2.5 px-4 border border-gray-100 rounded-xl bg-gray-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Link Pendaftaran
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Tampilkan URL daftar agenda
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          hasRegistration: !f.hasRegistration,
+                          registrationUrl: !f.hasRegistration
+                            ? f.registrationUrl
+                            : "",
+                        }))
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.hasRegistration ? "bg-blue-600" : "bg-gray-200"}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.hasRegistration ? "translate-x-6" : "translate-x-1"}`}
+                      />
+                    </button>
+                  </div>
+                  {form.hasRegistration && (
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-600">URL Pendaftaran</label>
+                      <input
+                        type="url"
+                        value={form.registrationUrl}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            registrationUrl: e.target.value,
+                          }))
+                        }
+                        placeholder="https://..."
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -1571,7 +2246,8 @@ function AgendaFormModal({
                         <option value="completed">Selesai</option>
                       </select>
                       <p className="text-xs text-amber-600 flex items-center gap-1">
-                        Jam selesai tidak diketahui — ubah ke &quot;Selesai&quot; secara manual
+                        Jam selesai tidak diketahui — ubah ke
+                        &quot;Selesai&quot; secara manual
                       </p>
                     </div>
                   ) : (
@@ -1603,8 +2279,12 @@ function AgendaFormModal({
                 <div className="flex flex-col justify-end">
                   <div className="flex items-center justify-between py-2.5 px-4 border border-gray-100 rounded-xl bg-gray-50">
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Publish</p>
-                      <p className="text-xs text-gray-400">Tampilkan ke publik</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Publish
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Tampilkan ke publik
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -1661,10 +2341,14 @@ function CategoryFormModal({
   const isEdit = !!category;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [iconSearch, setIconSearch] = useState("");
   const [form, setForm] = useState({
     name: "",
     color: "#3b82f6",
+    description: "",
+    icon: "calendar",
     isActive: true,
+    showInCategorySection: true,
   });
   const colorOptions = [
     "#ef4444",
@@ -1685,13 +2369,108 @@ function CategoryFormModal({
     "#ec4899",
     "#f43f5e",
   ];
+  const iconOptions = [
+    // Jadwal & pengumuman
+    { value: "calendar", label: "Kalender" },
+    { value: "calendarClock", label: "Jadwal" },
+    { value: "calendarCheck", label: "Konfirmasi Jadwal" },
+    { value: "alarm", label: "Pengingat" },
+    { value: "megaphone", label: "Pengumuman" },
+
+    // Akademik
+    { value: "book", label: "Akademik" },
+    { value: "library", label: "Perpustakaan" },
+    { value: "graduation", label: "Wisuda" },
+    { value: "school", label: "Sekolah" },
+    { value: "lightbulb", label: "Inovasi" },
+    { value: "atom", label: "Sains" },
+    { value: "flask", label: "Lab / Praktikum" },
+    { value: "testTube", label: "Eksperimen" },
+    { value: "microscope", label: "Riset" },
+
+    // Teknologi & digital
+    { value: "code", label: "Coding" },
+    { value: "laptop", label: "Digital" },
+    { value: "cpu", label: "Hardware" },
+    { value: "server", label: "Server/Network" },
+    { value: "smartphone", label: "Mobile" },
+    { value: "tablet", label: "Tablet" },
+    { value: "monitor", label: "Monitor" },
+    { value: "wifi", label: "Teknologi" },
+    { value: "bot", label: "Robotika" },
+    { value: "rocket", label: "Proyek/Startup" },
+
+    // Seni & kreatif
+    { value: "palette", label: "Kesenian" },
+    { value: "paintbrush", label: "Seni Rupa" },
+    { value: "pen", label: "Menulis/Desain" },
+    { value: "clapperboard", label: "Video" },
+    { value: "film", label: "Film" },
+    { value: "camera", label: "Dokumentasi" },
+    { value: "video", label: "Live / Streaming" },
+    { value: "music", label: "Musik" },
+    { value: "mic", label: "Seminar / Talkshow" },
+    { value: "theater", label: "Teater" },
+    { value: "partyPopper", label: "Perayaan" },
+
+    // Sosial & organisasi
+    { value: "handshake", label: "Kolaborasi" },
+    { value: "heartHandshake", label: "Relasi" },
+    { value: "briefcase", label: "Karir" },
+    { value: "gift", label: "Hadiah / Charity" },
+    { value: "ticket", label: "Tiket" },
+    { value: "clipboardList", label: "Daftar Tugas" },
+    { value: "clipboardCheck", label: "Checklist" },
+    { value: "award", label: "Penghargaan" },
+    { value: "trophy", label: "Lomba" },
+    { value: "medal", label: "Medali" },
+    { value: "star", label: "Highlight" },
+    { value: "sparkles", label: "Prestasi" },
+
+    // Lokasi & fasilitas
+    { value: "building", label: "Kampus" },
+    { value: "bus", label: "Transportasi" },
+    { value: "map", label: "Peta" },
+    { value: "mapPinned", label: "Lokasi Pasti" },
+    { value: "compass", label: "Eksplorasi" },
+    { value: "globe", label: "Global" },
+
+    // Olahraga & kesehatan
+    { value: "activity", label: "Kegiatan" },
+    { value: "fitness", label: "Olahraga" },
+    { value: "volleyball", label: "Turnamen" },
+    { value: "game", label: "E-Sport" },
+    { value: "stethoscope", label: "Kesehatan" },
+    { value: "heartPulse", label: "Kesehatan/Jantung" },
+    { value: "shield", label: "Keamanan" },
+
+    // Alam & lingkungan
+    { value: "trees", label: "Lingkungan" },
+    { value: "leaf", label: "Alam" },
+    { value: "mountain", label: "Outdoor" },
+    { value: "umbrella", label: "Kebencanaan" },
+    { value: "droplets", label: "Air / Sanitasi" },
+    { value: "recycle", label: "Daur Ulang" },
+    { value: "flag", label: "Upacara" },
+  ];
+
+  const filteredIconOptions = iconOptions.filter(({ value, label }) => {
+    if (!iconSearch.trim()) return true;
+    const q = iconSearch.toLowerCase();
+    return (
+      label.toLowerCase().includes(q) || value.toLowerCase().includes(q)
+    );
+  });
 
   useEffect(() => {
     if (category)
       setForm({
         name: category.name || "",
         color: category.color || "#3b82f6",
+        description: category.description || "",
+        icon: category.icon || "",
         isActive: category.isActive,
+        showInCategorySection: category.showInCategorySection,
       });
   }, [category]);
 
@@ -1818,6 +2597,64 @@ function CategoryFormModal({
                   />
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Icon
+                </label>
+                <div className="mb-2 flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Cari icon (misal: musik, coding)"
+                    aria-label="Cari icon"
+                  />
+                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                    {filteredIconOptions.length} pilihan
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-2 max-h-48 overflow-y-auto pr-1">
+                  {filteredIconOptions.map(({ value, label }) => {
+                    const IconComp = ICON_MAP[value as IconKey];
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, icon: value }))}
+                        className={`flex items-center gap-2 px-3 py-2 text-sm rounded-xl border transition-all ${
+                          form.icon === value
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 hover:border-blue-300"
+                        }`}
+                        aria-label={`Pilih icon ${label}`}
+                      >
+                        {IconComp && <IconComp className="w-4 h-4" />}
+                        <span className="text-xs">{label}</span>
+                      </button>
+                    );
+                  })}
+                  {filteredIconOptions.length === 0 && (
+                    <span className="text-xs text-gray-400">
+                      Tidak ada icon cocok
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Deskripsi
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  rows={3}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Ringkasan kategori agenda"
+                />
+              </div>
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-gray-700">
                   Kategori Aktif
@@ -1831,6 +2668,25 @@ function CategoryFormModal({
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isActive ? "translate-x-6" : "translate-x-1"}`}
+                  />
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">
+                  Tampilkan di Kategori Acara
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      showInCategorySection: !f.showInCategorySection,
+                    }))
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.showInCategorySection ? "bg-blue-600" : "bg-gray-200"}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.showInCategorySection ? "translate-x-6" : "translate-x-1"}`}
                   />
                 </button>
               </div>

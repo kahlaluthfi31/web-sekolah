@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { PannellumConfig } from "@/components/VirtualTourViewer";
-import { Compass, Info, Route } from "lucide-react";
+import { Building2, Compass, Info, MapPin, Route, Sparkles } from "lucide-react";
 
 const VirtualTourViewer = dynamic(() => import("@/components/VirtualTourViewer"), { ssr: false });
 
@@ -133,23 +133,71 @@ const CampusPage: React.FC = () => {
   ];
 
   return (
-    <div className="pt-20">
-      <section className="bg-[#0092DD] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">Sarana Prasarana</h1>
-          <p className="max-w-2xl mx-auto text-white/80 text-sm leading-relaxed">
-            Esse dolorum voluptatum ullam est sint nemo et est ipsa porro
-            placeat quibusdam quia assumenda nunquam molestias.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - sama gaya dengan Struktur Sekolah & Profil Sekolah */}
+      <section className="pt-24 pb-16 relative overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-linear-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
+
+        {/* Dotted pattern overlay */}
+        <div className="absolute inset-0 opacity-15">
+          <div
+            className="absolute top-0 left-0 w-full h-full"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3Ccircle cx='10' cy='10' r='1.5'/%3E%3Ccircle cx='50' cy='10' r='1.5'/%3E%3Ccircle cx='10' cy='50' r='1.5'/%3E%3Ccircle cx='50' cy='50' r='1.5'/%3E%3C/g%3E%3C/svg%3E\")",
+              backgroundSize: "60px 60px",
+            }}
+          />
+        </div>
+
+        {/* Floating elements */}
+        <div className="absolute top-10 right-20 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-10 left-20 w-48 h-48 bg-white opacity-5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+
+        {/* Campus-related illustrations */}
+        <div className="absolute top-16 left-12 text-white/10">
+          <Building2 className="w-16 h-16" strokeWidth={1} />
+        </div>
+        <div className="absolute top-32 right-16 text-white/10">
+          <MapPin className="w-12 h-12" strokeWidth={1} />
+        </div>
+        <div className="absolute bottom-20 left-32 text-white/10">
+          <Compass className="w-14 h-14" strokeWidth={1} />
+        </div>
+        <div className="absolute top-1/3 right-32 text-white/10">
+          <Sparkles className="w-10 h-10" strokeWidth={1} />
+        </div>
+
+        {/* School elements */}
+        <div className="absolute bottom-32 right-20 text-white/8">
+          <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 3L1 9L12 15L23 9L12 3Z" />
+            <path d="M12 15L12 21" />
+            <path d="M8 17L8 21" />
+            <path d="M16 17L16 21" />
+            <path d="M1 9L1 21L23 21L23 9" />
+          </svg>
+        </div>
+        <div className="absolute top-40 left-40 text-white/8">
+          <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3H5C3.89 3 3 3.89 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.89 20.1 3 19 3ZM19 5V19H5V5H19Z" />
+            <path d="M12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7ZM12 15C14.67 15 17 16.17 17 17.5V19H7V17.5C7 16.17 9.33 15 12 15Z" />
+          </svg>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line">
+              Sarana Prasarana
+            </h1>
+            <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+              Esse dolorum voluptatum ullam est sint nemo et est ipsa porro placeat quibusdam quia assumenda nunquam molestias.
+            </p>
+          </div>
         </div>
       </section>
-
-      <div className="bg-gray-100 py-4 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-medium text-gray-500">
-          <span className="text-[#0092DD]">Home</span>{" "}
-          <span className="mx-2">/</span> Sarana Prasarana
-        </div>
-      </div>
 
       {/* Sarana Prasarana (dynamic from facilities) */}
       <section className="py-24 bg-gray-50">

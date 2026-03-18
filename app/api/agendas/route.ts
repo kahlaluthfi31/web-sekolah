@@ -26,6 +26,9 @@ async function autoUpdateStatuses(agendas: Array<{ id: number; eventDate: Date |
   const toUpdate: Array<{ id: number; newStatus: 'upcoming' | 'ongoing' | 'completed' }> = []
 
   for (const agenda of agendas) {
+    // Jika jam selesai tidak diketahui, status ditentukan manual oleh admin → jangan auto-update
+    if (agenda.timeEndText) continue
+
     const base = computeStatus(agenda.eventDate, agenda.eventTime)
 
     let computed: 'upcoming' | 'ongoing' | 'completed' = base
@@ -40,14 +43,6 @@ async function autoUpdateStatuses(agendas: Array<{ id: number; eventDate: Date |
         const eventEndMs = new Date(y, m, d, ehh, emm).getTime()
         if (Date.now() >= eventEndMs) computed = 'completed'
       }
-    }
-
-    // Jika jam selesai tidak diketahui (timeEndText ada), jangan auto-complete —
-    // biarkan status yang sudah di-set admin (completed) tetap, hanya update upcoming→ongoing
-    if (agenda.timeEndText) {
-      if (base === 'upcoming') computed = 'upcoming'
-      else if (agenda.status === 'completed') computed = 'completed' // pertahankan manual completed
-      else computed = 'ongoing'
     }
 
     if (agenda.status !== computed) {
@@ -140,6 +135,9 @@ export async function GET(request: NextRequest) {
 
     // Kembalikan data dengan status yang sudah dihitung ulang (real-time)
     const dataWithComputedStatus = data.map((item) => {
+      // Untuk agenda tanpa jam selesai (manual), gunakan status yang disimpan admin apa adanya
+      if (item.timeEndText) return item
+
       const base = computeStatus(item.eventDate, item.eventTime)
       let status: string = base
 
@@ -194,6 +192,9 @@ export async function POST(request: NextRequest) {
         timeEndText: body.timeEndText || null,
         location: body.location || null,
         organizer: body.organizer || null,
+        participants: body.participants || null,
+        hasRegistration: body.hasRegistration === true,
+        registrationUrl: body.hasRegistration ? body.registrationUrl || null : null,
         image: body.image || null,
         status: body.status || 'upcoming',
         isPublished: body.isPublished !== undefined ? Boolean(body.isPublished) : true,

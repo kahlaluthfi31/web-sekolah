@@ -275,7 +275,8 @@ export default function SettingsPage() {
         const json = await res.json();
         alert(json.message || "Gagal menyimpan");
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert("Terjadi kesalahan");
     } finally {
       setSaving(null);
@@ -312,8 +313,8 @@ export default function SettingsPage() {
     let metadata;
     try {
       metadata = await readVideoMetadata(file);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setHeroVideoError("Tidak dapat membaca metadata video. Pastikan video valid dan coba lagi.");
       return;
     }
@@ -344,8 +345,8 @@ export default function SettingsPage() {
       } else {
         setHeroVideoError(j.message || "Gagal mengunggah video hero.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setHeroVideoError("Gagal mengunggah video hero. Coba lagi.");
     } finally {
       setHeroVideoUploading(false);
@@ -364,7 +365,8 @@ export default function SettingsPage() {
       setHeroVideoSaved(true);
       setPendingHeroVideoUrl(null);
       setHeroVideoError("");
-    } catch (error) {
+    } catch (err) {
+      console.error(err);
       setHeroVideoError("Gagal menyimpan video hero. Coba lagi.");
     } finally {
       setHeroVideoSaving(false);
@@ -444,6 +446,7 @@ export default function SettingsPage() {
     ...DEFAULT_SETTINGS.map((d) => d.key),
     ...popupKeys,
     "hero_video_url",
+    "events_registration_info",
   ];
   const customSettings = settings.filter(
     (s) => !defaultKeys.includes(s.settingKey),

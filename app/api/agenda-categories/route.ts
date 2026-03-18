@@ -8,12 +8,16 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search')
-    const isActive = searchParams.get('isActive')
+  const isActive = searchParams.get('isActive')
+  const showInCategorySection = searchParams.get('showInCategorySection')
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
     if (search) {
       where.name = { contains: search }
+    }
+    if (showInCategorySection !== null && showInCategorySection !== '') {
+      where.showInCategorySection = showInCategorySection === 'true'
     }
     if (isActive !== null && isActive !== '') {
       where.isActive = isActive === 'true'
@@ -55,7 +59,10 @@ export async function POST(request: NextRequest) {
       data: {
         name: body.name.trim(),
         color: body.color || null,
+        description: body.description?.trim() || null,
+        icon: body.icon?.trim() || null,
         isActive: body.isActive ?? true,
+        showInCategorySection: body.showInCategorySection ?? true,
       },
     })
 
