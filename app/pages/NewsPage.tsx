@@ -172,7 +172,7 @@ const NewsPage: React.FC = () => {
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Berita Utama</span>
-            <span className="text-xs text-gray-400">02 / 04</span>
+            <span className="text-xs text-gray-400">01 / 03</span>
           </div>
           
           <p className="text-gray-600 text-lg max-w-2xl mb-16">
@@ -282,7 +282,7 @@ const NewsPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Berita Terbaru</span>
-            <span className="text-xs text-gray-400">03 / 04</span>
+            <span className="text-xs text-gray-400">02 / 03</span>
           </div>
         </div>
 
@@ -334,7 +334,7 @@ const NewsPage: React.FC = () => {
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Semua Berita</span>
-            <span className="text-xs text-gray-400">04 / 04</span>
+            <span className="text-xs text-gray-400">03 / 03</span>
           </div>
           
           <p className="text-gray-600 text-lg max-w-2xl mb-16">

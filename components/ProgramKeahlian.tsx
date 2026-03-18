@@ -83,7 +83,7 @@ const ProgramKeahlian: React.FC = () => {
 
         {/* Top label row */}
         <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
-          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Kompetensi Keahlian</span>
+          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Program Keahlian</span>
           <span className="text-xs text-gray-400">02 / 04</span>
         </div>
 
