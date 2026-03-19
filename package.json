@@ -14,6 +14,8 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.0.1",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "lucide-react": "^0.563.0",
@@ -23,8 +25,10 @@
     "nodemailer": "^7.0.13",
     "pm2": "^6.0.14",
     "prisma": "^5.22.0",
+    "quill": "^2.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-quill": "^2.0.0",
     "sharp": "^0.34.5",
     "zod": "^4.3.6"
   },

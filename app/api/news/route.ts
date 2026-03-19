@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     const news = await prisma.news.create({
       data: {
         ...newsData,
+        // Simpan waktu publish hanya saat status publish (draft = null)
         publishedAt: newsData.isPublished ? new Date() : null,
         tags: tags
           ? {

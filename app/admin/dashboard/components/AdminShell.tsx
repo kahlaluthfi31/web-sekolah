@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import type { SessionUser } from '@/lib/auth'
 import { getNavigation, type UserRole, type NavItem } from '@/lib/rbac'
@@ -349,8 +350,15 @@ export function AdminShell({ user, children }: AdminShellProps) {
 
             {/* Logo */}
             <div className="flex items-center h-16 px-4 border-b border-gray-100 shrink-0 gap-3">
-              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                <School className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center shrink-0 p-1.5">
+                <Image
+                  src="/images/web/logo-smkn1-ciamis.png"
+                  alt="Logo SMKN 1 Ciamis"
+                  width={28}
+                  height={28}
+                  className="w-full h-full object-contain"
+                  priority
+                />
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-gray-900 text-sm truncate">Admin SMKN 1 CIAMIS</p>
@@ -397,9 +405,16 @@ export function AdminShell({ user, children }: AdminShellProps) {
         }`}
       >
         {/* Logo */}
-        <div className={`flex items-center h-16 px-4 border-b border-gray-100 shrink-0 ${collapsed ? 'justify-center' : 'gap-3'}`}>
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-            <School className="w-5 h-5 text-white" />
+          <div className={`flex items-center h-16 px-4 border-b border-gray-100 shrink-0 ${collapsed ? 'justify-center' : 'gap-3'}`}>
+          <div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center shrink-0 p-1.5">
+            <Image
+              src="/images/web/logo-smkn1-ciamis.png"
+              alt="Logo SMKN 1 Ciamis"
+              width={28}
+              height={28}
+              className="w-full h-full object-contain"
+              priority
+            />
           </div>
           {!collapsed && (
             <div className="min-w-0">
