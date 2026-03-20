@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { SessionUser } from '@/lib/auth'
 import { getNavigation, type UserRole, type NavItem } from '@/lib/rbac'
 import {
-  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
+  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays, Route,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu as MenuIcon, Home, School, Settings, LogOut,
   ChevronLeft, ChevronRight, ChevronDown, X, ShieldCheck, Camera,
@@ -18,7 +18,7 @@ import {
 /*  Icon mapping                                                       */
 /* ------------------------------------------------------------------ */
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
+  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays, Route,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu: MenuIcon, Home, School, Settings, ShieldCheck, Camera,
   Layers, Award,
@@ -310,7 +310,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
   )
 
   const groups = useMemo(() => {
-    const contentKeys = ['news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages', 'partners']
+  const contentKeys = ['news', 'achievements', 'extracurriculars', 'routine-activities', 'agendas', 'alumni', 'comments', 'messages', 'partners']
     const masterKeys = ['teachers', 'majors', 'facilities', 'virtual-tour']
   const settingsKeys = ['navigation', 'school-profile', 'settings']
     return {

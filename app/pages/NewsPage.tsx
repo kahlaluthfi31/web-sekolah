@@ -243,41 +243,45 @@ const NewsPage: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-12">
             {/* Featured Main */}
             <div className="lg:w-2/3">
-              <div className="relative group cursor-pointer">
-                <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
-                  <img
-                    src={featuredNews?.featuredImage || PLACEHOLDER_IMG}
-                    alt={featuredNews?.title || 'Featured News'}
-                    className="w-full h-96 lg:h-125 object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-8">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="bg-[#0268ab] text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">
-                        {featuredNews ? CATEGORY_LABEL[featuredNews.category] || featuredNews.category : 'Kategori'}
-                      </span>
-                      <span className="text-white/80 text-sm flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {featuredNews ? formatDate(featuredNews.publishedAt || featuredNews.createdAt) : '-'}
-                      </span>
-                    </div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4 leading-tight">
-                      {featuredNews ? formatTitlePrimary(featuredNews.title) : 'Belum ada berita'}
-                    </h2>
-                    <p className="text-white/90 text-sm mb-4 leading-relaxed">{featuredNews ? formatExcerptPrimary(featuredNews.excerpt) : ''}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-white/80 text-sm">
-                        <User className="w-4 h-4" />
-                        {featuredNews?.author?.name || 'Admin'}
+              {loading ? (
+                <div className="relative rounded-2xl overflow-hidden shadow-lg animate-pulse bg-gray-200 h-96 lg:h-125" />
+              ) : (
+                <div className="relative group cursor-pointer">
+                  <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                    <img
+                      src={featuredNews?.featuredImage || PLACEHOLDER_IMG}
+                      alt={featuredNews?.title || 'Featured News'}
+                      className="w-full h-96 lg:h-125 object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-8">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="bg-[#0268ab] text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                          {featuredNews ? CATEGORY_LABEL[featuredNews.category] || featuredNews.category : 'Kategori'}
+                        </span>
+                        <span className="text-white/80 text-sm flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {featuredNews ? formatDate(featuredNews.publishedAt || featuredNews.createdAt) : '-'}
+                        </span>
                       </div>
-                      <button className="flex items-center gap-2 text-white bg-[#0268ab] px-4 py-2 rounded-lg hover:bg-[#014a8f] transition-colors text-sm font-medium">
-                        Baca Selengkapnya
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
+                      <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4 leading-tight">
+                        {featuredNews ? formatTitlePrimary(featuredNews.title) : 'Belum ada berita'}
+                      </h2>
+                      <p className="text-white/90 text-sm mb-4 leading-relaxed">{featuredNews ? formatExcerptPrimary(featuredNews.excerpt) : ''}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-white/80 text-sm">
+                          <User className="w-4 h-4" />
+                          {featuredNews?.author?.name || 'Admin'}
+                        </div>
+                        <button className="flex items-center gap-2 text-white bg-[#0268ab] px-4 py-2 rounded-lg hover:bg-[#014a8f] transition-colors text-sm font-medium">
+                          Baca Selengkapnya
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -304,7 +308,20 @@ const NewsPage: React.FC = () => {
 
               {/* Sidebar News List */}
               <div className="space-y-6">
-                {loading && <p className="text-sm text-gray-500">Memuat data...</p>}
+                {loading && (
+                  <>
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                      <div key={idx} className="flex items-center gap-3 animate-pulse">
+                        <div className="w-14 h-14 rounded-lg bg-gray-200" />
+                        <div className="flex-1 space-y-2">
+                          <div className="w-24 h-3 bg-gray-200 rounded-full" />
+                          <div className="w-40 h-3 bg-gray-200 rounded-full" />
+                          <div className="w-32 h-3 bg-gray-200 rounded-full" />
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
                 {!loading && sidebarNews.length === 0 && <p className="text-sm text-gray-500">Belum ada data untuk tab ini.</p>}
                 {!loading &&
                   sidebarNews.map((item) => (
@@ -354,46 +371,60 @@ const NewsPage: React.FC = () => {
             <span className="text-xs text-gray-400">02 / 02</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-            {allNews.map((item) => (
-              <div key={item.id} className="group cursor-pointer">
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-                  {/* Logo SMKN 1 Ciamis - Pojok Bawah Kanan BNW - Half Visible - Larger & More Visible */}
-                  <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <img src="/images/logosmeabnw.svg" alt="SMKN 1 Ciamis Logo" className="w-full h-full object-contain" />
+            {loading
+              ? Array.from({ length: PAGE_SIZE }).map((_, idx) => (
+                  <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden animate-pulse">
+                    <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-10 bg-gray-200" />
+                    <div className="relative z-10 space-y-3">
+                      <div className="w-full h-40 rounded-xl bg-gray-200" />
+                      <div className="h-3 w-24 bg-gray-200 rounded-full" />
+                      <div className="h-4 w-3/4 bg-gray-200 rounded-full" />
+                      <div className="h-3 w-1/2 bg-gray-200 rounded-full" />
+                      <div className="h-3 w-full bg-gray-200 rounded-full" />
+                      <div className="h-3 w-2/3 bg-gray-200 rounded-full" />
                     </div>
                   </div>
+                ))
+              : allNews.map((item) => (
+                  <div key={item.id} className="group cursor-pointer">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+                      {/* Logo SMKN 1 Ciamis - Pojok Bawah Kanan BNW - Half Visible - Larger & More Visible */}
+                      <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15">
+                        <div className="w-full h-full flex items-center justify-center">
+                          <img src="/images/logosmeabnw.svg" alt="SMKN 1 Ciamis Logo" className="w-full h-full object-contain" />
+                        </div>
+                      </div>
 
-                    <div className="relative z-10">
-                    <div className="mb-4 rounded-xl overflow-hidden border border-gray-100">
-                      <div className="relative w-full h-40 bg-gray-50">
-                        <img
-                          src={item.featuredImage || PLACEHOLDER_IMG}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <span className="absolute top-2 left-2 bg-[#0268ab] text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
-                          {CATEGORY_LABEL[item.category] || item.category}
-                        </span>
+                      <div className="relative z-10">
+                        <div className="mb-4 rounded-xl overflow-hidden border border-gray-100">
+                          <div className="relative w-full h-40 bg-gray-50">
+                            <img
+                              src={item.featuredImage || PLACEHOLDER_IMG}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute top-2 left-2 bg-[#0268ab] text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
+                              {CATEGORY_LABEL[item.category] || item.category}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-start gap-1 text-xs text-gray-500 mb-3">
+                          <span>
+                            {formatDate(item.publishedAt || item.createdAt)}
+                            {isEdited(item) && <span className="text-[10px] font-semibold text-gray-500 uppercase"> (Diedit)</span>}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-gray-900 group-hover:text-[#0268ab] transition-colors mb-3 leading-tight">{formatTitleGrid(item.title)}</h4>
+                        <p className="text-xs text-gray-500 mb-2">by {item.author?.name || 'Admin'}</p>
+                        <p className="text-sm text-gray-600 leading-relaxed mb-4">{formatExcerptGrid(item.excerpt)}</p>
+                        <button className="flex items-center gap-2 text-[#0268ab] text-xs font-bold uppercase tracking-widest hover:translate-x-1 transition-transform">
+                          Baca Selengkapnya
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex flex-col items-start gap-1 text-xs text-gray-500 mb-3">
-                      <span>
-                        {formatDate(item.publishedAt || item.createdAt)}
-                        {isEdited(item) && <span className="text-[10px] font-semibold text-gray-500 uppercase"> (Diedit)</span>}
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-gray-900 group-hover:text-[#0268ab] transition-colors mb-3 leading-tight">{formatTitleGrid(item.title)}</h4>
-                    <p className="text-xs text-gray-500 mb-2">by {item.author?.name || 'Admin'}</p>
-                    <p className="text-sm text-gray-600 leading-relaxed mb-4">{formatExcerptGrid(item.excerpt)}</p>
-                    <button className="flex items-center gap-2 text-[#0268ab] text-xs font-bold uppercase tracking-widest hover:translate-x-1 transition-transform">
-                      Baca Selengkapnya
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
                   </div>
-                </div>
-              </div>
-            ))}
+                ))}
           </div>
 
           {/* Pagination */}
