@@ -30,6 +30,7 @@ import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface RoutineActivity {
   id: number
+  name?: string | null
   days?: string | null
   time?: string | null
   description?: string | null
@@ -220,7 +221,7 @@ export default function RoutineActivitiesPage() {
   const openEdit = (item: RoutineActivity) => {
     setEditing(item)
     setForm({
-      name: item.name,
+      name: item.name ?? '',
       days: item.days ?? '',
       time: item.time ?? '',
       description: item.description ?? '',
@@ -521,7 +522,7 @@ export default function RoutineActivitiesPage() {
       {deleteTarget && (
         <DeleteModal
           title="Hapus Kegiatan"
-          name={deleteTarget.name}
+          name={deleteTarget.name ?? 'Kegiatan'}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
           deleting={deleting}
