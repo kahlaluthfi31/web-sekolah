@@ -673,6 +673,19 @@ model AlumniProfile {
   @@map("alumni_profiles")
 }
 
+model AlumniEngagement {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(255)
+  description   String?  @db.Text
+  icon          String?  @db.VarChar(100)
+  orderPosition Int      @default(0) @map("order_position")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("alumni_engagements")
+}
+
 // ==================== COMMENTS ====================
 
 model Comment {

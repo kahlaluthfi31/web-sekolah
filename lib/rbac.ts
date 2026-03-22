@@ -32,6 +32,8 @@ export type Permission =
   | 'partners.view' | 'partners.create' | 'partners.edit' | 'partners.delete'
   // Comments
   | 'comments.view' | 'comments.create' | 'comments.approve' | 'comments.delete'
+  // Contact info management
+  | 'contact_info.manage'
   // Users
   | 'users.view' | 'users.create' | 'users.edit' | 'users.delete'
   // Messages
@@ -62,6 +64,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'alumni.view', 'alumni.verify',
     'partners.view', 'partners.create', 'partners.edit', 'partners.delete',
     'comments.view', 'comments.create', 'comments.approve', 'comments.delete',
+  'contact_info.manage',
     'users.view', 'users.create', 'users.edit', 'users.delete',
     'messages.view', 'messages.reply', 'messages.delete',
     'settings.view', 'settings.edit',
@@ -83,6 +86,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'alumni.view', 'alumni.verify',
     'partners.view', 'partners.create', 'partners.edit',
     'comments.view', 'comments.approve', 'comments.delete',
+    'contact_info.manage',
     'messages.view', 'messages.reply',
     'virtual_tour.view', 'virtual_tour.manage',
   ],
@@ -128,10 +132,11 @@ export const ADMIN_MENU_ITEMS: { key: string; label: string; icon: string; href:
   { key: 'facilities',       label: 'Fasilitas',            icon: 'Building2',    href: '/admin/dashboard/facilities' },
   { key: 'virtual-tour',     label: 'Virtual Tour',         icon: 'Camera',       href: '/admin/dashboard/virtual-tour' },
   { key: 'partners',         label: 'Mitra Kerja Sama',     icon: 'Building2',    href: '/admin/dashboard/partners' },
+  { key: 'contact-info',     label: 'Info Kontak',          icon: 'Contact',      href: '/admin/dashboard/contact-info' },
 ]
 
 export const DEFAULT_ADMIN_MENU_KEYS: string[] = [
-  'news', 'achievements', 'extracurriculars', 'routine-activities', 'agendas', 'alumni', 'comments', 'messages', 'partners',
+  'news', 'achievements', 'extracurriculars', 'routine-activities', 'agendas', 'alumni', 'comments', 'messages', 'partners', 'contact-info',
 ]
 
 export function getNavigation(role: UserRole, customMenuKeys?: string[] | null): NavItem[] {
@@ -148,6 +153,7 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
     { title: 'Komentar', href: '/admin/dashboard/comments', icon: 'MessageCircle', permission: 'comments.view' },
     { title: 'Pesan Masuk', href: '/admin/dashboard/messages', icon: 'Mail', permission: 'messages.view' },
     { title: 'Mitra Kerja Sama', href: '/admin/dashboard/partners', icon: 'Building2', permission: 'partners.view' },
+  { title: 'Info Kontak', href: '/admin/dashboard/contact-info', icon: 'Contact', permission: 'contact_info.manage' },
 
     // Data Master (Superadmin only)
     {

@@ -11,7 +11,7 @@ import {
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu as MenuIcon, Home, School, Settings, LogOut,
   ChevronLeft, ChevronRight, ChevronDown, X, ShieldCheck, Camera,
-  Layers, Award,
+  Layers, Award, Contact,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -21,7 +21,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays, Route,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu: MenuIcon, Home, School, Settings, ShieldCheck, Camera,
-  Layers, Award,
+  Layers, Award, Contact,
 }
 
 /* ------------------------------------------------------------------ */
@@ -312,7 +312,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
   const groups = useMemo(() => {
   const contentKeys = ['news', 'achievements', 'extracurriculars', 'routine-activities', 'agendas', 'alumni', 'comments', 'messages', 'partners']
     const masterKeys = ['teachers', 'majors', 'facilities', 'virtual-tour']
-  const settingsKeys = ['navigation', 'school-profile', 'settings']
+  const settingsKeys = ['navigation', 'school-profile', 'settings', 'contact-info']
     return {
       dashboard: navigation.filter(n => n.href === '/admin/dashboard'),
       content: navigation.filter(n => contentKeys.some(k => n.href.includes(k))),

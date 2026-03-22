@@ -1,12 +1,12 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { 
   ChevronLeft, ChevronRight, CalendarDays, Loader2,
   Users, Briefcase, Award, GraduationCap,
-  Heart, HandshakeIcon, Trophy, ArrowRight
+  Heart, HandshakeIcon, Trophy, ArrowRight, Sparkles
 } from 'lucide-react'
 import Testimonials from '@/components/Testimonials'
 import { usePageHeader } from '@/lib/usePageHeader'
@@ -34,6 +34,15 @@ interface Agenda {
   category: AgendaCategory | null
 }
 
+interface Engagement {
+  id: number
+  title: string
+  description: string | null
+  icon: string | null
+  orderPosition: number
+  isActive: boolean
+}
+
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   upcoming:  { label: 'Akan Datang',   color: 'bg-[#0268ab]' },
   ongoing:   { label: 'Berlangsung',   color: 'bg-emerald-500' },
@@ -46,6 +55,13 @@ const STATUS_ORDER: Record<string, number> = {
   upcoming: 1,
   completed: 2,
   cancelled: 3,
+}
+
+const CTA_DEFAULTS = {
+  title: 'Bergabung dengan Portal Alumni',
+  subtitle: 'Dapatkan akses ke event, networking, dan berbagai program alumni',
+  buttonText: 'Masuk Portal',
+  buttonUrl: '#',
 }
 
 const FALLBACK_IMAGE_UNOPTIMIZED = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMDAgMTgwSDUwMFYyNzBIMzAwVjE4MFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMjAwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSAyNUgxMjVWNDVINzVWMjVaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K'
@@ -109,6 +125,21 @@ const AlumniPage: React.FC = () => {
   const [calMonth, setCalMonth] = useState<Date>(new Date(todayObj.getFullYear(), todayObj.getMonth(), 1))
   const [agendas, setAgendas] = useState<Agenda[]>([])
   const [loading, setLoading] = useState(true)
+  const [engagements, setEngagements] = useState<Engagement[]>([])
+  const [engagementLoading, setEngagementLoading] = useState(true)
+  const [ctaContent, setCtaContent] = useState(CTA_DEFAULTS)
+
+  const engagementIconMap = useMemo(() => ({
+    heart: Heart,
+    love: Heart,
+    handshake: HandshakeIcon,
+    award: Award,
+    graduation: GraduationCap,
+    briefcase: Briefcase,
+    users: Users,
+    network: Users,
+    trophy: Trophy,
+  }), [])
 
   useEffect(() => {
     fetch('/api/agendas?limit=50&page=1&isPublished=true')
@@ -121,6 +152,40 @@ const AlumniPage: React.FC = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/alumni-engagements?active=true&limit=20')
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && Array.isArray(j.data)) {
+          setEngagements(j.data as Engagement[])
+        }
+      })
+      .catch(() => {})
+      .finally(() => setEngagementLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && Array.isArray(j.data)) {
+          const map: Record<string, string> = {}
+          for (const item of j.data) {
+            if (item.settingKey && typeof item.settingValue === 'string') {
+              map[item.settingKey] = item.settingValue
+            }
+          }
+          setCtaContent({
+            title: map['alumni_portal_cta_title'] || CTA_DEFAULTS.title,
+            subtitle: map['alumni_portal_cta_subtitle'] || CTA_DEFAULTS.subtitle,
+            buttonText: map['alumni_portal_cta_button_text'] || CTA_DEFAULTS.buttonText,
+            buttonUrl: map['alumni_portal_cta_button_url'] || CTA_DEFAULTS.buttonUrl,
+          })
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const agendaDates = new Set(
@@ -162,6 +227,44 @@ const AlumniPage: React.FC = () => {
     const [y, m, d] = activeDay.split('-').map(Number)
     return new Date(y, m - 1, d).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })
   })()
+
+  const renderEngagementItems = () => {
+    const listToRender = engagements.length > 0 ? engagements : [
+      { id: 1, title: 'Mentoring', description: 'Bagikan pengalaman berharga dan bimbing alumni junior untuk meraih kesuksesan karir mereka', icon: 'heart', orderPosition: 1, isActive: true },
+      { id: 2, title: 'Networking', description: 'Perluas jaringan profesional dan bangun kolaborasi yang bermanfaat dengan sesama alumni', icon: 'handshake', orderPosition: 2, isActive: true },
+      { id: 3, title: 'Donasi', description: 'Dukung program beasiswa dan pengembangan fasilitas sekolah untuk generasi penerus', icon: 'award', orderPosition: 3, isActive: true },
+      { id: 4, title: 'Guest Lecture', description: 'Berbagi ilmu dan pengalaman industri langsung kepada siswa untuk persiapan karir mereka', icon: 'graduation', orderPosition: 4, isActive: true },
+      { id: 5, title: 'Magang', description: 'Buka kesempatan magang berharga untuk alumni junior memulai karir profesional mereka', icon: 'briefcase', orderPosition: 5, isActive: true },
+      { id: 6, title: 'Event Alumni', description: 'Ikuti dan ramaikan acara reuni serta networking untuk mempererat tali persaudaraan alumni', icon: 'users', orderPosition: 6, isActive: true },
+    ]
+
+    const sorted = [...listToRender].sort((a, b) => (a.orderPosition ?? 0) - (b.orderPosition ?? 0))
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-12">
+        {sorted.map(item => {
+          const IconComp = item.icon ? engagementIconMap[item.icon as keyof typeof engagementIconMap] || Sparkles : Heart
+          return (
+            <div key={item.id} className="flex gap-4 group">
+              <div className="shrink-0">
+                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
+                  <IconComp className="w-7 h-7" strokeWidth={2} />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">{item.title}</h3>
+                {item.description && (
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -236,107 +339,27 @@ const AlumniPage: React.FC = () => {
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Cara Terlibat</span>
             <span className="text-xs text-gray-400">03 / 04</span>
           </div>
-          
-          <p className="text-gray-600 text-lg max-w-2xl mb-16">
-            Temukan berbagai cara untuk berkontribusi pada pengembangan alumni dan almamater, serta memperkuat jaringan profesional sesama alumnus
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-12">
-            {/* Kontribusi 1 */}
-            <div className="flex gap-4 group">
-              <div className="shrink-0">
-                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  <Heart className="w-7 h-7" strokeWidth={2} />
+          {engagementLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, idx) => (
+                <div key={idx} className="flex gap-4 animate-pulse">
+                  <div className="w-14 h-14 rounded-full bg-blue-100" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-32" />
+                    <div className="h-3 bg-gray-200 rounded w-full" />
+                    <div className="h-3 bg-gray-200 rounded w-2/3" />
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">Mentoring</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Bagikan pengalaman berharga dan bimbing alumni junior untuk meraih kesuksesan karir mereka
-                </p>
-              </div>
+              ))}
             </div>
-
-            {/* Kontribusi 2 */}
-            <div className="flex gap-4 group">
-              <div className="shrink-0">
-                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  <HandshakeIcon className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">Networking</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Perluas jaringan profesional dan bangun kolaborasi yang bermanfaat dengan sesama alumni
-                </p>
-              </div>
-            </div>
-
-            {/* Kontribusi 3 */}
-            <div className="flex gap-4 group">
-              <div className="shrink-0">
-                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  <Award className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">Donasi</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Dukung program beasiswa dan pengembangan fasilitas sekolah untuk generasi penerus
-                </p>
-              </div>
-            </div>
-
-            {/* Kontribusi 4 */}
-            <div className="flex gap-4 group">
-              <div className="shrink-0">
-                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  <GraduationCap className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">Guest Lecture</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Berbagi ilmu dan pengalaman industri langsung kepada siswa untuk persiapan karir mereka
-                </p>
-              </div>
-            </div>
-
-            {/* Kontribusi 5 */}
-            <div className="flex gap-4 group">
-              <div className="shrink-0">
-                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  <Briefcase className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">Magang</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Buka kesempatan magang berharga untuk alumni junior memulai karir profesional mereka
-                </p>
-              </div>
-            </div>
-
-            {/* Kontribusi 6 */}
-            <div className="flex gap-4 group">
-              <div className="shrink-0">
-                <div className="w-14 h-14 rounded-full bg-[#0268ab] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  <Users className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#0268ab] mb-3 leading-tight">Event Alumni</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Ikuti dan ramaikan acara reuni serta networking untuk mempererat tali persaudaraan alumni
-                </p>
-              </div>
-            </div>
-          </div>
+          ) : (
+            renderEngagementItems()
+          )}
         </div>
       </section>
 
       {/* Event & Kegiatan Alumni */}
-      <section className="py-16 lg:py-20 bg-white overflow-hidden">
+      {/* <section className="py-16 lg:py-20 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Event & Kegiatan Alumni</span>
@@ -347,10 +370,10 @@ const AlumniPage: React.FC = () => {
             Ikuti berbagai acara networking, workshop, dan reuni alumni untuk memperkuat koneksi profesional
           </p>
 
-          {/* Main layout */}
+          Main layout
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-            {/* Left: Featured + list */}
+            Left: Featured + list
             <div className="lg:col-span-8 flex flex-col gap-4">
 
               {loading ? (
@@ -364,7 +387,7 @@ const AlumniPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {/* Featured event card */}
+                  Featured event card
                   <div className="relative rounded-2xl overflow-hidden h-80 group cursor-pointer">
                     <Image
                       src={featured.image || FALLBACK_IMAGE_UNOPTIMIZED}
@@ -377,7 +400,7 @@ const AlumniPage: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
-                    {/* Status badge */}
+                    Status badge
                     <div className="absolute top-4 right-4">
                       <span className={`${STATUS_MAP[featured.status]?.color ?? 'bg-gray-500'} text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5`}>
                         <span className="w-1.5 h-1.5 rounded-full bg-white/70 inline-block" />
@@ -385,7 +408,7 @@ const AlumniPage: React.FC = () => {
                       </span>
                     </div>
 
-                    {/* Content overlay */}
+                    Content overlay
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <p className="text-white/60 text-xs mb-2">
                         {formatTime(featured.eventTime, featured.timeEnd, featured.timeEndText)}
@@ -410,7 +433,7 @@ const AlumniPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* List events */}
+                  List events
                   {listEvents.length > 0 && (
                     <div className="flex flex-col gap-3">
                       {listEvents.map((event) => {
@@ -423,7 +446,7 @@ const AlumniPage: React.FC = () => {
                               isCompleted ? 'bg-gray-50 hover:bg-gray-100' : 'bg-blue-50 hover:bg-blue-100'
                             }`}
                           >
-                            {/* Thumbnail */}
+                            Thumbnail
                             <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0">
                               <Image
                                 src={event.image || FALLBACK_IMAGE_UNOPTIMIZED}
@@ -436,7 +459,7 @@ const AlumniPage: React.FC = () => {
                               />
                             </div>
 
-                            {/* Info */}
+                            Info
                             <div className="flex-1 min-w-0">
                               <p className="text-xs text-gray-400 mb-0.5">
                                 {formatTime(event.eventTime, event.timeEnd, event.timeEndText)}
@@ -466,7 +489,7 @@ const AlumniPage: React.FC = () => {
                               )}
                             </div>
 
-                            {/* Status badge */}
+                            Status badge
                             <span className={`shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full text-white ${st.color}`}>
                               {st.label}
                             </span>
@@ -479,15 +502,15 @@ const AlumniPage: React.FC = () => {
               )}
             </div>
 
-            {/* Right: Calendar sidebar */}
+            Right: Calendar sidebar
             <div className="lg:col-span-4">
               <div className="rounded-2xl border border-gray-100 bg-white p-6 sticky top-6">
                 <h3 className="text-base font-bold text-[#0268ab] mb-1">Agenda Alumni</h3>
                 <p className="text-xs text-gray-400 mb-5">Dapatkan informasi terkait semua kegiatan alumni SMKN 1 Ciamis.</p>
 
-                {/* Mini Calendar */}
+                Mini Calendar
                 <div className="mb-4">
-                  {/* Header bulan */}
+                  Header bulan
                   <div className="flex items-center justify-between mb-3">
                     <button
                       onClick={prevMonth}
@@ -504,7 +527,7 @@ const AlumniPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Header hari */}
+                  Header hari
                   <div className="grid grid-cols-7 gap-0.5 mb-1">
                     {dayNames.map(n => (
                       <div key={n} className={`text-center text-[10px] font-semibold uppercase py-1 ${n === 'Min' ? 'text-red-400' : 'text-gray-400'}`}>
@@ -513,7 +536,7 @@ const AlumniPage: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Grid hari */}
+                  Grid hari
                   <div className="grid grid-cols-7 gap-0.5">
                     {calCells.map((cell, idx) => {
                       if (!cell) return <div key={`blank-${idx}`} />
@@ -547,7 +570,7 @@ const AlumniPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Agenda list untuk hari yang dipilih */}
+                Agenda list untuk hari yang dipilih
                 <div className="border-t border-gray-100 pt-4">
                   <p className="text-xs font-semibold text-gray-500 mb-3 capitalize">{selectedDayLabel}</p>
 
@@ -567,7 +590,7 @@ const AlumniPage: React.FC = () => {
                         const st = STATUS_MAP[a.status] ?? { label: a.status, color: 'bg-gray-400' }
                         return (
                           <div key={a.id} className="flex items-start gap-2.5 rounded-xl p-2.5 bg-gray-50 hover:bg-blue-50 transition-colors cursor-pointer">
-                            {/* Warna status */}
+                            Warna status
                             <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${st.color}`} />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug">{a.title}</p>
@@ -586,7 +609,7 @@ const AlumniPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* See all */}
+                See all
                 <button className="w-full mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-gray-900 hover:text-[#0268ab] transition-colors duration-200 border-t border-gray-100 pt-4">
                   Lihat Semua Agenda
                   <ArrowRight className="w-4 h-4" />
@@ -596,10 +619,10 @@ const AlumniPage: React.FC = () => {
 
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Alumni Success Stories - Testimonials */}
-      <section className="py-16 bg-[#f0f4f8] overflow-hidden">
+      {/* <section className="py-16 bg-[#f0f4f8] overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Success Stories</span>
@@ -611,24 +634,25 @@ const AlumniPage: React.FC = () => {
           </p>
         </div>
         <Testimonials />
-      </section>
-
+      </section> */}
 
       {/* CTA Section */}
       <section className="py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-r from-[#0268ab] to-[#0e3057] rounded-2xl p-8 lg:p-12 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Bergabung dengan Portal Alumni</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">{ctaContent.title}</h2>
             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-              Dapatkan akses ke event, networking, dan berbagai program alumni
+              {ctaContent.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="px-8 py-3 bg-white text-[#0268ab] rounded-lg font-semibold hover:bg-gray-100 transition-all">
-                Daftar Sekarang
-              </button>
-              <button className="px-8 py-3 bg-transparent border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-[#0268ab] transition-all">
-                Login Alumni
-              </button>
+              <a
+                href={ctaContent.buttonUrl || '#'}
+                className="px-8 py-3 bg-transparent border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-[#0268ab] transition-all"
+                target={ctaContent.buttonUrl?.startsWith('http') ? '_blank' : '_self'}
+                rel={ctaContent.buttonUrl?.startsWith('http') ? 'noopener noreferrer' : undefined}
+              >
+                {ctaContent.buttonText}
+              </a>
             </div>
           </div>
         </div>
