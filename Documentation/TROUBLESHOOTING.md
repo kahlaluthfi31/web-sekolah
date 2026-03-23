@@ -154,6 +154,11 @@ Error: Hydration failed because the initial UI does not match
 // Disable extensions or test in incognito mode
 ```
 
+**Special case — `fdprocessedid` attribute (Edge/auto-fill extensions):**
+- Sumbernya biasanya autofill/password manager (terutama Microsoft Edge) atau ekstensi yang menyuntik atribut `fdprocessedid` ke elemen `<button>`/`<input>` di sisi klien sebelum React melakukan hydration.
+- Gejala: peringatan hydration mismatch yang hanya menunjukkan perbedaan atribut `fdprocessedid`.
+- Solusi cepat: buka halaman di incognito/private window, nonaktifkan autofill/ekstensi form filler, atau coba browser lain. Jika harus tetap memakai ekstensi tersebut, Anda bisa menambahkan `suppressHydrationWarning` di root `<body>` untuk mengabaikan mismatch, tetapi sebaiknya hanya sebagai opsi terakhir karena dapat menyembunyikan mismatch lain.
+
 **2. Inconsistent HTML structure:**
 ```tsx
 // ❌ Wrong: Different structure on server/client
