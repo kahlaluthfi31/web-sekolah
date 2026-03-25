@@ -76,11 +76,11 @@ export default function NewsPage() {
 
           {/* Pagination */}
           <div className="flex justify-center items-center gap-2">
-             <button className="p-2 text-gray-400 hover:text-[#0092DD]"><ChevronLeft className="h-4 w-4" /></button>
-             <button className="w-8 h-8 rounded-full bg-[#0092DD] text-white text-xs font-bold">1</button>
-             <button className="w-8 h-8 rounded-full text-gray-400 text-xs font-bold hover:bg-gray-100">2</button>
-             <button className="w-8 h-8 rounded-full text-gray-400 text-xs font-bold hover:bg-gray-100">3</button>
-             <button className="p-2 text-gray-400 hover:text-[#0092DD]"><ChevronRight className="h-4 w-4" /></button>
+             <button className="p-2 text-gray-400 hover:text-[#0268ab] transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+             <button className="w-8 h-8 rounded-full bg-[#0268ab] text-white text-xs font-bold transition-colors">1</button>
+             <button className="w-8 h-8 rounded-full text-gray-500 text-xs font-bold hover:bg-gray-100 hover:text-[#0268ab] transition-colors">2</button>
+             <button className="w-8 h-8 rounded-full text-gray-500 text-xs font-bold hover:bg-gray-100 hover:text-[#0268ab] transition-colors">3</button>
+             <button className="p-2 text-gray-400 hover:text-[#0268ab] transition-colors"><ChevronRight className="h-4 w-4" /></button>
           </div>
         </div>
       </section>

@@ -10,9 +10,11 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Calendar,
   CalendarDays,
   Clock3,
   X,
+  ArrowRight,
 } from "lucide-react";
 import { usePageHeader } from "@/lib/usePageHeader";
 
@@ -398,7 +400,7 @@ const StudentLifePage: React.FC = () => {
           )}
 
           {!achievementsLoading && achievements.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {achievements.slice(0, ACHIEVEMENT_PAGE_SIZE).map((achievement) => {
                 const photoSrc =
                   achievement.photo ||
@@ -406,55 +408,57 @@ const StudentLifePage: React.FC = () => {
                   ACHIEVEMENT_PLACEHOLDER;
                 const dateLabel = formatDate(achievement.competitionDate);
                 return (
-                  <div key={achievement.id} className="relative">
-                    <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-                      {/* Logo SMKN 1 Ciamis - Pojok Bawah Kanan BNW - Half Visible - Larger & More Visible */}
-                      <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15">
-                        <div className="w-full h-full flex items-center justify-center">
-                          <img
-                            src="/images/logosmeabnw.svg"
-                            alt="SMKN 1 Ciamis Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
+                  <div key={achievement.id} className="group cursor-pointer">
+                    <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 relative">
+                      {/* Logo SMKN 1 Ciamis - same as news cards */}
+                      <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15 pointer-events-none">
+                        <img
+                          src="/images/logosmeabnw.svg"
+                          alt="SMKN 1 Ciamis Logo"
+                          className="w-full h-full object-contain"
+                        />
                       </div>
 
-                      <div className="mb-5 rounded-xl overflow-hidden border border-gray-100 relative">
-                        <div className="relative w-full h-48 bg-gray-50">
-                          <img
-                            src={photoSrc}
-                            alt={achievement.achievementName}
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-3 left-3 bg-[#0268ab] text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm uppercase tracking-wide">
-                            {formatLevel(achievement.level)}
+                      <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
+                        <img
+                          src={photoSrc}
+                          alt={achievement.achievementName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <span className="absolute top-2 left-2 bg-[#0268ab] text-white text-xs font-semibold px-2.5 py-1 rounded-lg">
+                          {formatLevel(achievement.level)}
+                        </span>
+                        {achievement.position && (
+                          <span className="absolute top-2 right-2 bg-amber-400 text-white text-xs font-semibold px-2.5 py-1 rounded-lg">
+                            {achievement.position}
                           </span>
-                          {achievement.position && (
-                            <span className="absolute top-3 right-3 bg-amber-100 text-amber-700 text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
-                              {achievement.position}
+                        )}
+                      </div>
+
+                      <div className="p-4 relative z-10 flex flex-col h-40">
+                        <div className="flex items-center gap-2 mb-2.5 text-xs text-gray-500">
+                          {dateLabel && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {dateLabel}
                             </span>
                           )}
                         </div>
-                      </div>
-
-                      <h4 className="font-bold text-xl text-gray-900 mb-2">
-                        {achievement.achievementName}
-                      </h4>
-                      <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                        {achievement.competitionName ||
-                          "Kompetisi / instansi belum diisi."}
-                      </p>
-
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-[#0268ab] font-semibold">
-                          {achievement.studentName}
-                          {achievement.class ? ` • ${achievement.class}` : ""}
-                        </span>
-                        {dateLabel && (
-                          <div className="text-[11px] text-gray-500">
-                            {dateLabel}
-                          </div>
-                        )}
+                        <h4 className="font-semibold text-gray-900 group-hover:text-[#0268ab] transition-colors mb-2 leading-snug line-clamp-2">
+                          {achievement.achievementName}
+                        </h4>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 grow">
+                          {achievement.competitionName || "Kompetisi / instansi belum diisi."}
+                        </p>
+                        <div className="flex items-center justify-between mt-auto">
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            {achievement.studentName}
+                            {achievement.class ? ` • ${achievement.class}` : ""}
+                          </span>
+                          <button className="text-[#0268ab] text-xs font-semibold hover:text-[#014a8f] transition-colors">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

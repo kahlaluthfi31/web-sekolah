@@ -235,8 +235,12 @@ const CampusPage: React.FC = () => {
                 return (
                   <div
                     key={item.id}
-                    className="w-full shrink-0 group cursor-pointer bg-white rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="w-full shrink-0 group cursor-pointer bg-white rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md relative"
                   >
+                    {/* SMK Logo Watermark - same as achievement cards */}
+                    <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15 pointer-events-none">
+                      <img src="/images/logosmeabnw.svg" alt="" className="w-full h-full object-contain" />
+                    </div>
                     <div className="aspect-video overflow-hidden relative">
                       <Image
                         src={item.image || "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=600"}
