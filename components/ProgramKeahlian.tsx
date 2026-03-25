@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 import {
   Building2, DollarSign, ShoppingCart, HandCoins,
   Monitor, Tv, Sprout, BookOpen, Cpu, Wrench,
-  GraduationCap, ArrowUpRight, Loader2,
+  GraduationCap, Loader2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -78,12 +78,12 @@ const ProgramKeahlian: React.FC = () => {
   }, [])
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
+    <section id="program-keahlian" className="py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Top label row */}
         <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
-          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Kompetensi Keahlian</span>
+          <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Program Keahlian</span>
           <span className="text-xs text-gray-400">02 / 04</span>
         </div>
 

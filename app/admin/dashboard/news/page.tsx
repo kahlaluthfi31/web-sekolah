@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import {
   Plus, Search, MoreVertical, Edit2, Trash2,
@@ -37,6 +38,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const CREATOR_CATEGORIES = ['Guru','Siswa Piket Kelas 10','Siswa Piket Kelas 11','Siswa Piket Kelas 12','Tim Medsos']
+
+const CkEditor = dynamic(async () => {
+  const { CKEditor } = await import('@ckeditor/ckeditor5-react')
+  const Classic = (await import('@ckeditor/ckeditor5-build-classic')).default
+  type CKProps = Omit<React.ComponentProps<typeof CKEditor>, 'editor'>
+  return function CkEditorWrapper(props: CKProps) {
+    return <CKEditor editor={Classic} {...props} />
+  }
+}, { ssr: false })
 
 function ActionDropdown({ onDetail, onEdit, onDelete }: { onDetail?: () => void; onEdit: () => void; onDelete: () => void }) {
   const { open, dropUp, pos, ref, btnRef, toggle, close } = useDropdownPosition(160)
@@ -182,7 +192,34 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Judul <span className="text-red-500">*</span></label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan judul berita..." required /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Slug (URL) <span className="text-xs text-gray-400 font-normal">— otomatis dari judul</span></label><input type="text" value={form.slug} readOnly className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-100 text-gray-500 cursor-not-allowed" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Ringkasan</label><textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows={3} placeholder="Ringkasan singkat berita..." /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Konten <span className="text-red-500">*</span></label><textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows={10} placeholder="Tulis konten berita di sini..." required /></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Konten <span className="text-red-500">*</span></label>
+                    <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                      <CkEditor
+                        data={form.content}
+                        onChange={(_event, editor) => {
+                          const html = editor.getData()
+                          setForm(f => ({ ...f, content: html }))
+                        }}
+                        config={{
+                          toolbar: [
+                            'heading', '|',
+                            'bold', 'italic', 'underline', 'strikethrough', '|',
+                            'bulletedList', 'numberedList', '|',
+                            'link', 'insertTable', 'blockQuote', 'undo', 'redo', '|',
+                            'alignment', 'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                            'imageUpload'
+                          ],
+                          image: {
+                            toolbar: [
+                              'imageTextAlternative', 'imageStyle:alignLeft', 'imageStyle:full', 'imageStyle:alignRight'
+                            ]
+                          },
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Konten disimpan sebagai HTML. Anda bisa menambah gambar di antara paragraf.</p>
+                  </div>
                 </div>
                 <div className="space-y-5">
                   {showCreatorFields && (
@@ -252,6 +289,16 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
                 </div>
               </div>
             </form>
+            <style jsx global>{`
+              /* Extra space inside CKEditor editable area */
+              .ck-editor__editable:not(.ck-editor__nested-editable) {
+                min-height: 320px;
+                padding: 16px;
+              }
+              .ck-editor__main > .ck-editor__editable {
+                border-radius: 0 0 12px 12px;
+              }
+            `}</style>
           </div>
         </div>
       </div>

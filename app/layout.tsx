@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthSessionProvider } from "@/components/AuthSessionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +18,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Website Sekolah",
-  description: "Website Sekolah dengan Next.js",
+  title: "SMKN 1 CIAMIS - Official Site",
+  description: "Official Site",
+  icons: {
+    icon: "/images/web/favicon-smea.png",
+    shortcut: "/images/web/favicon-smea.png",
+    apple: "/images/web/favicon-smea.png",
+  },
 };
 
 export default function RootLayout({
@@ -34,7 +40,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
-        {children}
+        <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>
   );

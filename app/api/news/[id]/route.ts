@@ -65,8 +65,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
       where: { id: newsId },
       data: {
         ...newsData,
+        // Set publishedAt when transitioning to published or when missing
         publishedAt:
-          validatedData.isPublished && !existingNews.isPublished
+          validatedData.isPublished && (!existingNews.isPublished || !existingNews.publishedAt)
             ? new Date()
             : existingNews.publishedAt,
         tags: tags

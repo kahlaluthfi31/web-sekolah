@@ -22,6 +22,8 @@ export type Permission =
   | 'achievements.view' | 'achievements.create' | 'achievements.edit' | 'achievements.delete' | 'achievements.verify'
   // Extracurriculars
   | 'extracurriculars.view' | 'extracurriculars.create' | 'extracurriculars.edit' | 'extracurriculars.delete'
+  // Routine Activities
+  | 'routine_activities.view' | 'routine_activities.create' | 'routine_activities.edit' | 'routine_activities.delete'
   // Agendas
   | 'agendas.view' | 'agendas.create' | 'agendas.edit' | 'agendas.delete'
   // Alumni
@@ -30,6 +32,8 @@ export type Permission =
   | 'partners.view' | 'partners.create' | 'partners.edit' | 'partners.delete'
   // Comments
   | 'comments.view' | 'comments.create' | 'comments.approve' | 'comments.delete'
+  // Contact info management
+  | 'contact_info.manage'
   // Users
   | 'users.view' | 'users.create' | 'users.edit' | 'users.delete'
   // Messages
@@ -55,10 +59,12 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'facilities.view', 'facilities.create', 'facilities.edit', 'facilities.delete',
     'achievements.view', 'achievements.create', 'achievements.edit', 'achievements.delete', 'achievements.verify',
     'extracurriculars.view', 'extracurriculars.create', 'extracurriculars.edit', 'extracurriculars.delete',
+  'routine_activities.view', 'routine_activities.create', 'routine_activities.edit', 'routine_activities.delete',
     'agendas.view', 'agendas.create', 'agendas.edit', 'agendas.delete',
     'alumni.view', 'alumni.verify',
     'partners.view', 'partners.create', 'partners.edit', 'partners.delete',
     'comments.view', 'comments.create', 'comments.approve', 'comments.delete',
+  'contact_info.manage',
     'users.view', 'users.create', 'users.edit', 'users.delete',
     'messages.view', 'messages.reply', 'messages.delete',
     'settings.view', 'settings.edit',
@@ -75,10 +81,12 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'facilities.view', 'facilities.create', 'facilities.edit', 'facilities.delete',
     'achievements.view', 'achievements.create', 'achievements.edit', 'achievements.verify',
     'extracurriculars.view', 'extracurriculars.create', 'extracurriculars.edit',
+  'routine_activities.view', 'routine_activities.create', 'routine_activities.edit',
     'agendas.view', 'agendas.create', 'agendas.edit',
     'alumni.view', 'alumni.verify',
     'partners.view', 'partners.create', 'partners.edit',
     'comments.view', 'comments.approve', 'comments.delete',
+    'contact_info.manage',
     'messages.view', 'messages.reply',
     'virtual_tour.view', 'virtual_tour.manage',
   ],
@@ -114,6 +122,7 @@ export const ADMIN_MENU_ITEMS: { key: string; label: string; icon: string; href:
   { key: 'news',             label: 'Berita & Pengumuman', icon: 'Newspaper',    href: '/admin/dashboard/news' },
   { key: 'achievements',     label: 'Prestasi Siswa',      icon: 'Trophy',       href: '/admin/dashboard/achievements' },
   { key: 'extracurriculars', label: 'Ekstrakurikuler',     icon: 'Volleyball',   href: '/admin/dashboard/extracurriculars' },
+  { key: 'routine-activities', label: 'Kegiatan Rutin',    icon: 'Route', href: '/admin/dashboard/routine-activities' },
   { key: 'agendas',          label: 'Agenda Kegiatan',     icon: 'CalendarDays', href: '/admin/dashboard/agendas' },
   { key: 'alumni',           label: 'Data Alumni',         icon: 'GraduationCap',href: '/admin/dashboard/alumni' },
   { key: 'comments',         label: 'Komentar',             icon: 'MessageCircle',href: '/admin/dashboard/comments' },
@@ -123,10 +132,11 @@ export const ADMIN_MENU_ITEMS: { key: string; label: string; icon: string; href:
   { key: 'facilities',       label: 'Fasilitas',            icon: 'Building2',    href: '/admin/dashboard/facilities' },
   { key: 'virtual-tour',     label: 'Virtual Tour',         icon: 'Camera',       href: '/admin/dashboard/virtual-tour' },
   { key: 'partners',         label: 'Mitra Kerja Sama',     icon: 'Building2',    href: '/admin/dashboard/partners' },
+  { key: 'contact-info',     label: 'Info Kontak',          icon: 'Contact',      href: '/admin/dashboard/contact-info' },
 ]
 
 export const DEFAULT_ADMIN_MENU_KEYS: string[] = [
-  'news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages', 'partners',
+  'news', 'achievements', 'extracurriculars', 'routine-activities', 'agendas', 'alumni', 'comments', 'messages', 'partners', 'contact-info',
 ]
 
 export function getNavigation(role: UserRole, customMenuKeys?: string[] | null): NavItem[] {
@@ -137,11 +147,13 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
     { title: 'Berita & Pengumuman', href: '/admin/dashboard/news', icon: 'Newspaper', permission: 'news.view' },
     { title: 'Prestasi Siswa', href: '/admin/dashboard/achievements', icon: 'Trophy', permission: 'achievements.view' },
     { title: 'Ekstrakurikuler', href: '/admin/dashboard/extracurriculars', icon: 'Volleyball', permission: 'extracurriculars.view' },
+    { title: 'Kegiatan Rutin', href: '/admin/dashboard/routine-activities', icon: 'Route', permission: 'routine_activities.view' },
     { title: 'Agenda Kegiatan', href: '/admin/dashboard/agendas', icon: 'CalendarDays', permission: 'agendas.view' },
     { title: 'Data Alumni', href: '/admin/dashboard/alumni', icon: 'GraduationCap', permission: 'alumni.view' },
     { title: 'Komentar', href: '/admin/dashboard/comments', icon: 'MessageCircle', permission: 'comments.view' },
     { title: 'Pesan Masuk', href: '/admin/dashboard/messages', icon: 'Mail', permission: 'messages.view' },
     { title: 'Mitra Kerja Sama', href: '/admin/dashboard/partners', icon: 'Building2', permission: 'partners.view' },
+  { title: 'Info Kontak', href: '/admin/dashboard/contact-info', icon: 'Contact', permission: 'contact_info.manage' },
 
     // Data Master (Superadmin only)
     {
@@ -166,8 +178,6 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
     { title: 'Hak Akses Admin', href: '/admin/dashboard/access-control', icon: 'ShieldCheck', permission: 'users.view' },
 
     // Website Settings (Superadmin only)
-    { title: 'Menu Navigasi', href: '/admin/dashboard/navigation', icon: 'Menu', permission: 'navigation.view' },
-    { title: 'Halaman Utama', href: '/admin/dashboard/homepage', icon: 'Home', permission: 'homepage.view' },
     { title: 'Profil Sekolah', href: '/admin/dashboard/school-profile', icon: 'School', permission: 'school_profile.view' },
     { title: 'Pengaturan', href: '/admin/dashboard/settings', icon: 'Settings', permission: 'settings.view' },
   ]

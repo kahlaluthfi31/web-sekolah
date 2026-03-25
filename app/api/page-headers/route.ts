@@ -43,3 +43,20 @@ export async function PUT(request: NextRequest) {
     return handleError(error)
   }
 }
+
+// DELETE /api/page-headers?key=about → hapus header by pageKey
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) return apiError('Unauthorized', 401)
+
+    const { searchParams } = new URL(request.url)
+    const key = searchParams.get('key')
+    if (!key) return apiError('pageKey wajib diisi', 400)
+
+    await prisma.pageHeader.delete({ where: { pageKey: key } })
+    return apiSuccess(null, 'Header berhasil dihapus')
+  } catch (error) {
+    return handleError(error)
+  }
+}

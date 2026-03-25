@@ -2,25 +2,26 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import type { SessionUser } from '@/lib/auth'
 import { getNavigation, type UserRole, type NavItem } from '@/lib/rbac'
 import {
-  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
+  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays, Route,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu as MenuIcon, Home, School, Settings, LogOut,
   ChevronLeft, ChevronRight, ChevronDown, X, ShieldCheck, Camera,
-  Layers, Award,
+  Layers, Award, Contact,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
 /*  Icon mapping                                                       */
 /* ------------------------------------------------------------------ */
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays,
+  LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays, Route,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu: MenuIcon, Home, School, Settings, ShieldCheck, Camera,
-  Layers, Award,
+  Layers, Award, Contact,
 }
 
 /* ------------------------------------------------------------------ */
@@ -309,9 +310,9 @@ export function AdminShell({ user, children }: AdminShellProps) {
   )
 
   const groups = useMemo(() => {
-    const contentKeys = ['news', 'achievements', 'extracurriculars', 'agendas', 'alumni', 'comments', 'messages', 'partners']
+  const contentKeys = ['news', 'achievements', 'extracurriculars', 'routine-activities', 'agendas', 'alumni', 'comments', 'messages', 'partners']
     const masterKeys = ['teachers', 'majors', 'facilities', 'virtual-tour']
-    const settingsKeys = ['navigation', 'homepage', 'school-profile', 'settings']
+  const settingsKeys = ['navigation', 'school-profile', 'settings', 'contact-info']
     return {
       dashboard: navigation.filter(n => n.href === '/admin/dashboard'),
       content: navigation.filter(n => contentKeys.some(k => n.href.includes(k))),
@@ -349,11 +350,18 @@ export function AdminShell({ user, children }: AdminShellProps) {
 
             {/* Logo */}
             <div className="flex items-center h-16 px-4 border-b border-gray-100 shrink-0 gap-3">
-              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                <School className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center shrink-0 p-1.5">
+                <Image
+                  src="/images/web/logo-smkn1-ciamis.png"
+                  alt="Logo SMKN 1 Ciamis"
+                  width={28}
+                  height={28}
+                  className="w-full h-full object-contain"
+                  priority
+                />
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-gray-900 text-sm truncate">SMK Admin</p>
+                <p className="font-bold text-gray-900 text-sm truncate">Admin SMKN 1 CIAMIS</p>
                 <p className="text-xs text-gray-400 truncate capitalize">{user.role}</p>
               </div>
             </div>
@@ -397,13 +405,20 @@ export function AdminShell({ user, children }: AdminShellProps) {
         }`}
       >
         {/* Logo */}
-        <div className={`flex items-center h-16 px-4 border-b border-gray-100 shrink-0 ${collapsed ? 'justify-center' : 'gap-3'}`}>
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-            <School className="w-5 h-5 text-white" />
+          <div className={`flex items-center h-16 px-4 border-b border-gray-100 shrink-0 ${collapsed ? 'justify-center' : 'gap-3'}`}>
+          <div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center shrink-0 p-1.5">
+            <Image
+              src="/images/web/logo-smkn1-ciamis.png"
+              alt="Logo SMKN 1 Ciamis"
+              width={28}
+              height={28}
+              className="w-full h-full object-contain"
+              priority
+            />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="font-bold text-gray-900 text-sm truncate">SMK Admin</p>
+              <p className="font-bold text-gray-900 text-sm truncate">Admin SMKN 1 CIAMIS</p>
               <p className="text-xs text-gray-400 truncate capitalize">{user.role}</p>
             </div>
           )}

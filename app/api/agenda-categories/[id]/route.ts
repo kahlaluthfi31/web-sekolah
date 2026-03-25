@@ -48,12 +48,26 @@ export async function PUT(
       }
     }
 
+    const existingWithFlag = existing as unknown as { showInCategorySection?: boolean }
+
     const data = await prisma.agendaCategory.update({
       where: { id: parseInt(id) },
       data: {
         name: body.name?.trim() ?? existing.name,
         color: body.color !== undefined ? body.color : existing.color,
+        description:
+          body.description !== undefined
+            ? body.description?.trim() || null
+            : (existing as { description?: string | null }).description ?? null,
+        icon:
+          body.icon !== undefined
+            ? body.icon?.trim() || null
+            : (existing as { icon?: string | null }).icon ?? null,
         isActive: body.isActive !== undefined ? body.isActive : existing.isActive,
+        showInCategorySection:
+          body.showInCategorySection !== undefined
+            ? body.showInCategorySection
+            : existingWithFlag.showInCategorySection ?? true,
       },
     })
 

@@ -12,43 +12,139 @@ interface HeroProps {
 const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [videoSrc, setVideoSrc] = useState('/videos/hero-bg.mp4')
+  const [heroText, setHeroText] = useState({
+    title: 'Membangun Generasi Unggul & Berkarakter',
+    subtitle: 'Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami',
+  })
+  const [heroStats, setHeroStats] = useState({
+    schoolName: 'SMK Negeri 1 Ciamis',
+    schoolTagline: 'Sekolah Pusat Keunggulan',
+    activeStudents: '2,500+',
+    teachersStaff: '150+',
+    achievements: '100+',
+    majors: '9',
+    accreditation: 'A (Unggul)',
+    curriculum: 'Merdeka',
+  })
 
   useEffect(() => {
-    setIsLoaded(true);
     const video = videoRef.current;
-    if (video) {
-      // Force video to load and play immediately
-      video.load();
-      
-      const playVideo = () => {
-        video.play().catch(error => {
-          console.log('Video autoplay failed:', error);
-          // Fallback: try to play on user interaction
-          document.addEventListener('click', playVideo, { once: true });
-        });
-      };
+    if (!video) return;
+    setIsLoaded(false);
 
-      // Try to play immediately
-      playVideo();
-
-      video.addEventListener('ended', () => {
-        video.currentTime = 0;
-        video.play();
+    const playVideo = () => {
+      video.play().catch(error => {
+        console.log('Video autoplay failed:', error);
+        document.addEventListener('click', playVideo, { once: true });
       });
+    };
 
-      // Remove loading state once video can play
-      video.addEventListener('canplaythrough', () => {
-        setIsLoaded(true);
-      }, { once: true });
-    }
-  }, []);
+    const handleEnded = () => {
+      video.currentTime = 0;
+      video.play();
+    };
+
+    const handleCanPlayThrough = () => {
+      setIsLoaded(true);
+    };
+
+    video.addEventListener('ended', handleEnded);
+    video.addEventListener('canplaythrough', handleCanPlayThrough, { once: true });
+    video.load();
+    playVideo();
+
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('canplaythrough', handleCanPlayThrough);
+    };
+  }, [videoSrc]);
+
+  const formatCount = (n: number | null | undefined, fallback: string) => {
+    if (typeof n !== 'number' || Number.isNaN(n)) return fallback
+    if (n >= 1000) return `${Math.round(n / 100) / 10}k+`
+    return `${n}+`
+  }
 
   const stats = [
-    { icon: GraduationCap, value: '2,500+', label: 'Siswa Aktif' },
-    { icon: Users, value: '150+', label: 'Guru & Staff' },
-    { icon: Trophy, value: '100+', label: 'Prestasi' },
-    { icon: BookOpen, value: '9', label: 'Program Keahlian' },
+    { icon: GraduationCap, value: heroStats.activeStudents, label: 'Siswa Aktif' },
+    { icon: Users, value: heroStats.teachersStaff, label: 'Guru & Staff' },
+    { icon: Trophy, value: heroStats.achievements, label: 'Prestasi' },
+    { icon: BookOpen, value: heroStats.majors, label: 'Program Keahlian' },
   ];
+
+  useEffect(() => {
+    // Fetch settings (hero texts, manual stats, school info)
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const json = await res.json()
+        if (json.success) {
+          const settings = json.data as { settingKey: string; settingValue: string | null }[]
+          const getVal = (key: string) => settings.find(s => s.settingKey === key)?.settingValue || ''
+          setHeroText({
+            title: getVal('hero_title') || 'Membangun Generasi Unggul & Berkarakter',
+            subtitle: getVal('hero_subtitle') || 'Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami',
+          })
+          setHeroStats(s => ({
+            ...s,
+            schoolName: getVal('site_name') || s.schoolName,
+            schoolTagline: getVal('site_description') || s.schoolTagline,
+            activeStudents: getVal('hero_active_students') || s.activeStudents,
+            accreditation: getVal('hero_accreditation') || s.accreditation,
+            curriculum: getVal('hero_curriculum') || s.curriculum,
+          }))
+        }
+      } catch (err) {
+        console.error('Failed to load settings', err)
+      }
+    }
+
+    // Fetch dynamic counts (teachers, majors, achievements)
+    const loadCounts = async () => {
+      try {
+        const [teachersRes, majorsRes, achievementsRes] = await Promise.all([
+          fetch('/api/teachers?limit=1'),
+          fetch('/api/majors?limit=1'),
+          fetch('/api/achievements?limit=1'),
+        ])
+
+        const [teachersJson, majorsJson, achievementsJson] = await Promise.all([
+          teachersRes.json(), majorsRes.json(), achievementsRes.json(),
+        ])
+
+        setHeroStats(s => ({
+          ...s,
+          teachersStaff: formatCount(teachersJson?.pagination?.total, s.teachersStaff),
+          majors: formatCount(majorsJson?.pagination?.total, s.majors),
+          achievements: formatCount(achievementsJson?.pagination?.total, s.achievements),
+        }))
+      } catch (err) {
+        console.error('Failed to load counts', err)
+      }
+    }
+
+    loadSettings()
+    loadCounts()
+  }, [])
+
+  // Update video src when settings loaded
+  useEffect(() => {
+    const fetchVideoSetting = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const json = await res.json()
+        if (json.success) {
+          const settings = json.data as { settingKey: string; settingValue: string | null }[]
+          const heroVideo = settings.find(s => s.settingKey === 'hero_video_url')?.settingValue
+          if (heroVideo) setVideoSrc(heroVideo)
+        }
+      } catch (err) {
+        console.error('Failed to load hero video setting', err)
+      }
+    }
+    fetchVideoSetting()
+  }, [])
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -66,7 +162,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           controlsList="nodownload"
           crossOrigin="anonymous"
         >
-          <source src="/videos/hero-bg.mp4" type="video/mp4" />
+          <source src={videoSrc} type="video/mp4" />
         </video>
       </div>
       
@@ -84,10 +180,10 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
               {/* Heading */}
               <div className="space-y-5">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.1] tracking-tight">
-                  Membangun Generasi Unggul & Berkarakter
+                  {heroText.title}
                 </h1>
                 <p className="text-base text-white/90 max-w-xl leading-relaxed">
-                  Temukan informasi tentang SMK Negeri 1 Ciamis, program keahlian, dan prestasi siswa kami
+                  {heroText.subtitle}
                 </p>
               </div>
 
@@ -135,8 +231,8 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                     <GraduationCap className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-base">SMK Negeri 1 Ciamis</h3>
-                    <p className="text-white/70 text-xs">Sekolah Pusat Keunggulan</p>
+                    <h3 className="text-white font-semibold text-base">{heroStats.schoolName}</h3>
+                    <p className="text-white/70 text-xs">{heroStats.schoolTagline}</p>
                   </div>
                 </div>
 
@@ -157,11 +253,11 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between py-1.5 border-b border-white/10">
                     <span className="text-white/60 text-xs">Akreditasi</span>
-                    <span className="text-white text-xs font-bold">A (Unggul)</span>
+                    <span className="text-white text-xs font-bold">{heroStats.accreditation}</span>
                   </div>
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-white/60 text-xs">Kurikulum</span>
-                    <span className="text-white text-xs font-medium">Merdeka</span>
+                    <span className="text-white text-xs font-medium">{heroStats.curriculum}</span>
                   </div>
                 </div>
               </div>

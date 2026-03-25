@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react'
 import Image from 'next/image'
 import {
   Plus, Search, MoreVertical, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X, Save,
   ArrowLeft, AlertTriangle, Users, Award, Camera,
-  GraduationCap, Layers,
+  GraduationCap, Layers, UploadCloud, FileDown, CheckCircle,
 } from 'lucide-react'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
@@ -399,6 +399,9 @@ export function TeachersTab() {
   const [detailItem, setDetailItem] = useState<Teacher | null>(null)
   const [deleteItem, setDeleteItem] = useState<Teacher | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/positions?all=true')
@@ -441,6 +444,115 @@ export function TeachersTab() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  const downloadTemplate = async () => {
+    const XLSX = await import('xlsx')
+    const headers = ['nama_guru', 'nip', 'email', 'phone', 'jabatan', 'pendidikan', 'status', 'join_date', 'order_position', 'is_active', 'subjects']
+    const rows = [
+      {
+        nama_guru: 'Contoh Guru 1',
+        nip: '19870610 201903 1 001',
+        email: 'guru1@sekolah.sch.id',
+        phone: '081234567890',
+        jabatan: 'Guru BK',
+        pendidikan: 'S1',
+        status: 'ACTIVE',
+        join_date: '2020-07-01',
+        order_position: 1,
+        is_active: 'TRUE',
+        subjects: 'BK, Konseling',
+      },
+      {
+        nama_guru: 'Contoh Guru 2',
+        nip: '19881212 202001 2 002',
+        email: 'guru2@sekolah.sch.id',
+        phone: '082198765432',
+        jabatan: 'Wakil Kepala Sekolah',
+        pendidikan: 'S2',
+        status: 'ACTIVE',
+        join_date: '2018-01-10',
+        order_position: 2,
+        is_active: 'TRUE',
+        subjects: 'Matematika',
+      },
+    ]
+  const sheet = XLSX.utils.json_to_sheet(rows, { header: headers })
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, sheet, 'Template')
+  const arrayBuf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+    const blob = new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'template-import-guru.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImport = () => {
+    importInputRef.current?.click()
+  }
+
+  const parseAndImport = async (file: File) => {
+    setImporting(true)
+  setToast(null)
+    try {
+      const XLSX = await import('xlsx')
+      const data = await file.arrayBuffer()
+      const wb = XLSX.read(data, { type: 'array' })
+      const sheet = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+
+      const mapped = rows.map((row) => {
+        const status = String(row.status || 'ACTIVE').toUpperCase()
+        const isActiveRaw = row.is_active
+        const isActive = isActiveRaw === '' || isActiveRaw === undefined ? undefined : String(isActiveRaw).toLowerCase() !== 'false'
+        return {
+          name: String(row.nama_guru || '').trim(),
+          nip: row.nip ? String(row.nip).trim() : null,
+          email: row.email ? String(row.email).trim() : null,
+          phone: row.phone ? String(row.phone).trim() : null,
+          position: row.jabatan ? String(row.jabatan).trim() : 'Guru',
+          education: row.pendidikan ? String(row.pendidikan).trim() : null,
+          status,
+          joinDate: row.join_date ? String(row.join_date).trim() : undefined,
+          orderPosition: row.order_position ? Number(row.order_position) : 0,
+          isActive,
+          subjects: row.subjects ? String(row.subjects).trim() : null,
+        }
+      }).filter(r => r.name)
+
+      if (!mapped.length) throw new Error('File kosong atau format tidak sesuai')
+
+      const res = await fetch('/api/teachers/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: mapped }),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.message || 'Gagal import')
+
+      setToast({ type: 'success', message: 'Import data guru berhasil' })
+      fetchData()
+    } catch (err) {
+      setToast({ type: 'error', message: err instanceof Error ? err.message : 'Gagal import' })
+    } finally {
+      setImporting(false)
+      if (importInputRef.current) importInputRef.current.value = ''
+    }
+  }
+
+  const onImportChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    parseAndImport(file)
+  }
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
+
   const handleDelete = async () => {
     if (!deleteItem) return
     setDeleting(true)
@@ -458,6 +570,41 @@ export function TeachersTab() {
 
   return (
     <>
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border bg-white/95 backdrop-blur-md min-w-[240px] max-w-sm">
+          <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+          </div>
+          <div className="text-sm text-gray-800 font-medium">
+            {toast.message}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Guru &amp; Staff</h2>
+          <p className="text-sm text-gray-500">Kelola data guru dan staf sekolah</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadTemplate}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-200 hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <FileDown className="w-4 h-4" /> Template Excel
+          </button>
+          <button
+            type="button"
+            onClick={handleImport}
+            disabled={importing}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-all shadow-sm disabled:opacity-60"
+          >
+            <UploadCloud className="w-4 h-4" /> {importing ? 'Mengimpor...' : 'Import Excel'}
+          </button>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -501,6 +648,13 @@ export function TeachersTab() {
         </button>
       </div>
 
+      <input
+        type="file"
+        accept=".xlsx,.xls"
+        ref={importInputRef}
+        className="hidden"
+        onChange={onImportChange}
+      />
       <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
@@ -687,11 +841,24 @@ function TeacherFormModal({
     if (typeof value === 'string') validateField(name, value)
   }
 
-  const availablePositions = positions.filter(p => {
+  const filteredPositions = positions.filter(p => {
     if (p.name === 'Kepala Sekolah' && existingSpecial.hasKepsek && teacher?.position !== 'Kepala Sekolah') return false
     if (p.name === 'Wakil Kepala Sekolah' && existingSpecial.hasWakepsek && teacher?.position !== 'Wakil Kepala Sekolah') return false
     return true
   })
+
+  const hasCurrentPosition = teacher?.position && filteredPositions.every(p => p.name !== teacher.position)
+  const availablePositions = hasCurrentPosition
+    ? [...filteredPositions, {
+        id: -1,
+        name: teacher!.position!,
+        description: null,
+        orderPosition: 0,
+        isActive: true,
+        createdAt: '',
+        updatedAt: '',
+      } as Position]
+    : filteredPositions
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1957,12 +2124,6 @@ function PositionFormModal({
 export default function TeachersPage() {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Guru &amp; Staff</h2>
-          <p className="text-sm text-gray-500">Kelola data guru dan staf sekolah</p>
-        </div>
-      </div>
       <TeachersTab />
     </div>
   )

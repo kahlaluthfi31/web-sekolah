@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, stat } from 'fs/promises'
 import path from 'path'
 
 export async function POST(request: NextRequest) {
@@ -14,30 +14,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-    if (!allowedTypes.includes(file.type)) {
+    const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+    const videoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+    const isImage = imageTypes.includes(file.type)
+    const isVideo = videoTypes.includes(file.type)
+
+    if (!isImage && !isVideo) {
       return NextResponse.json(
-        { success: false, message: 'Tipe file tidak didukung. Gunakan JPG, PNG, GIF, WEBP, atau SVG.' },
+        { success: false, message: 'Tipe file tidak didukung. Gunakan gambar (JPG, PNG, GIF, WEBP, SVG) atau video (MP4, WebM).' },
         { status: 400 }
       )
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024
+    // Size guard: images 5MB, video 80MB pre-compress (recommended kompres di client juga)
+    const maxSize = isVideo ? 80 * 1024 * 1024 : 5 * 1024 * 1024
     if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, message: 'Ukuran file melebihi 5MB' },
+        { success: false, message: isVideo ? 'Video terlalu besar (maks 80MB sebelum kompres). Kompres dulu lalu upload.' : 'Ukuran file melebihi 5MB' },
         { status: 400 }
       )
     }
 
     // Create upload directory
-    const uploadDir = path.join(process.cwd(), 'public', 'images', 'uploads')
+    const uploadDir = isVideo
+      ? path.join(process.cwd(), 'public', 'videos', 'uploads')
+      : path.join(process.cwd(), 'public', 'images', 'uploads')
     await mkdir(uploadDir, { recursive: true })
 
-    // Generate unique filename
-    const ext = path.extname(file.name) || '.jpg'
+  // Generate unique filename
+  const ext = isVideo ? (path.extname(file.name) || '.mp4') : (path.extname(file.name) || '.jpg')
     const timestamp = Date.now()
     const safeName = file.name
       .replace(ext, '')
@@ -50,18 +55,19 @@ export async function POST(request: NextRequest) {
     // Write file
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+
     const filePath = path.join(uploadDir, filename)
     await writeFile(filePath, buffer)
 
-    // Return public URL
-    const publicUrl = `/images/uploads/${filename}`
+    const stats = await stat(filePath)
+    const publicUrl = isVideo ? `/videos/uploads/${filename}` : `/images/uploads/${filename}`
 
     return NextResponse.json({
       success: true,
       data: {
         url: publicUrl,
         filename,
-        size: file.size,
+        size: stats.size,
         type: file.type,
       },
       message: 'File berhasil diupload',
@@ -69,7 +75,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(
-      { success: false, message: 'Gagal mengupload file' },
+      {
+        success: false,
+        message: error instanceof Error ? error.message : 'Gagal mengupload file',
+      },
       { status: 500 }
     )
   }

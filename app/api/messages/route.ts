@@ -1,6 +1,30 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiPagination, handleError } from '@/lib/api-response'
+import { apiPagination, apiSuccess, handleError } from '@/lib/api-response'
+import { contactMessageCreateSchema } from '@/lib/validations'
+
+// POST /api/messages — create new contact message (public)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const parsed = contactMessageCreateSchema.parse(body)
+
+    const created = await prisma.contactMessage.create({
+      data: {
+        name: parsed.name,
+        email: parsed.email,
+        subject: parsed.subject ?? null,
+        message: parsed.message,
+        phone: (body.phone as string | undefined) ?? null,
+        status: parsed.status ?? 'unread',
+      },
+    })
+
+    return apiSuccess(created, 'Pesan berhasil dikirim')
+  } catch (error) {
+    return handleError(error)
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {

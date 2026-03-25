@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Link2, ListOrdered, List, Save, Bold, Italic, Underline, Eraser } from 'lucide-react'
 
 export default function CreateNewsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const editorRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
@@ -64,6 +66,29 @@ export default function CreateNewsPage() {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }))
+  }
+
+  // Sync content state to editor when existing data is present (e.g. edit modal reuse)
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== formData.content) {
+      editorRef.current.innerHTML = formData.content
+    }
+  }, [formData.content])
+
+  // Avoid hydration mismatch by rendering editor only on client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleContentInput = () => {
+    const html = editorRef.current?.innerHTML ?? ''
+    setFormData(prev => ({ ...prev, content: html }))
+  }
+
+  const applyFormat = (command: string, value?: string) => {
+    document.execCommand(command, false, value)
+    // after formatting, update state
+    handleContentInput()
   }
 
   return (
@@ -133,16 +158,96 @@ export default function CreateNewsPage() {
                 <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                   Konten <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="content"
-                  name="content"
-                  required
-                  value={formData.content}
-                  onChange={handleChange}
-                  rows={12}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Tulis konten berita lengkap di sini..."
-                />
+
+                {mounted ? (
+                  <div className="border border-gray-200 rounded-lg shadow-sm bg-white">
+                    <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+                      <button
+                        type="button"
+                        onClick={() => applyFormat('bold')}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Bold"
+                      >
+                        <Bold className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFormat('italic')}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Italic"
+                      >
+                        <Italic className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFormat('underline')}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Underline"
+                      >
+                        <Underline className="w-4 h-4" />
+                      </button>
+                      <span className="h-5 w-px bg-gray-200" />
+                      <button
+                        type="button"
+                        onClick={() => applyFormat('insertUnorderedList')}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Bullet list"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFormat('insertOrderedList')}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Numbered list"
+                      >
+                        <ListOrdered className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = prompt('Masukkan URL tautan:')?.trim()
+                          if (url) applyFormat('createLink', url)
+                        }}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Sisipkan tautan"
+                      >
+                        <Link2 className="w-4 h-4" />
+                      </button>
+                      <span className="h-5 w-px bg-gray-200" />
+                      <button
+                        type="button"
+                        onClick={() => applyFormat('removeFormat')}
+                        className="p-2 rounded-md hover:bg-gray-200 text-gray-700"
+                        title="Bersihkan format"
+                      >
+                        <Eraser className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div
+                      id="content"
+                      ref={editorRef}
+                      className="min-h-60 px-4 py-3 focus:outline-none prose prose-sm max-w-none"
+                      contentEditable
+                      role="textbox"
+                      aria-multiline
+                      onInput={handleContentInput}
+                      suppressContentEditableWarning
+                      data-placeholder="Tulis konten berita lengkap di sini..."
+                    ></div>
+                  </div>
+                ) : (
+                  <textarea
+                    id="content"
+                    name="content"
+                    value={formData.content}
+                    readOnly
+                    rows={8}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                    placeholder="Memuat editor..."
+                  />
+                )}
+                <p className="mt-1 text-xs text-gray-500">Gunakan toolbar untuk format dasar. Konten akan disimpan sebagai HTML.</p>
               </div>
 
               {/* Thumbnail URL */}

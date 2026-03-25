@@ -38,10 +38,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
     })
     if (!data) return apiError('Agenda tidak ditemukan', 404)
 
-    // Jika jam selesai tidak diketahui dan sudah di-set "completed" oleh admin, pertahankan
+    // Jika jam selesai tidak diketahui → status manual admin, jangan diubah otomatis
     let computedStatus: string
-    if (data.timeEndText && data.status === 'completed') {
-      computedStatus = 'completed'
+    if (data.timeEndText) {
+      computedStatus = data.status
     } else {
       computedStatus = computeStatus(data.eventDate, data.eventTime, data.timeEnd, data.timeEndText)
     }
@@ -64,6 +64,26 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const existing = await prisma.agenda.findUnique({
       where: { id: parseInt(id) },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        categoryId: true,
+        eventDate: true,
+        eventTime: true,
+        timeEnd: true,
+        timeEndText: true,
+        location: true,
+        organizer: true,
+        participants: true,
+        hasRegistration: true,
+        registrationUrl: true,
+        image: true,
+        status: true,
+        isPublished: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     })
 
     if (!existing) {
@@ -123,6 +143,17 @@ export async function PUT(request: NextRequest, { params }: Params) {
         timeEndText: body.timeEndText !== undefined ? body.timeEndText : existing.timeEndText,
         location: body.location !== undefined ? body.location : existing.location,
         organizer: body.organizer !== undefined ? body.organizer : existing.organizer,
+        participants:
+          body.participants !== undefined
+            ? body.participants || null
+            : existing.participants,
+        hasRegistration: body.hasRegistration !== undefined ? Boolean(body.hasRegistration) : existing.hasRegistration,
+        registrationUrl:
+          body.hasRegistration === false
+            ? null
+            : body.registrationUrl !== undefined
+              ? body.registrationUrl || null
+              : existing.registrationUrl,
         image: body.image !== undefined ? body.image : existing.image,
         status: body.status ?? existing.status,
         isPublished: body.isPublished !== undefined ? Boolean(body.isPublished) : existing.isPublished,
