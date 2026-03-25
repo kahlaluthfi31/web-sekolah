@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Mail, Lock, User, Loader2 } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
-export default function RegisterPage() {
+function RegisterContent() {
   const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -238,5 +238,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#f2f3f5] text-gray-600">Memuat formulir...</div>}>
+      <RegisterContent />
+    </Suspense>
   )
 }
