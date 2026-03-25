@@ -36,6 +36,8 @@ const ADMIN_ALLOWED_KEYS = [
   'social_youtube',
   'social_tiktok',
   'social_linkedin',
+  // External links
+  'blud_url',
 ]
 
 export async function GET() {

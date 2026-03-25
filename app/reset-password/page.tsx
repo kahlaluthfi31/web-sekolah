@@ -24,6 +24,13 @@ function ResetPasswordContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!/^\d{6}$/.test(code)) {
+      setStatus('error')
+      setMessage('Kode harus 6 digit angka')
+      return
+    }
+
     if (password !== confirmPassword) {
       setStatus('error')
       setMessage('Konfirmasi password tidak cocok')
@@ -117,7 +124,6 @@ function ResetPasswordContent() {
                 <input
                   type="text"
                   inputMode="numeric"
-                  pattern="\\d{6}"
                   maxLength={6}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}

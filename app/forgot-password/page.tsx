@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Mail, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -11,7 +10,6 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [devCode, setDevCode] = useState<string | null>(null)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,7 +17,6 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     setStatus('idle')
     setMessage('')
-  setDevCode(null)
 
     try {
       const res = await fetch('/api/auth/forgot', {
@@ -32,7 +29,6 @@ export default function ForgotPasswordPage() {
       if (data.success) {
         setStatus('success')
         setMessage(data.message || 'Jika email terdaftar, kode reset sudah dikirim.')
-        if (data.code) setDevCode(data.code as string)
         // Arahkan ke halaman input kode dengan email terisi
         setTimeout(() => {
           router.push(`/reset-password?email=${encodeURIComponent(email)}`)
@@ -111,17 +107,7 @@ export default function ForgotPasswordPage() {
             </button>
           </form>
 
-          {devCode && (
-            <div className="mt-6 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <p className="font-semibold text-gray-700 mb-1">Kode reset (mode dev):</p>
-              <p className="text-lg font-mono tracking-widest text-gray-800">{devCode}</p>
-            </div>
-          )}
-
-          <p className="text-center text-sm text-gray-600 mt-6">
-            Sudah ada kode?{' '}
-            <Link href={`/reset-password?email=${encodeURIComponent(email)}`} className="text-[#2F9BE9] hover:underline">Masukkan kode</Link>
-          </p>
+          {/* Removed dev code display and shortcut link */}
         </div>
       </div>
     </div>

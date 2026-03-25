@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { X, ExternalLink, ArrowRight } from 'lucide-react';
 import type { PageType } from '@/App';
@@ -14,22 +14,27 @@ interface PopupData {
   buttonType: 'external' | 'internal';
 }
 
-const STORAGE_KEY = 'smk_popup_dismissed';
+type PopupItem = Omit<PopupData, 'isActive'>;
 
 interface AnnouncementPopupProps {
   onNavigate?: (page: PageType) => void;
+  currentPage?: PageType;
 }
 
-export default function AnnouncementPopup({ onNavigate }: AnnouncementPopupProps) {
+export default function AnnouncementPopup({ onNavigate, currentPage }: AnnouncementPopupProps) {
   const [popup, setPopup] = useState<PopupData | null>(null);
   const [visible, setVisible] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [closing, setClosing] = useState(false);
+  const initOnce = useRef(false);
 
   useEffect(() => {
-    // Jangan tampilkan jika sudah di-dismiss hari ini
-    const dismissed = sessionStorage.getItem(STORAGE_KEY);
-    if (dismissed) return;
+    // Tampilkan hanya di landing page / beranda
+    if (currentPage && currentPage !== 'home') return;
+
+    // Hindari double-run (mis. React Strict Mode dev) agar 1 popup per refresh
+    if (initOnce.current) return;
+    initOnce.current = true;
 
     // Fetch setting dari API
     fetch('/api/settings')
@@ -42,21 +47,46 @@ export default function AnnouncementPopup({ onNavigate }: AnnouncementPopupProps
         const isActive = get('popup_active') === 'true';
         if (!isActive) return;
 
-        const data: PopupData = {
-          isActive,
-          image: get('popup_image'),
-          title: get('popup_title'),
-          buttonLabel: get('popup_button_label') ?? 'Cek Selengkapnya',
-          buttonUrl: get('popup_button_url'),
-          buttonType: (get('popup_button_type') as 'external' | 'internal') ?? 'external',
-        };
+        let items: PopupItem[] = [];
+        try {
+          const parsed = JSON.parse(get('popup_items_json') ?? '[]');
+          if (Array.isArray(parsed)) {
+            items = parsed
+              .map((it) => ({
+                image: it.image ?? null,
+                title: it.title ?? null,
+                buttonLabel: it.buttonLabel ?? 'Cek Selengkapnya',
+                buttonUrl: it.buttonUrl ?? null,
+                buttonType: (it.buttonType as 'external' | 'internal') ?? 'external',
+              }))
+              .filter((it) => it.buttonUrl || it.title || it.image);
+          }
+        } catch (err) {
+          console.warn('Failed to parse popup items', err);
+        }
 
-        setPopup(data);
+        // fallback ke skema lama (single)
+        if (items.length === 0) {
+          items = [
+            {
+              image: get('popup_image'),
+              title: get('popup_title'),
+              buttonLabel: get('popup_button_label') ?? 'Cek Selengkapnya',
+              buttonUrl: get('popup_button_url'),
+              buttonType: (get('popup_button_type') as 'external' | 'internal') ?? 'external',
+            },
+          ];
+        }
+
+        if (items.length === 0) return;
+
+        const randomItem = items[Math.floor(Math.random() * items.length)];
+        setPopup({ isActive, ...randomItem });
         // Delay sedikit biar animasi masuk terasa
         setTimeout(() => setVisible(true), 100);
       })
       .catch(() => {/* silent */});
-  }, []);
+  }, [currentPage]);
 
   const handleClose = () => {
     setClosing(true);
@@ -64,7 +94,6 @@ export default function AnnouncementPopup({ onNavigate }: AnnouncementPopupProps
       setVisible(false);
       setClosing(false);
       setPopup(null);
-      sessionStorage.setItem(STORAGE_KEY, '1');
     }, 250);
   };
 
@@ -87,38 +116,52 @@ export default function AnnouncementPopup({ onNavigate }: AnnouncementPopupProps
         closing ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* Backdrop blur */}
+      {/* Area klik luar tanpa overlay gelap */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0"
         onClick={handleClose}
       />
 
-      {/* Card */}
+      {/* Kontainer tanpa card agar gambar tampil penuh (ukuran 640x480px, rasio 4:3) */}
       <div
-        className={`relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transition-all duration-300 ${
-          closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
-        }`}
+        className={`relative w-full transition-all duration-300 ${closing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
+        style={{ width: '640px', maxWidth: '85vw', aspectRatio: '4 / 3' }}
       >
         {/* Tombol close pojok kanan atas */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg transition-all hover:scale-110 active:scale-95"
+          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#0092DD] hover:bg-[#0077BB] text-white shadow-lg transition-all hover:scale-110 active:scale-95"
           aria-label="Tutup"
         >
           <X className="w-4 h-4" strokeWidth={3} />
         </button>
 
-        {/* Gambar */}
+        {/* Gambar tidak terpotong (object-contain) dengan ukuran seragam */}
         {popup.image && !imgError ? (
-          <div className="relative w-full aspect-4/3 bg-gray-100">
+          <div className="relative w-full h-full bg-white rounded-2xl overflow-hidden">
             <Image
               src={popup.image}
               alt={popup.title ?? 'Pengumuman'}
               fill
               unoptimized
-              className="object-cover"
+              className="object-contain"
               onError={() => setImgError(true)}
             />
+
+            {popup.buttonUrl && (
+              <div className="absolute inset-x-0 bottom-0 pb-4 pt-8 bg-linear-to-t from-black/50 via-black/20 to-transparent flex justify-center">
+                <button
+                  onClick={handleButton}
+                  className="inline-flex items-center gap-2 bg-[#0092DD] hover:bg-[#0077BB] active:bg-[#0066A8] text-white font-semibold text-sm px-6 py-2.5 rounded-2xl shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+                >
+                  {popup.buttonLabel ?? 'Cek Selengkapnya'}
+                  {popup.buttonType === 'external'
+                    ? <ExternalLink className="w-4 h-4" />
+                    : <ArrowRight className="w-4 h-4" />
+                  }
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           /* Fallback jika tidak ada gambar */
@@ -128,13 +171,12 @@ export default function AnnouncementPopup({ onNavigate }: AnnouncementPopupProps
             </div>
           )
         )}
-
-        {/* Button area */}
-        {popup.buttonUrl && (
-          <div className="px-6 py-5 flex justify-center">
+        {/* Button fallback jika tidak ada gambar */}
+        {!popup.image && popup.buttonUrl && (
+          <div className="pt-4 flex justify-center">
             <button
               onClick={handleButton}
-              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold text-sm px-8 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 bg-[#0092DD] hover:bg-[#0077BB] active:bg-[#0066A8] text-white font-semibold text-sm px-6 py-2.5 rounded-2xl shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
             >
               {popup.buttonLabel ?? 'Cek Selengkapnya'}
               {popup.buttonType === 'external'

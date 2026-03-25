@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Mail, Lock, User, Loader2 } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,6 +17,23 @@ export default function RegisterPage() {
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [toast, setToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    const err = searchParams.get('error')
+    if (!err) return
+
+    const map: Record<string, string> = {
+      AccessDenied: 'Akses Google ditolak. Pastikan Anda memilih akun dan izinkan akses.',
+      GoogleNotRegistered: 'Email belum terdaftar. Silakan daftar menggunakan tombol Google di halaman ini.',
+      OAuthAccountNotLinked: 'Email ini sudah terdaftar manual. Login dengan email & password.',
+      OAuthError: 'Login Google gagal. Coba lagi atau daftar manual.',
+      GoogleMissingEmail: 'Google tidak mengembalikan email. Gunakan akun lain atau daftar manual.',
+    }
+
+    const friendly = map[err] || 'Autentikasi Google gagal. Coba lagi atau daftar manual.'
+    setStatus('error')
+    setMessage(friendly)
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,6 +110,40 @@ export default function RegisterPage() {
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold text-gray-900">Daftar Akun</h1>
             <p className="text-sm text-gray-600 mt-2">Buat akun untuk menggunakan layanan</p>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/auth/google-intent?mode=register', {
+                    method: 'POST',
+                    cache: 'no-store',
+                    credentials: 'include',
+                  })
+                  if (!res.ok) {
+                    throw new Error('Gagal menyimpan intent Google')
+                  }
+                } catch {
+                  setStatus('error')
+                  setMessage('Gagal menyiapkan login Google. Coba lagi atau daftar manual.')
+                  return
+                }
+
+                signIn('google', { callbackUrl: '/?welcome=new' })
+              }}
+              className="w-full flex items-center justify-center gap-3 bg-blue-50 text-gray-800 border border-blue-100 hover:border-blue-200 hover:bg-blue-100/80 rounded-xl py-3 font-semibold transition-colors"
+            >
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-[#4285F4] font-black text-sm shadow-sm">G</span>
+              Daftar dengan Google
+            </button>
+
+            <div className="flex items-center gap-3 text-gray-400 text-xs">
+              <div className="h-px flex-1 bg-gray-200" />
+              <span>atau daftar manual</span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>

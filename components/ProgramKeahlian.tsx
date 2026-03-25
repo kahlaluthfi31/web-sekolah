@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 import {
   Building2, DollarSign, ShoppingCart, HandCoins,
   Monitor, Tv, Sprout, BookOpen, Cpu, Wrench,
-  GraduationCap, ArrowUpRight, Loader2,
+  GraduationCap, Loader2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -78,7 +78,7 @@ const ProgramKeahlian: React.FC = () => {
   }, [])
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
+    <section id="program-keahlian" className="py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Top label row */}

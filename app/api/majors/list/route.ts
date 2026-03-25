@@ -6,7 +6,24 @@ export async function GET() {
   try {
     const majors = await prisma.major.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, code: true, description: true, image: true, icon: true },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        image: true,
+        icon: true,
+        competencies: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            detailType: true,
+            externalUrl: true,
+          },
+          orderBy: { name: 'asc' },
+        },
+      },
       orderBy: { orderPosition: 'asc' },
     })
     return apiSuccess(majors)

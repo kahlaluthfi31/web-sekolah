@@ -1,9 +1,9 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { SessionProvider } from 'next-auth/react'
 
-// Lightweight no-op provider to avoid next-auth client fetch errors. The app uses
-// custom cookie-based auth in `lib/auth`, so we don't need SessionProvider here.
+// Global SessionProvider so useSession works across pages/components
 export function AuthSessionProvider({ children }: { children: ReactNode }) {
-  return <>{children}</>
+  return <SessionProvider>{children}</SessionProvider>
 }
