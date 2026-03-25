@@ -38,7 +38,8 @@ function verifyToken(token: string): { userId: number } | null {
 
 // Login
 export async function loginUser(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } })
+  const normalizedEmail = email.trim().toLowerCase()
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
 
   if (!user) {
     return { success: false, message: 'Email atau password salah' }

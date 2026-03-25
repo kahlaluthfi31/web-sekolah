@@ -25,9 +25,9 @@ const SocialFeeds: React.FC = () => {
           <span className="text-xs text-gray-400">06 / 08</span>
         </div>
         
-        <div className="flex flex-col space-y-8">
+        <div className="flex flex-col divide-y divide-gray-200">
           {/* Instagram Feed */}
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full">
+          <div className="py-6 w-full">
             <div className="flex items-center mb-4">
               <div className="flex items-center justify-center mr-3">
                 <img 
@@ -47,7 +47,7 @@ const SocialFeeds: React.FC = () => {
           </div>
 
           {/* TikTok Feed */}
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full">
+          <div className="py-6 w-full">
             <div className="flex items-center mb-4">
               <div className="flex items-center justify-center mr-3">
                 <img 
