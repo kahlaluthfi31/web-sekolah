@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, apiError, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 // ─── Helper: hitung status berdasarkan tanggal & jam ──────────────────────────
 function computeStatus(eventDate: Date | null, eventTime: Date | null): 'upcoming' | 'ongoing' | 'completed' {
@@ -205,6 +206,8 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    await trackActivity(request, 'CREATE', 'agendas', null, data)
     return apiSuccess(data, 'Agenda berhasil ditambahkan', 201)
   } catch (error) {
     return handleError(error)

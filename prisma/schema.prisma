@@ -36,6 +36,7 @@ model User {
   commentLikes         CommentLike[]
   adminPermission      AdminPermission?
   passwordResetTokens  PasswordResetToken[]
+  loginActivities      LoginActivity[]
 
   @@map("users")
 }
@@ -61,6 +62,46 @@ enum Role {
 enum Status {
   active
   inactive
+}
+
+enum ActivityAction {
+  CREATE
+  EDIT
+  DELETE
+}
+
+model LoginActivity {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role
+  ipAddress  String?   @map("ip_address") @db.VarChar(100)
+  userAgent  String?   @map("user_agent") @db.VarChar(500)
+  device     String?   @db.VarChar(255)
+  loginEmail String?   @map("login_email") @db.VarChar(255)
+  chromeEmail String?  @map("chrome_email") @db.VarChar(255)
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("login_activities")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id            Int             @id @default(autoincrement())
+  adminEmail    String          @map("admin_email") @db.VarChar(255)
+  action        ActivityAction
+  targetTable   String          @map("target_table") @db.VarChar(191)
+  oldData       Json?           @map("old_data")
+  newData       Json?           @map("new_data")
+  ipAddress     String?         @map("ip_address") @db.VarChar(100)
+  locationCoords String?        @map("location_coords") @db.VarChar(100)
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  @@map("activity_logs")
+  @@index([createdAt])
 }
 
 // ==================== ACCESS CONTROL ====================

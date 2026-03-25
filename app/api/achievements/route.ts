@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 // GET /api/achievements
 export async function GET(request: NextRequest) {
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
         status: body.status || 'approved',
       },
     })
+    await trackActivity(request, 'CREATE', 'student_achievements', null, achievement)
     return apiSuccess(achievement, 'Achievement created', 201)
   } catch (error) {
     return handleError(error)

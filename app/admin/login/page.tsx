@@ -6,6 +6,66 @@ import Image from "next/image";
 import Link from 'next/link'
 import { LogIn, Eye, EyeOff, Mail, Lock } from "lucide-react";
 
+type ClientInfo = {
+  userAgent: string;
+  device: string;
+  os: string;
+  browser: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+function detectFromUA(ua: string): { device: string; os: string; browser: string } {
+  const lower = ua.toLowerCase();
+
+  const os = (() => {
+    if (lower.includes("windows")) return "Windows";
+    if (lower.includes("mac os") || lower.includes("macintosh")) return "macOS";
+    if (lower.includes("android")) return "Android";
+    if (lower.includes("iphone") || lower.includes("ipad")) return "iOS";
+    if (lower.includes("linux")) return "Linux";
+    return "Unknown OS";
+  })();
+
+  const browser = (() => {
+    if (lower.includes("edg/")) return "Edge";
+    if (lower.includes("chrome")) return "Chrome";
+    if (lower.includes("safari")) return "Safari";
+    if (lower.includes("firefox")) return "Firefox";
+    return "Unknown Browser";
+  })();
+
+  const device = (() => {
+    if (lower.includes("iphone")) return "iPhone";
+    if (lower.includes("ipad")) return "iPad";
+    if (lower.includes("android")) return "Android Device";
+    if (lower.includes("macintosh")) return "Mac";
+    if (lower.includes("windows")) return "Windows PC";
+    return "Perangkat";
+  })();
+
+  return { device, os, browser };
+}
+
+async function collectClientInfo(): Promise<ClientInfo> {
+  const userAgent = navigator.userAgent;
+  const { device, os, browser } = detectFromUA(userAgent);
+
+  const coords = await new Promise<{ latitude: number | null; longitude: number | null }>((resolve) => {
+    if (!navigator.geolocation) {
+      resolve({ latitude: null, longitude: null });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => resolve({ latitude: null, longitude: null }),
+      { timeout: 5000 }
+    );
+  });
+
+  return { userAgent, device, os, browser, ...coords };
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -20,10 +80,12 @@ export default function LoginPage() {
     setError("");
 
     try {
+      const clientInfo = await collectClientInfo();
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, clientInfo }),
       });
 
       const data = await res.json();

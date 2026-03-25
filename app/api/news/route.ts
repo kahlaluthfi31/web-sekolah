@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
 import { newsCreateSchema } from '@/lib/validations'
 import { getSession } from '@/lib/auth'
+import { trackActivity } from '@/lib/activity-logger'
 
 // GET /api/news - Get all news with pagination and filters
 export async function GET(request: NextRequest) {
@@ -107,6 +108,8 @@ export async function POST(request: NextRequest) {
         tags: true,
       },
     })
+
+    await trackActivity(request, 'CREATE', 'news', null, news)
 
     return apiSuccess(news, 'News created successfully', 201)
   } catch (error) {

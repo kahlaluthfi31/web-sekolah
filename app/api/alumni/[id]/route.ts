@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleError } from '@/lib/api-response'
 import { getSession } from '@/lib/auth'
+import { trackActivity } from '@/lib/activity-logger'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -21,6 +22,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         verifiedAt: new Date(),
       },
     })
+    await trackActivity(request, 'UPDATE', 'alumni_submissions', null, data)
     return apiSuccess(data, 'Updated')
   } catch (error) {
     return handleError(error)

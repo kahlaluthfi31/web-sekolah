@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { apiSuccess, apiError, handleError } from '@/lib/api-response'
 import { newsUpdateSchema } from '@/lib/validations'
+import { trackActivity } from '@/lib/activity-logger'
 
 type Params = {
   params: Promise<{
@@ -91,6 +92,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       },
     })
 
+    await trackActivity(request, 'UPDATE', 'news', existingNews, news)
     return apiSuccess(news, 'News updated successfully')
   } catch (error) {
     return handleError(error)
@@ -116,6 +118,8 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     await prisma.news.delete({
       where: { id: newsId },
     })
+
+    await trackActivity(request, 'DELETE', 'news', existingNews, null)
 
     return apiSuccess(null, 'News deleted successfully')
   } catch (error) {

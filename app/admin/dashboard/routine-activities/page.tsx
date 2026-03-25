@@ -297,14 +297,7 @@ export default function RoutineActivitiesPage() {
           <h1 className="text-xl font-semibold text-gray-900">Kegiatan Rutin</h1>
           <p className="text-sm text-gray-500">Kelola daftar kegiatan terjadwal yang muncul di halaman Student Life</p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah Kegiatan
-        </button>
+        
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -318,6 +311,14 @@ export default function RoutineActivitiesPage() {
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Tambah Kegiatan
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">

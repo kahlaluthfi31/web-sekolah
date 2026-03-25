@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,8 +33,9 @@ export async function GET(request: NextRequest) {
     ])
 
     return apiPagination(data, page, limit, total)
-  } catch (error: any) {
-    if (error?.code === 'P2021') {
+  } catch (error) {
+    const err = error as { code?: string }
+    if (err?.code === 'P2021') {
       console.warn('routine_activities table does not exist yet. Returning empty list.')
       return apiPagination([], 1, 20, 0)
     }
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
         isActive: body.isActive ?? true,
       },
     })
+    await trackActivity(request, 'CREATE', 'routine_activities', null, data)
     return apiSuccess(data, 'Kegiatan rutin ditambahkan', 201)
   } catch (error) {
     return handleError(error)

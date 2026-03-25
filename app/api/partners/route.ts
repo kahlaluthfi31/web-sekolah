@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,9 +27,10 @@ export async function GET(request: NextRequest) {
     ])
 
     return apiPagination(data, page, limit, total)
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as { code?: string }
     // Handle case when partners table doesn't exist yet
-    if (error?.code === 'P2021') {
+    if (err?.code === 'P2021') {
       console.warn('Partners table does not exist. Returning empty data.')
       return apiPagination([], 1, 20, 0)
     }
@@ -48,6 +50,7 @@ export async function POST(request: NextRequest) {
         isActive: body.isActive ?? true,
       },
     })
+    await trackActivity(request, 'CREATE', 'partners', null, data)
     return apiSuccess(data, 'Partner created', 201)
   } catch (error) {
     return handleError(error)

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 // GET /api/extracurriculars
 export async function GET(request: NextRequest) {
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
         isActive: body.isActive ?? true,
       },
     })
+    await trackActivity(request, 'CREATE', 'extracurriculars', null, data)
     return apiSuccess(data, 'Kegiatan ekskul berhasil ditambahkan', 201)
   } catch (error) {
     return handleError(error)

@@ -11,7 +11,7 @@ import {
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu as MenuIcon, Home, School, Settings, LogOut,
   ChevronLeft, ChevronRight, ChevronDown, X, ShieldCheck, Camera,
-  Layers, Award, Contact,
+  Layers, Award, Contact, Activity, NotebookPen, ListTodo,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -21,7 +21,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, Newspaper, Trophy, Volleyball, CalendarDays, Route,
   GraduationCap, MessageCircle, Mail, Users, BookOpen, Building2,
   UserCog, Menu: MenuIcon, Home, School, Settings, ShieldCheck, Camera,
-  Layers, Award, Contact,
+  Layers, Award, Contact, Activity, NotebookPen, ListTodo,
 }
 
 /* ------------------------------------------------------------------ */
@@ -317,7 +317,12 @@ export function AdminShell({ user, children }: AdminShellProps) {
       dashboard: navigation.filter(n => n.href === '/admin/dashboard'),
       content: navigation.filter(n => contentKeys.some(k => n.href.includes(k))),
       master: navigation.filter(n => masterKeys.some(k => n.href.includes(k))),
-      users: navigation.filter(n => n.href.includes('users') || n.href.includes('access-control')),
+      users: navigation.filter(n =>
+        n.href.includes('users') ||
+        n.href.includes('access-control') ||
+        n.href.includes('login-activity') ||
+        n.href.includes('user-activity')
+      ),
       settings: navigation.filter(n => settingsKeys.some(k => n.href.includes(k))),
     }
   }, [navigation])

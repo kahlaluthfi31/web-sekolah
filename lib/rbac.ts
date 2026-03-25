@@ -38,6 +38,10 @@ export type Permission =
   | 'users.view' | 'users.create' | 'users.edit' | 'users.delete'
   // Messages
   | 'messages.view' | 'messages.reply' | 'messages.delete'
+  // Login Activity (Superadmin only)
+  | 'login_activity.view'
+  // User Activity (Superadmin only)
+  | 'user_activity.view' | 'user_activity.next'
   // Settings (Superadmin only)
   | 'settings.view' | 'settings.edit'
   // Navigation Menu (Superadmin only)
@@ -67,6 +71,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   'contact_info.manage',
     'users.view', 'users.create', 'users.edit', 'users.delete',
     'messages.view', 'messages.reply', 'messages.delete',
+    'login_activity.view',
+  'user_activity.view', 'user_activity.next',
     'settings.view', 'settings.edit',
     'navigation.view', 'navigation.edit',
     'homepage.view', 'homepage.edit',
@@ -176,6 +182,17 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
 
     // Access Control (Superadmin only)
     { title: 'Hak Akses Admin', href: '/admin/dashboard/access-control', icon: 'ShieldCheck', permission: 'users.view' },
+    {
+      title: 'Aktivitas Pengguna',
+      href: '/admin/dashboard/login-activity',
+      icon: 'Activity',
+      permission: 'login_activity.view',
+      children: [
+        { title: 'Aktivitas Login', href: '/admin/dashboard/login-activity', icon: 'Activity', permission: 'login_activity.view' as const },
+        { title: 'Log Perubahan', href: '/admin/dashboard/user-activity', icon: 'NotebookPen', permission: 'user_activity.view' as const },
+        { title: 'Next task', href: '/admin/dashboard/user-activity/next-task', icon: 'ListTodo', permission: 'user_activity.next' as const },
+      ],
+    },
 
     // Website Settings (Superadmin only)
     { title: 'Profil Sekolah', href: '/admin/dashboard/school-profile', icon: 'School', permission: 'school_profile.view' },

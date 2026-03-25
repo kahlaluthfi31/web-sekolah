@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -164,6 +165,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
         },
       },
     })
+
+    await trackActivity(request, 'UPDATE', 'agendas', existing, data)
     return apiSuccess(data, 'Agenda berhasil diperbarui')
   } catch (error) {
     return handleError(error)
@@ -173,7 +176,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
+    const existing = await prisma.agenda.findUnique({ where: { id: parseInt(id) } })
+    if (!existing) return apiError('Agenda tidak ditemukan', 404)
+
     await prisma.agenda.delete({ where: { id: parseInt(id) } })
+    await trackActivity(_req, 'DELETE', 'agendas', existing, null)
     return apiSuccess(null, 'Agenda berhasil dihapus')
   } catch (error) {
     return handleError(error)

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError, handleError } from '@/lib/api-response'
 import bcrypt from 'bcryptjs'
+import { trackActivity } from '@/lib/activity-logger'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -24,6 +25,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const { id } = await params
     const body = await request.json()
 
+    const existing = await prisma.user.findUnique({ where: { id: parseInt(id) } })
+    if (!existing) return apiError('User not found', 404)
+
     const updateData: Record<string, unknown> = {}
     if (body.name !== undefined) updateData.name = body.name
     if (body.email !== undefined) updateData.email = body.email
@@ -39,6 +43,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       data: updateData,
       select: { id: true, name: true, email: true, role: true, status: true },
     })
+
+    await trackActivity(request, 'UPDATE', 'users', existing, user)
     return apiSuccess(user, 'User updated')
   } catch (error) {
     return handleError(error)
@@ -48,7 +54,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
+    const existing = await prisma.user.findUnique({ where: { id: parseInt(id) } })
+    if (!existing) return apiError('User not found', 404)
+
     await prisma.user.delete({ where: { id: parseInt(id) } })
+
+    await trackActivity(_req, 'DELETE', 'users', existing, null)
     return apiSuccess(null, 'User deleted')
   } catch (error) {
     return handleError(error)

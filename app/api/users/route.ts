@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
 import { userCreateSchema } from '@/lib/validations'
 import bcrypt from 'bcryptjs'
+import { trackActivity } from '@/lib/activity-logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,6 +58,8 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true, name: true, email: true, role: true, status: true },
     })
+
+    await trackActivity(request, 'CREATE', 'users', null, user)
 
     return apiSuccess(user, 'User created', 201)
   } catch (error) {
