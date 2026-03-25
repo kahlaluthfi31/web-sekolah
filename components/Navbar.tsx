@@ -198,8 +198,8 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
             <Image
               src="/images/web/logo-smkn1-ciamis.png"
               alt="SMK NEGERI 1 CIAMIS Logo"
-              width={40}
-              height={40}
+              width={34}
+              height={34}
               priority
               className="object-contain"
             />

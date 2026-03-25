@@ -145,23 +145,38 @@ const Testimonials: React.FC = () => {
           </div>
         )}
 
-        {/* Pagination — bottom right */}
-        <div className="flex justify-end items-center gap-3">
+        {/* Pagination */}
+        <div className="flex justify-center items-center gap-2 mt-8">
           <button
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            className="w-11 h-11 rounded-full bg-[#0e3057] flex items-center justify-center text-white hover:bg-[#0268ab] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`p-2 transition-colors ${
+              currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#0268ab]'
+            }`}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+            <button
+              key={num}
+              onClick={() => setCurrentPage(num)}
+              className={`w-8 h-8 rounded-full text-xs font-bold transition-colors ${
+                num === currentPage
+                  ? 'bg-[#0268ab] text-white'
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-[#0268ab]'
+              }`}
+            >
+              {num}
+            </button>
+          ))}
           <button
-            onClick={() =>
-              setCurrentPage(Math.min(totalPages, currentPage + 1))
-            }
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            className="w-11 h-11 rounded-full bg-[#0e3057] flex items-center justify-center text-white hover:bg-[#0268ab] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={`p-2 transition-colors ${
+              currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#0268ab]'
+            }`}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>

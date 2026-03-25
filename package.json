@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 3001",
+    "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -14,23 +14,19 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
-    "@ckeditor/ckeditor5-react": "^11.0.1",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
+    "jquery": "^4.0.0",
     "lucide-react": "^0.563.0",
     "mysql2": "^3.17.1",
     "next": "16.1.6",
-    "next-auth": "^4.0.0",
-    "nodemailer": "^7.0.13",
-    "pm2": "^6.0.14",
+    "next-auth": "^5.0.0-beta.30",
     "prisma": "^5.22.0",
-    "quill": "^2.0.3",
+    "raphael": "^2.3.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-quill": "^2.0.0",
-    "xlsx": "^0.18.5",
     "sharp": "^0.34.5",
+    "treant-js": "^1.0.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

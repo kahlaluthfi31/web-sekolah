@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User, TrendingUp, Newspaper, FileText } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User, TrendingUp, Newspaper, FileText, Clock } from 'lucide-react';
 import { usePageHeader } from '@/lib/usePageHeader';
 
 type NewsItem = {
@@ -158,7 +158,7 @@ const NewsPage: React.FC = () => {
   };
 
   const featuredNews = sortedNews[0];
-  const latestNews = sortedNews; // tampilkan semua data pada tab Latest News
+  const latestNews = sortedNews.slice(0, 5); // tampilkan max 5 berita terbaru saja
   const allNews = sortedNews;
   const trendingNews: NewsItem[] = [];
   const sidebarNews = activeTab === 'Berita Teratas' ? trendingNews : latestNews;
@@ -232,7 +232,7 @@ const NewsPage: React.FC = () => {
       </section>
 
       {/* Featured News Section */}
-      <section className="py-16 lg:py-24 bg-white">
+      <section className="py-12 lg:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
@@ -363,64 +363,66 @@ const NewsPage: React.FC = () => {
       </section>
 
       {/* All News Grid Section */}
-      <section className="py-16 lg:py-24 bg-white">
+      <section className="py-12 lg:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Semua Berita</span>
             <span className="text-xs text-gray-400">02 / 02</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
             {loading
               ? Array.from({ length: PAGE_SIZE }).map((_, idx) => (
-                  <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden animate-pulse">
-                    <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-10 bg-gray-200" />
-                    <div className="relative z-10 space-y-3">
-                      <div className="w-full h-40 rounded-xl bg-gray-200" />
-                      <div className="h-3 w-24 bg-gray-200 rounded-full" />
-                      <div className="h-4 w-3/4 bg-gray-200 rounded-full" />
-                      <div className="h-3 w-1/2 bg-gray-200 rounded-full" />
-                      <div className="h-3 w-full bg-gray-200 rounded-full" />
-                      <div className="h-3 w-2/3 bg-gray-200 rounded-full" />
+                  <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 animate-pulse space-y-3">
+                    <div className="w-full h-40 rounded-lg bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-3 w-20 bg-gray-200 rounded" />
+                      <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                      <div className="h-3 w-full bg-gray-200 rounded" />
+                      <div className="h-3 w-2/3 bg-gray-200 rounded" />
                     </div>
                   </div>
                 ))
               : allNews.map((item) => (
                   <div key={item.id} className="group cursor-pointer">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-                      {/* Logo SMKN 1 Ciamis - Pojok Bawah Kanan BNW - Half Visible - Larger & More Visible */}
-                      <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15">
-                        <div className="w-full h-full flex items-center justify-center">
-                          <img src="/images/logosmeabnw.svg" alt="SMKN 1 Ciamis Logo" className="w-full h-full object-contain" />
-                        </div>
+                    <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 relative">
+                      {/* SMK Logo Watermark - same as achievement cards */}
+                      <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15 pointer-events-none">
+                        <img src="/images/logosmeabnw.svg" alt="" className="w-full h-full object-contain" />
                       </div>
 
-                      <div className="relative z-10">
-                        <div className="mb-4 rounded-xl overflow-hidden border border-gray-100">
-                          <div className="relative w-full h-40 bg-gray-50">
-                            <img
-                              src={item.featuredImage || PLACEHOLDER_IMG}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <span className="absolute top-2 left-2 bg-[#0268ab] text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
-                              {CATEGORY_LABEL[item.category] || item.category}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-start gap-1 text-xs text-gray-500 mb-3">
-                          <span>
+                      <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
+                        <img
+                          src={item.featuredImage || PLACEHOLDER_IMG}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <span className="absolute top-2 left-2 bg-[#0268ab] text-white text-xs font-semibold px-2.5 py-1 rounded-lg">
+                          {CATEGORY_LABEL[item.category] || item.category}
+                        </span>
+                      </div>
+
+                      <div className="p-4 relative z-10 flex flex-col h-40">
+                        <div className="flex items-center gap-2 mb-2.5 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
                             {formatDate(item.publishedAt || item.createdAt)}
-                            {isEdited(item) && <span className="text-[10px] font-semibold text-gray-500 uppercase"> (Diedit)</span>}
                           </span>
+                          {isEdited(item) && <span className="text-[10px] font-semibold text-gray-500">(Diedit)</span>}
                         </div>
-                        <h4 className="font-bold text-gray-900 group-hover:text-[#0268ab] transition-colors mb-3 leading-tight">{formatTitleGrid(item.title)}</h4>
-                        <p className="text-xs text-gray-500 mb-2">by {item.author?.name || 'Admin'}</p>
-                        <p className="text-sm text-gray-600 leading-relaxed mb-4">{formatExcerptGrid(item.excerpt)}</p>
-                        <button className="flex items-center gap-2 text-[#0268ab] text-xs font-bold uppercase tracking-widest hover:translate-x-1 transition-transform">
-                          Baca Selengkapnya
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
+                        <h4 className="font-semibold text-gray-900 group-hover:text-[#0268ab] transition-colors mb-2 leading-snug line-clamp-2">
+                          {formatTitleGrid(item.title)}
+                        </h4>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 grow">{formatExcerptGrid(item.excerpt)}</p>
+                        <div className="flex items-center justify-between mt-auto">
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {item.author?.name || 'Admin'}
+                          </span>
+                          <button className="text-[#0268ab] text-xs font-semibold hover:text-[#014a8f] transition-colors">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

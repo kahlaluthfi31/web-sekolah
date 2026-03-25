@@ -832,8 +832,8 @@ const AlumniPage: React.FC = () => {
                   <button
                     onClick={() => setTestimonialPage((p) => Math.max(1, p - 1))}
                     disabled={testimonialPage === 1}
-                    className={`p-2 rounded-full border border-gray-200 text-gray-500 hover:text-[#0268ab] hover:border-[#0268ab] transition ${
-                      testimonialPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                    className={`p-2 transition-colors ${
+                      testimonialPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#0268ab]'
                     }`}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -842,10 +842,10 @@ const AlumniPage: React.FC = () => {
                     <button
                       key={num}
                       onClick={() => setTestimonialPage(num)}
-                      className={`w-8 h-8 rounded-full text-xs font-bold transition ${
+                      className={`w-8 h-8 rounded-full text-xs font-bold transition-colors ${
                         num === testimonialPage
-                          ? "bg-[#0268ab] text-white"
-                          : "text-gray-500 hover:bg-gray-100"
+                          ? 'bg-[#0268ab] text-white'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-[#0268ab]'
                       }`}
                     >
                       {num}
@@ -854,8 +854,8 @@ const AlumniPage: React.FC = () => {
                   <button
                     onClick={() => setTestimonialPage((p) => Math.min(testimonialTotalPages, p + 1))}
                     disabled={testimonialPage === testimonialTotalPages}
-                    className={`p-2 rounded-full border border-gray-200 text-gray-500 hover:text-[#0268ab] hover:border-[#0268ab] transition ${
-                      testimonialPage === testimonialTotalPages ? "opacity-50 cursor-not-allowed" : ""
+                    className={`p-2 transition-colors ${
+                      testimonialPage === testimonialTotalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-[#0268ab]'
                     }`}
                   >
                     <ChevronRight className="h-4 w-4" />
