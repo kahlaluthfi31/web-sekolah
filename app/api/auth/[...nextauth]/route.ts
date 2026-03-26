@@ -65,26 +65,31 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
-      // Tangani /api/auth/error agar dikirim ke login/register dengan pesan error
-      const errorParam = (() => {
-        try {
-          const u = new URL(url, baseUrl)
-          return u.pathname.startsWith('/api/auth/error') ? u.searchParams.get('error') : null
-        } catch {
-          return null
+      try {
+        // Tangani /api/auth/error agar dikirim ke login/register dengan pesan error
+        const errorParam = (() => {
+          try {
+            const u = new URL(url, baseUrl)
+            return u.pathname.startsWith('/api/auth/error') ? u.searchParams.get('error') : null
+          } catch {
+            return null
+          }
+        })()
+
+        if (errorParam) {
+          const intent = (await cookies()).get('google_intent')?.value === 'register' ? 'register' : 'login'
+          const target = intent === 'register' ? '/register' : '/login'
+          return `${baseUrl}${target}?error=${encodeURIComponent(errorParam)}`
         }
-      })()
 
-      if (errorParam) {
-        const intent = (await cookies()).get('google_intent')?.value === 'register' ? 'register' : 'login'
-        const target = intent === 'register' ? '/register' : '/login'
-        return `${baseUrl}${target}?error=${encodeURIComponent(errorParam)}`
+        // default: allow NextAuth defaults (same-origin only), preserve relative URLs with query
+        if (url.startsWith('/')) return `${baseUrl}${url}`
+        if (url.startsWith(baseUrl)) return url
+        return baseUrl
+      } catch (error) {
+        console.error('Redirect callback error', error)
+        return baseUrl
       }
-
-      // default: allow NextAuth defaults (same-origin only), preserve relative URLs with query
-      if (url.startsWith('/')) return `${baseUrl}${url}`
-      if (url.startsWith(baseUrl)) return url
-      return baseUrl
     },
     async signIn({ user, account, profile }: { user: User; account?: Account | null; profile?: Profile | null }) {
       if (account?.provider === 'google') {
@@ -133,7 +138,7 @@ export const authOptions: NextAuthOptions = {
 
       return true
     },
-    async jwt({ token, user }: { token: JWT; user?: User | null }) {
+    async jwt({ token, user, account }: { token: JWT; user?: User | null; account?: Account | null }) {
       try {
         // Saat login, paksa pakai ID user di database (bukan sub Google yang panjang)
         if (user?.email) {
@@ -141,33 +146,66 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.sub = String(dbUser.id)
             token.role = dbUser.role
+            token.email = dbUser.email
           }
         } else if (user?.id) {
           // fallback: credentials login sudah mengirim id numerik sebagai string
           token.sub = user.id
-          token.role = (user as { role?: string }).role || token.role
+          token.role = (user as { role?: string }).role || token.role || 'user'
+          token.email = user.email
         }
       } catch (err) {
         console.error('JWT callback error', err)
+        // Set default values to prevent undefined token
+        if (user?.email) {
+          token.email = user.email
+          token.role = 'user'
+        }
       }
       return token
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       try {
         const userRole = (token as { role?: string }).role || 'user'
-        const sessionUser = session.user || {}
+        const userEmail = (token as { email?: string }).email || ''
+        const userId = token.sub || ''
 
+        // Ensure session.user exists
+        if (session.user) {
+          session.user.id = userId
+          session.user.email = userEmail
+          ;(session.user as any).role = userRole
+        } else {
+          session.user = {
+            id: userId,
+            email: userEmail,
+            name: (token as { name?: string }).name || 'User',
+            image: null,
+          } as any
+          ;(session.user as any).role = userRole
+        }
+
+        return session
+      } catch (error) {
+        console.error('Session callback error', error)
+        // Return default session to prevent crashes
         return {
           ...session,
           user: {
-            ...sessionUser,
+            ...session.user,
             id: token.sub || '',
-            role: userRole,
-          } as typeof session.user & { id: string; role: string },
+            email: (token as { email?: string }).email || '',
+          } as any,
         }
+      }
+    },
+    async signOut() {
+      try {
+        // Cleanup on sign out
+        return true
       } catch (error) {
-        console.error('Session callback error', error)
-        return session
+        console.error('Sign out error', error)
+        return true
       }
     },
   },
