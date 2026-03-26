@@ -191,27 +191,31 @@ const NewsDetailsPage: React.FC = () => {
                      <span>Penulis: {selectedNews.author?.name || "Admin"} | Peliput: {selectedNews.author?.name || "Admin"}</span>
                   </div>
 
-                  {/* Views Box */}
-                  <div className="flex items-center gap-3 mb-4">
-                     <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
-                        <Eye className="w-5 h-5 text-white" />
+                  {/* Views and Shares Stats */}
+                  <div className="flex flex-col sm:flex-row gap-8 max-w-2xl">
+                     {/* Views */}
+                     <div className="flex items-center gap-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                           <Eye className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                           <div className="text-white font-bold text-lg">136 kali</div>
+                           <div className="text-white/80 text-xs">Berita ini dilihat</div>
+                        </div>
                      </div>
-                     <div>
-                        <div className="text-white font-bold text-lg">136 kali</div>
-                        <div className="text-white/80 text-xs">Berita ini dilihat</div>
-                     </div>
-                  </div>
 
-                  {/* Shares Box */}
-                  <div className="flex items-center gap-3">
-                     <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
-                        <Share2 className="w-5 h-5 text-white" />
-                     </div>
-                     <div>
-                        <div className="text-white font-bold text-lg">0 kali</div>
-                        <div className="text-white/80 text-xs">Berita ini dibagikan</div>
+                     {/* Shares */}
+                     <div className="flex items-center gap-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                           <Share2 className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                           <div className="text-white font-bold text-lg">0 kali</div>
+                           <div className="text-white/80 text-xs">Berita ini dibagikan</div>
+                        </div>
                      </div>
                   </div>
+               </div>
             </section>
          )}
 
