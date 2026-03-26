@@ -134,26 +134,85 @@ const NewsDetailsPage: React.FC = () => {
    }, [selectedNews]);
 
    return (
-      <div className="min-h-screen bg-gray-50 pt-24 pb-16">
-         <section className="py-12 lg:py-16 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-               <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
-                  <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Detail Berita</span>
-                  <button
-                     onClick={() => {
-                        sessionStorage.setItem("smk_last_page", "news");
-                        window.location.reload();
+      <div className="min-h-screen bg-gray-50">
+         {/* Hero Header Section */}
+         {!loading && selectedNews && (
+            <section className="pt-24 pb-16 relative overflow-hidden bg-linear-to-b from-[#0268ab] via-[#0268ab] to-[#0268ab]/80">
+               <div className="absolute inset-0 opacity-10">
+                  <div
+                     className="absolute top-0 left-0 w-full h-full"
+                     style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3Ccircle cx='10' cy='10' r='1.5'/%3E%3Ccircle cx='50' cy='10' r='1.5'/%3E%3Ccircle cx='10' cy='50' r='1.5'/%3E%3Ccircle cx='50' cy='50' r='1.5'/%3E%3C/g%3E%3C/svg%3E")`,
+                        backgroundSize: "60px 60px",
                      }}
-                     className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-[#0268ab] transition-colors"
-                  >
-                     <ChevronLeft className="w-4 h-4" />
-                     Kembali ke daftar
-                  </button>
+                  />
                </div>
 
+               <div className="absolute top-10 right-20 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
+               <div className="absolute bottom-10 left-20 w-48 h-48 bg-white opacity-5 rounded-full blur-3xl"></div>
+
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                  <button
+                     onClick={() => {
+                        sessionStorage.removeItem("selected_news_item");
+                        window.history.back();
+                     }}
+                     className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors mb-8 text-sm font-semibold group"
+                  >
+                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                     Kembali
+                  </button>
+
+                  <div className="max-w-4xl">
+                     <div className="mb-6 flex items-center gap-3 flex-wrap">
+                        <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-widest px-3.5 py-1.5 rounded-full border border-white/30">
+                           {CATEGORY_LABEL[selectedNews.category] || selectedNews.category}
+                        </span>
+                        <div className="flex items-center gap-4 text-white/80 text-xs md:text-sm">
+                           <span className="flex items-center gap-1.5">
+                              <User className="w-4 h-4" />
+                              {selectedNews.author?.name || "Admin"}
+                           </span>
+                           <span className="w-1 h-1 bg-white/40 rounded-full"></span>
+                           <span className="flex items-center gap-1.5">
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(selectedNews.publishedAt || selectedNews.createdAt)}
+                           </span>
+                        </div>
+                     </div>
+                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+                        {selectedNews.title}
+                     </h1>
+                     {selectedNews.excerpt && (
+                        <p className="text-white/85 text-sm md:text-base leading-relaxed max-w-3xl">
+                           {selectedNews.excerpt}
+                        </p>
+                     )}
+                  </div>
+               </div>
+            </section>
+         )}
+
+         {/* Loading State Header */}
+         {loading && (
+            <section className="pt-24 pb-16 bg-linear-to-b from-[#0268ab] via-[#0268ab] to-[#0268ab]/80">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="space-y-4 animate-pulse">
+                     <div className="w-24 h-4 bg-white/20 rounded-full"></div>
+                     <div className="w-3/4 h-10 bg-white/20 rounded-lg"></div>
+                     <div className="w-full h-6 bg-white/15 rounded-lg"></div>
+                     <div className="w-2/3 h-5 bg-white/15 rounded-lg"></div>
+                  </div>
+               </div>
+            </section>
+         )}
+
+         {/* Content Section */}
+         <section className="py-12 lg:py-16 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                {loading && (
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-pulse">
-                     <div className="lg:col-span-8 bg-gray-100 h-110 rounded-xl" />
+                     <div className="lg:col-span-8 bg-gray-100 h-96 rounded-xl" />
                      <div className="lg:col-span-4 space-y-4">
                         <div className="bg-gray-100 h-36 rounded-xl" />
                         <div className="bg-gray-100 h-56 rounded-xl" />
@@ -275,7 +334,7 @@ const NewsDetailsPage: React.FC = () => {
          </section>
 
          {!loading && !selectedNews && (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-sm text-gray-500">
                   Detail berita tidak ditemukan.
                </div>

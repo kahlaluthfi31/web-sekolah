@@ -49,22 +49,19 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
       // Hero section detection - gunakan hero section yang lebih spesifik per halaman
       let heroHeight = window.innerHeight; // Default untuk landing page
 
-      // Jika bukan landing page, gunakan hero section yang lebih kecil
+      // Jika bukan landing page, tentukan hero height berdasarkan page type
       if (currentPage !== "home") {
-        // Hero section untuk halaman lain lebih kecil (sekitar 400px)
-        heroHeight = 400;
+        // Pages dengan detail content (news-details, dll) punya header lebih besar
+        if (currentPage === "news-details") {
+          // For detail pages with larger header
+          heroHeight = 500;
+        } else {
+          // Hero section untuk halaman lain lebih kecil (sekitar 400px)
+          heroHeight = 400;
+        }
       }
 
       setInHeroSection(scrollPosition < heroHeight);
-
-      // Debug log
-      console.log("Navbar Debug:", {
-        currentPage,
-        scrollPosition,
-        heroHeight,
-        inHeroSection: scrollPosition < heroHeight,
-        scrolled: scrollPosition > 50,
-      });
     };
 
     handleScroll();
