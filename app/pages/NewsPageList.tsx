@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User, TrendingUp, Newspaper, FileText } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User } from 'lucide-react';
 import { usePageHeader } from '@/lib/usePageHeader';
 
 interface NewsPageListProps {
@@ -180,10 +180,8 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="pt-24 pb-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
-
-        <div className="absolute inset-0 opacity-15">
+      <section className="pt-24 pb-16 relative overflow-hidden bg-linear-to-b from-[#0268ab] via-[#0268ab] to-[#0268ab]/80">
+        <div className="absolute inset-0 opacity-10">
           <div
             className="absolute top-0 left-0 w-full h-full"
             style={{
@@ -195,25 +193,14 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
 
         <div className="absolute top-10 right-20 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
         <div className="absolute bottom-10 left-20 w-48 h-48 bg-white opacity-5 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-
-        <div className="absolute top-20 left-10 text-white/10">
-          <Newspaper className="w-16 h-16" strokeWidth={1} />
-        </div>
-        <div className="absolute top-32 right-16 text-white/10">
-          <FileText className="w-12 h-12" strokeWidth={1} />
-        </div>
-        <div className="absolute bottom-20 left-32 text-white/10">
-          <TrendingUp className="w-14 h-14" strokeWidth={1} />
-        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
               {header.displayTitle || header.title}
             </h1>
             {header.subtitle && (
-              <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+              <p className="text-white/85 text-sm md:text-base leading-relaxed max-w-2xl">
                 {header.subtitle}
               </p>
             )}
