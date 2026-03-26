@@ -137,7 +137,7 @@ const NewsDetailsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
          {/* Hero Header Section */}
          {!loading && selectedNews && (
-            <section className="relative overflow-hidden h-72 md:h-96 lg:h-110 pt-24">
+            <section className="relative overflow-hidden pt-24 pb-12">
                {/* Background Image */}
                <div
                   className="absolute inset-0"
@@ -152,60 +152,70 @@ const NewsDetailsPage: React.FC = () => {
                <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/40 to-black/60" />
 
                {/* Content */}
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-between py-8">
-                  {/* Top: Back Button and Breadcrumb */}
-                  <div>
-                     <button
-                        onClick={() => {
-                           sessionStorage.removeItem("selected_news_item");
-                           window.history.back();
-                        }}
-                        className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors mb-4 text-xs md:text-sm font-semibold group"
-                     >
-                        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        Kembali
-                     </button>
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                  {/* Back Button */}
+                  <button
+                     onClick={() => {
+                        sessionStorage.removeItem("selected_news_item");
+                        window.history.back();
+                     }}
+                     className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-4 text-xs md:text-sm font-semibold group"
+                  >
+                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                     Kembali
+                  </button>
 
-                     {/* Breadcrumb Navigation */}
-                     <nav className="flex items-center gap-2 text-white/70 text-xs md:text-sm">
-                        <a href="#" className="hover:text-white transition-colors">Beranda</a>
-                        <span className="text-white/50">/</span>
-                        <a href="#" className="hover:text-white transition-colors">Berita</a>
-                        <span className="text-white/50">/</span>
-                        <span className="text-white/90">{CATEGORY_LABEL[selectedNews.category] || selectedNews.category}</span>
-                     </nav>
+                  {/* Breadcrumb Navigation */}
+                  <nav className="flex items-center gap-2 text-[#4dd0e1] text-xs md:text-sm font-semibold mb-6">
+                     <a href="#" className="hover:text-cyan-300 transition-colors">Beranda</a>
+                     <span className="text-cyan-300">/</span>
+                     <a href="#" className="hover:text-cyan-300 transition-colors">Berita</a>
+                     <span className="text-cyan-300">/</span>
+                     <span className="text-cyan-300">{CATEGORY_LABEL[selectedNews.category] || selectedNews.category}</span>
+                  </nav>
+
+                  {/* Title */}
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight max-w-4xl">
+                     {selectedNews.title}
+                  </h1>
+
+                  {/* Date Line */}
+                  <div className="flex items-center gap-2 text-white/90 text-sm md:text-base mb-3">
+                     <Calendar className="w-4 h-4" />
+                     <span>{formatDate(selectedNews.publishedAt || selectedNews.createdAt)}</span>
                   </div>
 
-                  {/* Bottom: Title and Metadata */}
-                  <div className="max-w-4xl">
-                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight line-clamp-3">
-                        {selectedNews.title}
-                     </h1>
+                  {/* Author/Peliput Line */}
+                  <div className="flex items-center gap-2 text-white/90 text-sm md:text-base mb-8">
+                     <span className="text-white/70">📎</span>
+                     <span>Penulis: {selectedNews.author?.name || "Admin"} | Peliput: {selectedNews.author?.name || "Admin"}</span>
+                  </div>
 
-                     {/* Metadata Row */}
-                     <div className="flex flex-wrap items-center gap-4 md:gap-6 text-white/80 text-xs md:text-sm">
-                        {/* Date */}
-                        <div className="flex items-center gap-2">
-                           <Calendar className="w-4 h-4" />
-                           <span>{formatDate(selectedNews.publishedAt || selectedNews.createdAt)}</span>
+                  {/* Views and Shares Stats */}
+                  <div className="flex flex-col sm:flex-row gap-4 max-w-2xl">
+                     {/* Views Box */}
+                     <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 flex-1">
+                        <div className="flex items-center gap-3">
+                           <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                              <Eye className="w-5 h-5 text-white" />
+                           </div>
+                           <div>
+                              <div className="text-white font-bold text-lg">136 kali</div>
+                              <div className="text-white/80 text-xs">Berita ini dilihat</div>
+                           </div>
                         </div>
+                     </div>
 
-                        {/* Author */}
-                        <div className="flex items-center gap-2">
-                           <User className="w-4 h-4" />
-                           <span>{selectedNews.author?.name || "Admin"}</span>
-                        </div>
-
-                        {/* Views */}
-                        <div className="flex items-center gap-2">
-                           <Eye className="w-4 h-4" />
-                           <span>1.2K dilihat</span>
-                        </div>
-
-                        {/* Shares */}
-                        <div className="flex items-center gap-2">
-                           <Share2 className="w-4 h-4" />
-                           <span>248 bagian</span>
+                     {/* Shares Box */}
+                     <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 flex-1">
+                        <div className="flex items-center gap-3">
+                           <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                              <Share2 className="w-5 h-5 text-white" />
+                           </div>
+                           <div>
+                              <div className="text-white font-bold text-lg">0 kali</div>
+                              <div className="text-white/80 text-xs">Berita ini dibagikan</div>
+                           </div>
                         </div>
                      </div>
                   </div>
@@ -215,19 +225,15 @@ const NewsDetailsPage: React.FC = () => {
 
          {/* Loading State Header */}
          {loading && (
-            <section className="relative overflow-hidden h-72 md:h-96 lg:h-110 pt-24 bg-linear-to-b from-gray-300 to-gray-400">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-between py-8 animate-pulse">
-                  <div className="space-y-3">
-                     <div className="w-20 h-3 bg-gray-400/60 rounded-full"></div>
-                     <div className="w-32 h-3 bg-gray-400/60 rounded-full"></div>
-                  </div>
-                  <div className="space-y-4">
-                     <div className="w-3/4 max-w-2xl h-8 bg-gray-400/60 rounded-lg"></div>
-                     <div className="flex gap-6">
-                        <div className="w-24 h-3 bg-gray-400/50 rounded-full"></div>
-                        <div className="w-28 h-3 bg-gray-400/50 rounded-full"></div>
-                        <div className="w-20 h-3 bg-gray-400/50 rounded-full"></div>
-                     </div>
+            <section className="relative overflow-hidden pt-24 pb-12 bg-linear-to-b from-gray-300 to-gray-400">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative animate-pulse space-y-4">
+                  <div className="w-32 h-3 bg-gray-400/60 rounded-full"></div>
+                  <div className="w-full max-w-3xl h-12 bg-gray-400/60 rounded-lg"></div>
+                  <div className="w-48 h-3 bg-gray-400/50 rounded-full"></div>
+                  <div className="w-2/3 h-3 bg-gray-400/50 rounded-full"></div>
+                  <div className="flex gap-4 mt-6">
+                     <div className="flex-1 h-20 bg-gray-400/50 rounded-lg"></div>
+                     <div className="flex-1 h-20 bg-gray-400/50 rounded-lg"></div>
                   </div>
                </div>
             </section>
