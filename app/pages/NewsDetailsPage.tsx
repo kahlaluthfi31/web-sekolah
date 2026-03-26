@@ -176,10 +176,10 @@ const NewsDetailsPage: React.FC = () => {
                      <span>{formatDate(selectedNews.publishedAt || selectedNews.createdAt)}</span>
                   </div>
 
-                  {/* Author/Peliput Line */}
+                  {/* Author Line */}
                   <div className="flex items-center gap-2 text-white/90 text-sm md:text-base mb-8">
                      <User className="w-4 h-4 text-white/70" />
-                     <span>Penulis: {selectedNews.author?.name || "Admin"} | Peliput: {selectedNews.author?.name || "Admin"}</span>
+                     <span>Penulis: {selectedNews.author?.name || "Admin"}</span>
                   </div>
 
                   {/* Views and Shares Stats */}
