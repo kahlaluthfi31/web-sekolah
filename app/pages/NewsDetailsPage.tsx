@@ -1,113 +1,293 @@
+"use client";
+/* eslint-disable @next/next/no-img-element */
 
-import React from 'react';
-import { MessageSquare, Calendar, Clock, Share2, Twitter, Facebook, Linkedin } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Calendar, ChevronLeft, User } from "lucide-react";
+
+type NewsItem = {
+   id: number;
+   title: string;
+   excerpt: string | null;
+   content?: string | null;
+   featuredImage: string | null;
+   category: string;
+   author?: { name?: string | null } | null;
+   publishedAt: string | null;
+   createdAt: string;
+   updatedAt?: string;
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+   berita: "Berita",
+   kejuaraan: "Kejuaraan",
+   pengumuman: "Pengumuman",
+   event: "Event",
+};
+
+const PLACEHOLDER_IMG =
+   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2NzUiIHZpZXdCb3g9IjAgMCAxMjAwIDY3NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjc1IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjQ4MCAyNzBINzIwVjQwNUg0ODBWMjcwWiIgZmlsbD0iI0QxRDVEQiIvPgo8c3ZnIHdpZHRoPSIyNDAiIGhlaWdodD0iMTM1IiB2aWV3Qm94PSIwIDAgMjQwIDEzNSIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxMzUiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iMTExLjIgNTQuM0gxMjguOFY4MC43SDExMS4yVjU0LjNaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K";
+
+const formatDate = (dateStr: string | null) => {
+   if (!dateStr) return "-";
+   try {
+      return new Date(dateStr).toLocaleDateString("id-ID", {
+         day: "2-digit",
+         month: "short",
+         year: "numeric",
+      });
+   } catch {
+      return dateStr;
+   }
+};
+
+const buildNewsTags = (item?: NewsItem | null) => {
+   if (!item) return [];
+   const words = item.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((word) => word.length > 3);
+
+   const unique = Array.from(new Set(words)).slice(0, 5);
+   const categoryTag = CATEGORY_LABEL[item.category] || item.category;
+   return [categoryTag, ...unique];
+};
 
 const NewsDetailsPage: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Breadcrumb */}
-      <section className="pt-24 pb-8 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span className="hover:text-maroon-600 cursor-pointer">Beranda</span>
-            <span>/</span>
-            <span className="hover:text-maroon-600 cursor-pointer">Berita</span>
-            <span>/</span>
-            <span className="text-gray-900">Detail</span>
-          </div>
-        </div>
-      </section>
+   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+   const [allNews, setAllNews] = useState<NewsItem[]>([]);
+   const [loading, setLoading] = useState(true);
 
-      <article className="pb-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div className="rounded-2xl overflow-hidden shadow-lg h-125 mb-12">
-              <img src="/images/default-news.svg" className="w-full h-full object-cover" alt="Main Article" />
-           </div>
+   useEffect(() => {
+      let mounted = true;
 
-           <div className="flex items-center gap-6 mb-8">
-              <span className="flex items-center text-xs text-gray-400 font-bold uppercase tracking-widest"><Clock className="h-4 w-4 mr-2 text-[#0092DD]" /> 8 min read</span>
-              <span className="flex items-center text-xs text-gray-400 font-bold uppercase tracking-widest">Technology</span>
-           </div>
+      try {
+         const raw = sessionStorage.getItem("selected_news_item");
+         if (raw) {
+            const parsed = JSON.parse(raw) as NewsItem;
+            if (mounted) setSelectedNews(parsed);
+         }
+      } catch {
+         // ignore parse issue
+      }
 
-           <h1 className="text-4xl font-black text-gray-900 mb-8 leading-tight">The Future of Artificial Intelligence: Transforming Industries and Reshaping Society</h1>
+      fetch(`/api/news?published=true&limit=50&page=1`)
+         .then((res) => res.json())
+         .then((json) => {
+            if (!mounted) return;
+            if (json?.success && Array.isArray(json.data)) {
+               const sorted = [...(json.data as NewsItem[])].sort((a, b) => {
+                  const dateA = new Date(a.publishedAt || a.createdAt).getTime();
+                  const dateB = new Date(b.publishedAt || b.createdAt).getTime();
+                  return dateB - dateA;
+               });
+               setAllNews(sorted);
+               if (!selectedNews && sorted.length > 0) setSelectedNews(sorted[0]);
+            }
+         })
+         .catch(() => {
+            if (!mounted) return;
+            setAllNews([]);
+         })
+         .finally(() => {
+            if (mounted) setLoading(false);
+         });
 
-           <div className="flex items-center justify-between py-6 border-y border-gray-100 mb-12">
-              <div className="flex items-center">
-                 <img src="/images/default-faculty.svg" className="w-12 h-12 rounded-full object-cover mr-4" alt="Author" />
-                 <div>
-                    <h5 className="font-bold text-gray-900">Sarah Anderson</h5>
-                    <div className="flex items-center text-[10px] text-gray-400 font-bold gap-4 uppercase">
-                       <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> Feb 13, 2025</span>
-                       <span className="flex items-center"><MessageSquare className="h-3 w-3 mr-1" /> 24 Comments</span>
-                    </div>
-                 </div>
-              </div>
-              <div className="flex gap-4 text-gray-300">
-                 <Twitter className="h-5 w-5 cursor-pointer hover:text-[#0092DD] transition-colors" />
-                 <Facebook className="h-5 w-5 cursor-pointer hover:text-[#0092DD] transition-colors" />
-                 <Linkedin className="h-5 w-5 cursor-pointer hover:text-[#0092DD] transition-colors" />
-              </div>
-           </div>
+      return () => {
+         mounted = false;
+      };
+   }, [selectedNews]);
 
-           <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed">
-              <p className="font-bold text-gray-900 mb-8">Artificial Intelligence has emerged as one of the most transformative technologies of our time, revolutionizing industries from healthcare to finance, and fundamentally changing how we live and work.</p>
-              <p className="mb-8">In recent years, the advancement of AI technologies has accelerated at an unprecedented pace, bringing both exciting opportunities and unique challenges. This comprehensive analysis explores the current state of AI, its impact across various sectors, and what the future might hold for this revolutionary technology.</p>
-              
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">The Current State of AI Technology</h2>
-              <p className="mb-8">Modern AI systems have achieved remarkable capabilities in areas such as:</p>
-              <ul className="list-disc pl-6 mb-12 space-y-2">
-                 <li>Natural Language Processing and Generation</li>
-                 <li>Computer Vision and Image Recognition</li>
-                 <li>Predictive Analytics and Decision Making</li>
-                 <li>Autonomous Systems and Robotics</li>
-              </ul>
+   const selectedTags = useMemo(() => buildNewsTags(selectedNews), [selectedNews]);
 
-              <div className="rounded-2xl overflow-hidden shadow-lg h-100 mb-4">
-                 <img src="/images/default-news.svg" className="w-full h-full object-cover" alt="AI Workspace" />
-              </div>
-              <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-16">AI systems processing and analyzing complex data patterns</p>
+   const detailTrendingNews = useMemo(() => {
+      return allNews.filter((item) => item.id !== selectedNews?.id).slice(0, 5);
+   }, [allNews, selectedNews]);
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Transforming Industries</h2>
-              <p className="mb-12">From healthcare diagnostics to financial forecasting, AI is revolutionizing traditional business models and creating new opportunities for innovation and efficiency. Organizations worldwide are leveraging AI to streamline operations, enhance customer experiences, and drive growth.</p>
+   const detailRecommendedNews = useMemo(() => {
+      if (!selectedNews) return [];
 
-              <div className="bg-[#0092DD]/5 p-12 rounded-[40px] border-l-8 border-[#0092DD] mb-16 italic text-xl font-bold text-gray-900 leading-tight">
-                 "Artificial Intelligence is not just another technological advancement; it's a fundamental shift in how we approach problem-solving and decision-making across every industry and sector of society."
-                 <p className="text-sm font-bold mt-4 not-italic text-[#0092DD] uppercase tracking-widest">— Dr. Rachel Chen, AI Research Director</p>
-              </div>
+      const sameCategory = allNews.filter(
+         (item) => item.id !== selectedNews.id && item.category === selectedNews.category,
+      );
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Ethical Considerations and Future Challenges</h2>
-              <p className="mb-12">As AI continues to evolve, important questions arise about privacy, security, and the ethical implications of increasingly autonomous systems. Addressing these challenges while fostering innovation will be crucial for the sustainable development of AI technologies.</p>
+      if (sameCategory.length >= 5) return sameCategory.slice(0, 5);
 
-              <div className="grid grid-cols-2 gap-8 mb-16">
-                 <img src="/images/default-news.svg" className="rounded-3xl shadow-lg h-64 object-cover" alt="Context 1" />
-                 <img src="/images/default-news.svg" className="rounded-3xl shadow-lg h-64 object-cover" alt="Context 2" />
-              </div>
+      const fallback = allNews.filter(
+         (item) => item.id !== selectedNews.id && item.category !== selectedNews.category,
+      );
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Looking Ahead</h2>
-              <p className="mb-12">The future of AI promises even more groundbreaking developments, from advanced cognitive systems to seamless human-AI collaboration. As we move forward, the key will be balancing technological progress with ethical considerations and societal impact.</p>
-           </div>
+      return [...sameCategory, ...fallback].slice(0, 5);
+   }, [allNews, selectedNews]);
 
-           <div className="pt-12 border-t border-gray-100 flex items-center justify-between">
-              <div className="flex gap-2">
-                 {["Artificial Intelligence", "Technology", "Innovation", "Future"].map(tag => (
-                   <span key={tag} className="bg-gray-50 text-gray-400 text-[10px] font-bold px-3 py-1 rounded-full border border-gray-100 uppercase tracking-widest">{tag}</span>
-                 ))}
-              </div>
-              <div className="flex items-center gap-4">
-                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Share:</span>
-                 <div className="flex gap-2">
-                    <Twitter className="h-4 w-4 text-gray-400 hover:text-[#0092DD] cursor-pointer" />
-                    <Facebook className="h-4 w-4 text-gray-400 hover:text-[#0092DD] cursor-pointer" />
-                    <Linkedin className="h-4 w-4 text-gray-400 hover:text-[#0092DD] cursor-pointer" />
-                 </div>
-              </div>
-           </div>
-        </div>
-      </article>
-    </div>
-  );
+   const handleSelectNews = (item: NewsItem) => {
+      sessionStorage.setItem("selected_news_item", JSON.stringify(item));
+      setSelectedNews(item);
+   };
+
+   const detailContentParagraphs = useMemo(() => {
+      const rawContent = selectedNews?.content || selectedNews?.excerpt || "";
+      return rawContent
+         .split("\n")
+         .map((paragraph) => paragraph.trim())
+         .filter(Boolean);
+   }, [selectedNews]);
+
+   return (
+      <div className="min-h-screen bg-gray-50 pt-24 pb-16">
+         <section className="py-12 lg:py-16 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+               <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
+                  <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Detail Berita</span>
+                  <button
+                     onClick={() => {
+                        sessionStorage.setItem("smk_last_page", "news");
+                        window.location.reload();
+                     }}
+                     className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-[#0268ab] transition-colors"
+                  >
+                     <ChevronLeft className="w-4 h-4" />
+                     Kembali ke daftar
+                  </button>
+               </div>
+
+               {loading && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-pulse">
+                     <div className="lg:col-span-8 bg-gray-100 h-110 rounded-xl" />
+                     <div className="lg:col-span-4 space-y-4">
+                        <div className="bg-gray-100 h-36 rounded-xl" />
+                        <div className="bg-gray-100 h-56 rounded-xl" />
+                        <div className="bg-gray-100 h-56 rounded-xl" />
+                     </div>
+                  </div>
+               )}
+
+               {!loading && selectedNews && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                     <article className="lg:col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="relative w-full h-64 md:h-90 bg-gray-100">
+                           <img
+                              src={selectedNews.featuredImage || PLACEHOLDER_IMG}
+                              alt={selectedNews.title}
+                              className="w-full h-full object-cover"
+                           />
+                        </div>
+
+                        <div className="p-6 md:p-8">
+                           <div className="flex flex-wrap items-center gap-3 mb-4">
+                              <span className="bg-[#0268ab] text-white text-xs font-semibold px-2.5 py-1 rounded-lg">
+                                 {CATEGORY_LABEL[selectedNews.category] || selectedNews.category}
+                              </span>
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                 <Calendar className="w-3 h-3" />
+                                 {formatDate(selectedNews.publishedAt || selectedNews.createdAt)}
+                              </span>
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                 <User className="w-3 h-3" />
+                                 {selectedNews.author?.name || "Admin"}
+                              </span>
+                           </div>
+
+                           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-5">
+                              {selectedNews.title}
+                           </h2>
+
+                           <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
+                              {detailContentParagraphs.length > 0 ? (
+                                 detailContentParagraphs.map((paragraph, idx) => (
+                                    <p key={`${selectedNews.id}-${idx}`}>{paragraph}</p>
+                                 ))
+                              ) : (
+                                 <p>Konten berita belum tersedia.</p>
+                              )}
+                           </div>
+                        </div>
+                     </article>
+
+                     <aside className="lg:col-span-4 space-y-6">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                           <h3 className="text-sm font-bold text-gray-900 mb-4">Berdasarkan Tags</h3>
+                           <div className="flex flex-wrap gap-2">
+                              {selectedTags.map((tag) => (
+                                 <span
+                                    key={tag}
+                                    className="text-xs font-semibold text-[#0268ab] bg-[#0268ab]/10 px-2.5 py-1 rounded-lg"
+                                 >
+                                    #{tag}
+                                 </span>
+                              ))}
+                           </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                           <h3 className="text-sm font-bold text-gray-900 mb-4">Berita Teratas / Trending</h3>
+                           <div className="space-y-3">
+                              {detailTrendingNews.map((item) => (
+                                 <button
+                                    key={`trend-${item.id}`}
+                                    onClick={() => handleSelectNews(item)}
+                                    className="w-full text-left flex items-start gap-3 group"
+                                 >
+                                    <img
+                                       src={item.featuredImage || PLACEHOLDER_IMG}
+                                       alt={item.title}
+                                       className="w-14 h-14 rounded-lg object-cover border border-gray-100 shrink-0"
+                                    />
+                                    <div>
+                                       <p className="text-xs font-semibold text-gray-900 group-hover:text-[#0268ab] line-clamp-2 transition-colors">
+                                          {item.title}
+                                       </p>
+                                       <p className="text-[11px] text-gray-500 mt-1">{formatDate(item.publishedAt || item.createdAt)}</p>
+                                    </div>
+                                 </button>
+                              ))}
+                           </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                           <h3 className="text-sm font-bold text-gray-900 mb-4">Berita Untukmu</h3>
+                           <div className="space-y-3">
+                              {detailRecommendedNews.map((item) => (
+                                 <button
+                                    key={`rec-${item.id}`}
+                                    onClick={() => handleSelectNews(item)}
+                                    className="w-full text-left flex items-start gap-3 group"
+                                 >
+                                    <img
+                                       src={item.featuredImage || PLACEHOLDER_IMG}
+                                       alt={item.title}
+                                       className="w-14 h-14 rounded-lg object-cover border border-gray-100 shrink-0"
+                                    />
+                                    <div>
+                                       <p className="text-xs font-semibold text-gray-900 group-hover:text-[#0268ab] line-clamp-2 transition-colors">
+                                          {item.title}
+                                       </p>
+                                       <p className="text-[11px] text-gray-500 mt-1">{CATEGORY_LABEL[item.category] || item.category}</p>
+                                    </div>
+                                 </button>
+                              ))}
+                           </div>
+                        </div>
+                     </aside>
+                  </div>
+               )}
+            </div>
+         </section>
+
+         {!loading && !selectedNews && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+               <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-sm text-gray-500">
+                  Detail berita tidak ditemukan.
+               </div>
+            </div>
+         )}
+      </div>
+   );
 };
 
 export default NewsDetailsPage;
+
+
+
 
 
