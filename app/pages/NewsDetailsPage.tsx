@@ -165,15 +165,6 @@ const NewsDetailsPage: React.FC = () => {
                      Kembali
                   </button>
 
-                  {/* Breadcrumb Navigation */}
-                  <nav className="flex items-center gap-2 text-[#4dd0e1] text-xs md:text-sm font-semibold mb-6">
-                     <a href="#" className="hover:text-cyan-300 transition-colors">Beranda</a>
-                     <span className="text-cyan-300">/</span>
-                     <a href="#" className="hover:text-cyan-300 transition-colors">Berita</a>
-                     <span className="text-cyan-300">/</span>
-                     <span className="text-cyan-300">{CATEGORY_LABEL[selectedNews.category] || selectedNews.category}</span>
-                  </nav>
-
                   {/* Title */}
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight max-w-4xl">
                      {selectedNews.title}
@@ -187,7 +178,7 @@ const NewsDetailsPage: React.FC = () => {
 
                   {/* Author/Peliput Line */}
                   <div className="flex items-center gap-2 text-white/90 text-sm md:text-base mb-8">
-                     <span className="text-white/70">📎</span>
+                     <User className="w-4 h-4 text-white/70" />
                      <span>Penulis: {selectedNews.author?.name || "Admin"} | Peliput: {selectedNews.author?.name || "Admin"}</span>
                   </div>
 
