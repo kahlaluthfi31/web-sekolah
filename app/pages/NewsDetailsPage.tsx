@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Calendar, ChevronLeft, User } from "lucide-react";
+import { Calendar, ChevronLeft, User, Eye, Share2 } from "lucide-react";
 
 type NewsItem = {
    id: number;
@@ -137,7 +137,7 @@ const NewsDetailsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
          {/* Hero Header Section */}
          {!loading && selectedNews && (
-            <section className="relative overflow-hidden h-96 md:h-110 lg:h-125 pt-24">
+            <section className="relative overflow-hidden h-72 md:h-96 lg:h-110 pt-24">
                {/* Background Image */}
                <div
                   className="absolute inset-0"
@@ -149,50 +149,65 @@ const NewsDetailsPage: React.FC = () => {
                />
                
                {/* Dark Overlay */}
-               <div className="absolute inset-0 bg-linear-to-b from-black/30 via-black/50 to-black/70" />
+               <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/40 to-black/60" />
 
                {/* Content */}
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-end pb-12">
-                  <div className="max-w-4xl">
-                     {/* Back Button */}
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-between py-8">
+                  {/* Top: Back Button and Breadcrumb */}
+                  <div>
                      <button
                         onClick={() => {
                            sessionStorage.removeItem("selected_news_item");
                            window.history.back();
                         }}
-                        className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors mb-8 text-sm font-semibold group"
+                        className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors mb-4 text-xs md:text-sm font-semibold group"
                      >
                         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                         Kembali
                      </button>
 
-                     {/* Category and Meta */}
-                     <div className="mb-6 flex items-center gap-3 flex-wrap">
-                        <span className="bg-[#0268ab] text-white text-xs font-bold uppercase tracking-widest px-3.5 py-1.5 rounded-full">
-                           {CATEGORY_LABEL[selectedNews.category] || selectedNews.category}
-                        </span>
-                        <div className="flex items-center gap-4 text-white/90 text-xs md:text-sm">
-                           <span className="flex items-center gap-1.5">
-                              <User className="w-4 h-4" />
-                              {selectedNews.author?.name || "Admin"}
-                           </span>
-                           <span className="w-1 h-1 bg-white/50 rounded-full"></span>
-                           <span className="flex items-center gap-1.5">
-                              <Calendar className="w-4 h-4" />
-                              {formatDate(selectedNews.publishedAt || selectedNews.createdAt)}
-                           </span>
-                        </div>
-                     </div>
+                     {/* Breadcrumb Navigation */}
+                     <nav className="flex items-center gap-2 text-white/70 text-xs md:text-sm">
+                        <a href="#" className="hover:text-white transition-colors">Beranda</a>
+                        <span className="text-white/50">/</span>
+                        <a href="#" className="hover:text-white transition-colors">Berita</a>
+                        <span className="text-white/50">/</span>
+                        <span className="text-white/90">{CATEGORY_LABEL[selectedNews.category] || selectedNews.category}</span>
+                     </nav>
+                  </div>
 
-                     {/* Title and Excerpt */}
-                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+                  {/* Bottom: Title and Metadata */}
+                  <div className="max-w-4xl">
+                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight line-clamp-3">
                         {selectedNews.title}
                      </h1>
-                     {selectedNews.excerpt && (
-                        <p className="text-white/90 text-sm md:text-base leading-relaxed max-w-3xl">
-                           {selectedNews.excerpt}
-                        </p>
-                     )}
+
+                     {/* Metadata Row */}
+                     <div className="flex flex-wrap items-center gap-4 md:gap-6 text-white/80 text-xs md:text-sm">
+                        {/* Date */}
+                        <div className="flex items-center gap-2">
+                           <Calendar className="w-4 h-4" />
+                           <span>{formatDate(selectedNews.publishedAt || selectedNews.createdAt)}</span>
+                        </div>
+
+                        {/* Author */}
+                        <div className="flex items-center gap-2">
+                           <User className="w-4 h-4" />
+                           <span>{selectedNews.author?.name || "Admin"}</span>
+                        </div>
+
+                        {/* Views */}
+                        <div className="flex items-center gap-2">
+                           <Eye className="w-4 h-4" />
+                           <span>1.2K dilihat</span>
+                        </div>
+
+                        {/* Shares */}
+                        <div className="flex items-center gap-2">
+                           <Share2 className="w-4 h-4" />
+                           <span>248 bagian</span>
+                        </div>
+                     </div>
                   </div>
                </div>
             </section>
@@ -200,12 +215,19 @@ const NewsDetailsPage: React.FC = () => {
 
          {/* Loading State Header */}
          {loading && (
-            <section className="relative overflow-hidden h-96 md:h-110 lg:h-125 pt-24 bg-linear-to-b from-gray-300 to-gray-400">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-end pb-12 animate-pulse">
-                  <div className="max-w-4xl space-y-4">
-                     <div className="w-32 h-6 bg-gray-400/60 rounded-full"></div>
-                     <div className="w-3/4 h-12 bg-gray-400/60 rounded-lg"></div>
-                     <div className="w-full max-w-2xl h-5 bg-gray-400/50 rounded-lg"></div>
+            <section className="relative overflow-hidden h-72 md:h-96 lg:h-110 pt-24 bg-linear-to-b from-gray-300 to-gray-400">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex flex-col justify-between py-8 animate-pulse">
+                  <div className="space-y-3">
+                     <div className="w-20 h-3 bg-gray-400/60 rounded-full"></div>
+                     <div className="w-32 h-3 bg-gray-400/60 rounded-full"></div>
+                  </div>
+                  <div className="space-y-4">
+                     <div className="w-3/4 max-w-2xl h-8 bg-gray-400/60 rounded-lg"></div>
+                     <div className="flex gap-6">
+                        <div className="w-24 h-3 bg-gray-400/50 rounded-full"></div>
+                        <div className="w-28 h-3 bg-gray-400/50 rounded-full"></div>
+                        <div className="w-20 h-3 bg-gray-400/50 rounded-full"></div>
+                     </div>
                   </div>
                </div>
             </section>

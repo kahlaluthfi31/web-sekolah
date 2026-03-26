@@ -14,6 +14,8 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.1.0",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "jquery": "^4.0.0",
@@ -21,12 +23,14 @@
     "mysql2": "^3.17.1",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
+    "nodemailer": "^8.0.4",
     "prisma": "^5.22.0",
     "raphael": "^2.3.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sharp": "^0.34.5",
     "treant-js": "^1.0.1",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
