@@ -251,7 +251,7 @@ const NewsDetailsPage: React.FC = () => {
 
                {!loading && selectedNews && (
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                     <article className="lg:col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                     <article className="lg:col-span-8">
                         <div className="p-6 md:p-8">
                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-5">
                               {selectedNews.title}
@@ -270,7 +270,7 @@ const NewsDetailsPage: React.FC = () => {
                      </article>
 
                      <aside className="lg:col-span-4 space-y-6">
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div className="p-5">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berdasarkan Tags</h3>
                            <div className="flex flex-wrap gap-2">
                               {selectedTags.map((tag) => (
@@ -284,7 +284,7 @@ const NewsDetailsPage: React.FC = () => {
                            </div>
                         </div>
 
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div className="p-5">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berita Teratas / Trending</h3>
                            <div className="space-y-3">
                               {detailTrendingNews.map((item) => (
@@ -309,7 +309,7 @@ const NewsDetailsPage: React.FC = () => {
                            </div>
                         </div>
 
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                        <div className="p-5">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berita Untukmu</h3>
                            <div className="space-y-3">
                               {detailRecommendedNews.map((item) => (
