@@ -61,19 +61,21 @@ const NewsDetailsPage: React.FC = () => {
    useEffect(() => {
       let mounted = true;
 
-      try {
-         const raw = sessionStorage.getItem("selected_news_item");
-         if (raw) {
-            const parsed = JSON.parse(raw) as NewsItem;
-            if (mounted) setSelectedNews(parsed);
+      const loadData = async () => {
+         try {
+            const raw = sessionStorage.getItem("selected_news_item");
+            if (raw) {
+               const parsed = JSON.parse(raw) as NewsItem;
+               if (mounted) setSelectedNews(parsed);
+            }
+         } catch {
+            // ignore parse issue
          }
-      } catch {
-         // ignore parse issue
-      }
 
-      fetch(`/api/news?published=true&limit=50&page=1`)
-         .then((res) => res.json())
-         .then((json) => {
+         try {
+            const res = await fetch(`/api/news?published=true&limit=50&page=1`);
+            const json = await res.json();
+            
             if (!mounted) return;
             if (json?.success && Array.isArray(json.data)) {
                const sorted = [...(json.data as NewsItem[])].sort((a, b) => {
@@ -82,21 +84,19 @@ const NewsDetailsPage: React.FC = () => {
                   return dateB - dateA;
                });
                setAllNews(sorted);
-               if (!selectedNews && sorted.length > 0) setSelectedNews(sorted[0]);
             }
-         })
-         .catch(() => {
-            if (!mounted) return;
-            setAllNews([]);
-         })
-         .finally(() => {
+         } catch {
+            if (mounted) setAllNews([]);
+         } finally {
             if (mounted) setLoading(false);
-         });
+         }
+      };
 
+      loadData();
       return () => {
          mounted = false;
       };
-   }, [selectedNews]);
+   }, []);
 
    const selectedTags = useMemo(() => buildNewsTags(selectedNews), [selectedNews]);
 
