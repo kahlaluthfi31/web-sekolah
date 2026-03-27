@@ -295,7 +295,7 @@ const NewsDetailsPage: React.FC = () => {
                         </div>
                      </article>
 
-                     <aside className="lg:col-span-4 space-y-6">
+                     <aside className="lg:col-span-4 space-y-6 lg:border-l lg:border-gray-200 lg:pl-8">
                         <div className="p-5 border-t border-gray-200">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berdasarkan Tags</h3>
                            <div className="flex flex-wrap gap-2">
