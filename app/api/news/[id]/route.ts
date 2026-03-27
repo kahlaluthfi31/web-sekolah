@@ -99,6 +99,46 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
+// PATCH /api/news/[id]?action=increment-view - Increment view counter
+export async function PATCH(request: NextRequest, { params }: Params) {
+  try {
+    const { id } = await params
+    const newsId = parseInt(id)
+    const { searchParams } = new URL(request.url)
+    const action = searchParams.get('action')
+
+    if (action !== 'increment-view') {
+      return apiError('Invalid action', 400)
+    }
+
+    const existingNews = await prisma.news.findUnique({
+      where: { id: newsId },
+      select: { id: true },
+    })
+
+    if (!existingNews) {
+      return apiError('News not found', 404)
+    }
+
+    const updated = await prisma.news.update({
+      where: { id: newsId },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+      select: {
+        id: true,
+        views: true,
+      },
+    })
+
+    return apiSuccess(updated, 'View count incremented')
+  } catch (error) {
+    return handleError(error)
+  }
+}
+
 // DELETE /api/news/[id] - Delete news
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
