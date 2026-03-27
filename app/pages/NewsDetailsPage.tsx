@@ -296,7 +296,7 @@ const NewsDetailsPage: React.FC = () => {
                      </article>
 
                      <aside className="lg:col-span-4 space-y-6">
-                        <div className="p-5">
+                        <div className="p-5 border-t border-gray-200">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berdasarkan Tags</h3>
                            <div className="flex flex-wrap gap-2">
                               {selectedTags.map((tag) => (
@@ -310,7 +310,7 @@ const NewsDetailsPage: React.FC = () => {
                            </div>
                         </div>
 
-                        <div className="p-5">
+                        <div className="p-5 border-t border-gray-200">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berita Teratas / Trending</h3>
                            <div className="space-y-3">
                               {detailTrendingNews.map((item) => (
@@ -335,7 +335,7 @@ const NewsDetailsPage: React.FC = () => {
                            </div>
                         </div>
 
-                        <div className="p-5">
+                        <div className="p-5 border-t border-gray-200">
                            <h3 className="text-sm font-bold text-gray-900 mb-4">Berita Untukmu</h3>
                            <div className="space-y-3">
                               {detailRecommendedNews.map((item) => (
