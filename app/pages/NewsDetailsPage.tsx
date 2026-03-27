@@ -57,7 +57,6 @@ const NewsDetailsPage: React.FC = () => {
    const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
    const [allNews, setAllNews] = useState<NewsItem[]>([]);
    const [loading, setLoading] = useState(true);
-   const [shareCount, setShareCount] = useState(0);
 
    useEffect(() => {
       let mounted = true;
@@ -134,32 +133,6 @@ const NewsDetailsPage: React.FC = () => {
          .filter(Boolean);
    }, [selectedNews]);
 
-   const handleShare = async () => {
-      if (!selectedNews) return;
-
-      const shareData = {
-         title: selectedNews.title,
-         text: selectedNews.excerpt || selectedNews.title,
-         url: window.location.href,
-      };
-
-      try {
-         if (navigator.share) {
-            await navigator.share(shareData);
-            setShareCount((prev) => prev + 1);
-         } else {
-            // Fallback: copy to clipboard
-            const text = `${selectedNews.title}\n${window.location.href}`;
-            await navigator.clipboard.writeText(text);
-            setShareCount((prev) => prev + 1);
-         }
-      } catch (error: any) {
-         if (error.name !== "AbortError") {
-            console.error("Share error:", error);
-         }
-      }
-   };
-
    return (
       <div className="min-h-screen bg-gray-50">
          {/* Hero Header Section */}
@@ -180,17 +153,43 @@ const NewsDetailsPage: React.FC = () => {
 
                {/* Content */}
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                  {/* Back Button */}
-                  <button
-                     onClick={() => {
-                        sessionStorage.removeItem("selected_news_item");
-                        window.history.back();
-                     }}
-                     className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-4 text-xs md:text-sm font-semibold group"
-                  >
-                     <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                     Kembali
-                  </button>
+                  {/* Header Controls */}
+                  <div className="flex items-center justify-between mb-4">
+                     {/* Back Button */}
+                     <button
+                        onClick={() => {
+                           sessionStorage.removeItem("selected_news_item");
+                           window.history.back();
+                        }}
+                        className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-xs md:text-sm font-semibold group"
+                     >
+                        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        Kembali
+                     </button>
+
+                     {/* Share Button */}
+                     <button
+                        onClick={() => {
+                           if (navigator.share) {
+                              navigator.share({
+                                 title: selectedNews.title,
+                                 text: selectedNews.excerpt || selectedNews.title,
+                                 url: window.location.href,
+                              }).catch(() => {
+                                 // Silently handle cancel
+                              });
+                           } else {
+                              // Fallback: copy to clipboard
+                              navigator.clipboard.writeText(window.location.href);
+                           }
+                        }}
+                        className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-xs md:text-sm font-semibold group"
+                        title="Bagikan berita"
+                     >
+                        <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        <span className="hidden sm:inline">Bagikan</span>
+                     </button>
+                  </div>
 
                   {/* Title */}
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight max-w-4xl">
@@ -210,7 +209,7 @@ const NewsDetailsPage: React.FC = () => {
                   </div>
 
                   {/* Views and Shares Stats */}
-                  <div className="flex flex-col sm:flex-row gap-8 max-w-2xl items-start">
+                  <div className="flex flex-col sm:flex-row gap-8 max-w-2xl">
                      {/* Views */}
                      <div className="flex items-center gap-3">
                         <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
@@ -228,19 +227,10 @@ const NewsDetailsPage: React.FC = () => {
                            <Share2 className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                           <div className="text-white font-bold text-lg">{shareCount} kali</div>
+                           <div className="text-white font-bold text-lg">0 kali</div>
                            <div className="text-white/80 text-xs">Berita ini dibagikan</div>
                         </div>
                      </div>
-
-                     {/* Share Button */}
-                     <button
-                        onClick={handleShare}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors font-semibold text-sm"
-                     >
-                        <Share2 className="w-4 h-4" />
-                        Bagikan
-                     </button>
                   </div>
                </div>
             </section>
