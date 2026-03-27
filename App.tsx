@@ -330,7 +330,7 @@ const App: React.FC = () => {
 
       case 'news-details':
 
-        return <NewsDetailsPage />;
+        return <NewsDetailsPage onBack={() => navigateTo('news')} />;
 
       case 'contact':
 

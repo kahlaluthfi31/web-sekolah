@@ -4,6 +4,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, ChevronLeft, User, Eye, Share2 } from "lucide-react";
 
+interface NewsDetailsPageProps {
+   onBack?: () => void;
+}
+
 type NewsItem = {
    id: number;
    title: string;
@@ -54,7 +58,58 @@ const buildNewsTags = (item?: NewsItem | null) => {
    return [categoryTag, ...unique];
 };
 
-const NewsDetailsPage: React.FC = () => {
+const escapeHtml = (value: string) => {
+   return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+};
+
+const sanitizeAndNormalizeNewsContent = (raw: string) => {
+   const source = raw.trim();
+   if (!source) return "";
+
+   const containsHtml = /<[^>]+>/.test(source);
+   const normalizedHtml = containsHtml
+      ? source
+      : source
+           .split(/\n\s*\n/)
+           .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
+           .join("");
+
+   if (typeof window === "undefined") {
+      return normalizedHtml;
+   }
+
+   const parser = new DOMParser();
+   const doc = parser.parseFromString(normalizedHtml, "text/html");
+
+   // Remove dangerous elements from rich text
+   doc.querySelectorAll("script,style,iframe,object,embed,link,meta").forEach((node) => node.remove());
+
+   // Remove inline event handlers and javascript: URLs
+   doc.querySelectorAll("*").forEach((element) => {
+      Array.from(element.attributes).forEach((attribute) => {
+         const name = attribute.name.toLowerCase();
+         const value = attribute.value.trim().toLowerCase();
+
+         if (name.startsWith("on")) {
+            element.removeAttribute(attribute.name);
+            return;
+         }
+
+         if ((name === "href" || name === "src") && value.startsWith("javascript:")) {
+            element.removeAttribute(attribute.name);
+         }
+      });
+   });
+
+   return doc.body.innerHTML;
+};
+
+const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
    const [allNews, setAllNews] = useState<NewsItem[]>([]);
    const [loading, setLoading] = useState(true);
@@ -127,12 +182,9 @@ const NewsDetailsPage: React.FC = () => {
       setSelectedNews(item);
    };
 
-   const detailContentParagraphs = useMemo(() => {
+   const detailContentHtml = useMemo(() => {
       const rawContent = selectedNews?.content || selectedNews?.excerpt || "";
-      return rawContent
-         .split("\n")
-         .map((paragraph) => paragraph.trim())
-         .filter(Boolean);
+      return sanitizeAndNormalizeNewsContent(rawContent);
    }, [selectedNews]);
 
    useEffect(() => {
@@ -202,7 +254,16 @@ const NewsDetailsPage: React.FC = () => {
                      <button
                         onClick={() => {
                            sessionStorage.removeItem("selected_news_item");
-                           window.history.back();
+                           if (onBack) {
+                              onBack();
+                              return;
+                           }
+
+                           if (window.history.length > 1) {
+                              window.history.back();
+                           } else {
+                              window.location.href = "/";
+                           }
                         }}
                         className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-xs md:text-sm font-semibold group"
                      >
@@ -326,11 +387,12 @@ const NewsDetailsPage: React.FC = () => {
                               {selectedNews.title}
                            </h2>
 
-                           <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
-                              {detailContentParagraphs.length > 0 ? (
-                                 detailContentParagraphs.map((paragraph, idx) => (
-                                    <p key={`${selectedNews.id}-${idx}`}>{paragraph}</p>
-                                 ))
+                           <div className="text-sm text-gray-600 leading-relaxed">
+                              {detailContentHtml ? (
+                                 <div
+                                    className="[&_a]:text-[#0268ab] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-gray-900 [&_h3]:mb-3 [&_img]:rounded-lg [&_img]:my-4 [&_img]:max-w-full [&_img]:h-auto [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-4 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4"
+                                    dangerouslySetInnerHTML={{ __html: detailContentHtml }}
+                                 />
                               ) : (
                                  <p>Konten berita belum tersedia.</p>
                               )}
