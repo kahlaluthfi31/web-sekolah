@@ -27,6 +27,7 @@ export async function trackActivity(
     await recordActivityLog({
       request,
       adminEmail: session.email,
+      userId: session.id,
       action: mapAction(action),
       targetTable,
       oldData,

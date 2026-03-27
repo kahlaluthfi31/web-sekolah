@@ -11,7 +11,6 @@ import {
   Loader2,
   Plus,
   History,
-  FileText,
   Globe,
   MoreVertical,
   AlertTriangle,
@@ -64,7 +63,6 @@ import {
   Compass,
   Map,
   Flag,
-  Video,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -168,9 +166,11 @@ const PAGE_KEY_LABELS: Record<string, string> = {
   contact: "Hubungi Kami",
   admissions: "Penerimaan Siswa Baru",
   alumni: "Alumni",
-  campus: "Tur Kampus",
+  campus: "Sarana Prasarana",
   events: "Agenda & Kegiatan",
   students: "Kehidupan Siswa",
+  faculty: "Struktur Sekolah",
+  majors: "Program Keahlian",
 };
 
 const ALL_PAGE_KEYS = Object.keys(PAGE_KEY_LABELS);
@@ -1783,7 +1783,7 @@ function PageHeaderTab() {
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <span className="text-xs text-gray-500">Tampilkan di section "Video Profil" landing Profil Sekolah.</span>
+            <span className="text-xs text-gray-500">Tampilkan di section &quot;Video Profil&quot; landing Profil Sekolah.</span>
             <button
               type="button"
               onClick={handleSaveVideo}

@@ -33,12 +33,12 @@ async function getLoginActivities({
   q?: string;
 }): Promise<{ items: LoginActivityWithUser[]; total: number }> {
   const where = {
-    role: role ?? undefined,
+    role: role || undefined,
     user: q
       ? {
           OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
+            { name: { contains: q } },
+            { email: { contains: q } },
           ],
         }
       : undefined,
@@ -100,7 +100,7 @@ export default async function LoginActivityPage({
   const { items, total } = await getLoginActivities({
     page,
     limit,
-    role: roleFilter as Role | undefined,
+    role: roleFilter ? (roleFilter as Role) : undefined,
     q: q?.trim(),
   });
   const totalPages = Math.max(1, Math.ceil(total / limit));

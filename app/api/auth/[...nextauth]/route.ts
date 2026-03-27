@@ -1,13 +1,12 @@
 export const dynamic = 'force-dynamic'
 
-import NextAuth, { type NextAuthOptions } from 'next-auth'
+import NextAuth from 'next-auth'
 import type { Account, Profile, Session, User } from 'next-auth'
 import type { JWT } from 'next-auth/jwt'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
@@ -55,7 +54,7 @@ if (!googleClientId || !googleClientSecret) {
   console.warn('Google OAuth tidak diaktifkan: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET belum di-set')
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   providers,
   session: {
     strategy: 'jwt' as const,
@@ -76,9 +75,7 @@ export const authOptions: NextAuthOptions = {
       })()
 
       if (errorParam) {
-        const intent = (await cookies()).get('google_intent')?.value === 'register' ? 'register' : 'login'
-        const target = intent === 'register' ? '/register' : '/login'
-        return `${baseUrl}${target}?error=${encodeURIComponent(errorParam)}`
+        return `${baseUrl}/login?error=${encodeURIComponent(errorParam)}`
       }
 
       // default: allow NextAuth defaults (same-origin only), preserve relative URLs with query
@@ -94,12 +91,8 @@ export const authOptions: NextAuthOptions = {
 
           const existing = await prisma.user.findUnique({ where: { email } })
           const picture = (profile as { picture?: string } | null)?.picture || null
-          const intent = (await cookies()).get('google_intent')?.value ?? 'login'
 
           if (!existing) {
-            if (intent !== 'register') {
-              return '/login?error=GoogleNotRegistered'
-            }
             // User baru via Google -> otomatis aktif sebagai user biasa
             await prisma.user.create({
               data: {
@@ -172,7 +165,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET || 'dev-secret-change-me',
-  // @ts-expect-error trustHost is a runtime flag supported by NextAuth on Next.js
   trustHost: true,
   logger: {
     error(error: unknown) {
@@ -181,6 +173,8 @@ export const authOptions: NextAuthOptions = {
   },
 }
 
-const handler = NextAuth(authOptions)
+const { handlers, auth, signIn, signOut } = NextAuth(authOptions)
 
-export { handler as GET, handler as POST }
+export const GET = handlers.GET
+export const POST = handlers.POST
+export { auth, signIn, signOut }

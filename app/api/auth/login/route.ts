@@ -40,8 +40,8 @@ async function resolveClientIp(request: NextRequest): Promise<string> {
 
   let ip = forwardedFor || cfConnecting || xRealIp || runtimeIp || socketIp || 'unknown'
 
-  // 3) If loopback/localhost/unknown, try to fetch public IP for local testing
-  if (ip === '::1' || ip === '127.0.0.1' || ip === 'unknown') {
+  // 3) If loopback/unknown/private, try to fetch public IP for local/testing
+  if (isPrivateIp(ip) || ip === 'unknown') {
     try {
       const res = await fetch('https://api.ipify.org?format=json', { next: { revalidate: 60 } })
       if (res.ok) {
@@ -69,8 +69,8 @@ async function lookupGeo(ip: string | null) {
       if (latitude !== null && longitude !== null) return { latitude, longitude }
     }
 
-    // fallback: ip-api
-    const res2 = await fetch(`http://ip-api.com/json/${ip}?fields=status,lat,lon`, { next: { revalidate: 60 * 60 } })
+  // fallback: ip-api (https to avoid blocked mixed content)
+  const res2 = await fetch(`https://ip-api.com/json/${ip}?fields=status,lat,lon`, { next: { revalidate: 60 * 60 } })
     if (!res2.ok) return { latitude: null as number | null, longitude: null as number | null }
     const data2 = (await res2.json()) as { status?: string; lat?: number; lon?: number }
     return {

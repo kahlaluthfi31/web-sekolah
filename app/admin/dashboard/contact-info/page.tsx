@@ -579,7 +579,7 @@ export default function ContactInfoPage() {
           {/* Izin Tampil di Website */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between text-gray-900 font-semibold">
-              <span>Izin Tampilkan di Website</span>
+              <span>Izin Tampilkan di halaman Kontak</span>
               <span className="text-xs font-normal text-gray-500">
                 Kartu Informasi Kontak
               </span>
