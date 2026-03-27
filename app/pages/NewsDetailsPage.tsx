@@ -11,6 +11,7 @@ type NewsItem = {
    content?: string | null;
    featuredImage: string | null;
    category: string;
+   views?: number;
    author?: { name?: string | null } | null;
    publishedAt: string | null;
    createdAt: string;
@@ -57,6 +58,7 @@ const NewsDetailsPage: React.FC = () => {
    const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
    const [allNews, setAllNews] = useState<NewsItem[]>([]);
    const [loading, setLoading] = useState(true);
+   const [displayViews, setDisplayViews] = useState(0);
 
    useEffect(() => {
       let mounted = true;
@@ -131,6 +133,47 @@ const NewsDetailsPage: React.FC = () => {
          .split("\n")
          .map((paragraph) => paragraph.trim())
          .filter(Boolean);
+   }, [selectedNews]);
+
+   useEffect(() => {
+      if (!selectedNews) return;
+
+      // Always start from current value from API/session data
+      setDisplayViews(selectedNews.views || 0);
+
+      const viewedKey = "viewed_news_ids";
+      let viewedIds: number[] = [];
+
+      try {
+         viewedIds = JSON.parse(sessionStorage.getItem(viewedKey) || "[]");
+      } catch {
+         viewedIds = [];
+      }
+
+      const hasViewed = viewedIds.includes(selectedNews.id);
+      if (hasViewed) return;
+
+      const incrementView = async () => {
+         try {
+            const res = await fetch(`/api/news/${selectedNews.id}?action=increment-view`, {
+               method: "PATCH",
+            });
+            const json = await res.json();
+            if (json?.success && typeof json?.data?.views === "number") {
+               setDisplayViews(json.data.views);
+            } else {
+               setDisplayViews((prev) => prev + 1);
+            }
+         } catch {
+            // Fallback for temporary network issues
+            setDisplayViews((prev) => prev + 1);
+         } finally {
+            const nextViewedIds = Array.from(new Set([...viewedIds, selectedNews.id]));
+            sessionStorage.setItem(viewedKey, JSON.stringify(nextViewedIds));
+         }
+      };
+
+      incrementView();
    }, [selectedNews]);
 
    return (
@@ -216,7 +259,7 @@ const NewsDetailsPage: React.FC = () => {
                            <Eye className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                           <div className="text-white font-bold text-lg">136 kali</div>
+                           <div className="text-white font-bold text-lg">{displayViews} kali</div>
                            <div className="text-white/80 text-xs">Berita ini dilihat</div>
                         </div>
                      </div>
