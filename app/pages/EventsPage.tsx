@@ -7,6 +7,8 @@ import {
   Clock,
   MapPin,
   Users,
+  ChevronLeft,
+  ChevronRight,
   CalendarDays,
   Map,
   Ticket,
@@ -75,6 +77,14 @@ import {
   Laptop,
 } from "lucide-react";
 import { usePageHeader } from "@/lib/usePageHeader";
+
+const EVENTS_HEADER_FALLBACK = {
+  title: "Agenda Sekolah",
+  subtitle:
+    "Temukan jadwal kegiatan terbaru, informasi pendaftaran, dan agenda penting sekolah kami.",
+};
+
+const EVENTS_PER_PAGE = 3;
 
 type AgendaStatus = "upcoming" | "ongoing" | "completed" | "cancelled";
 
@@ -342,6 +352,7 @@ const EventsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "ongoing" | "past">(
     "upcoming",
   );
+  const [timelinePage, setTimelinePage] = useState(1);
   const [agendas, setAgendas] = useState<AgendaApiItem[]>([]);
   const [categories, setCategories] = useState<AgendaCategory[]>([]);
   const [expandedDescriptions, setExpandedDescriptions] = useState<
@@ -350,7 +361,7 @@ const EventsPage: React.FC = () => {
   const [registrationInfos, setRegistrationInfos] = useState<
     RegistrationInfo[]
   >(DEFAULT_REGISTRATION_INFO);
-  const header = usePageHeader("events");
+  const header = usePageHeader("events", EVENTS_HEADER_FALLBACK);
 
   useEffect(() => {
     let mounted = true;
@@ -469,6 +480,75 @@ const EventsPage: React.FC = () => {
         ? ongoingEvents
         : pastEvents;
 
+  const timelineTotalPages = Math.max(
+    1,
+    Math.ceil(currentEvents.length / EVENTS_PER_PAGE),
+  );
+
+  const paginatedCurrentEvents = useMemo(() => {
+    const start = (timelinePage - 1) * EVENTS_PER_PAGE;
+    return currentEvents.slice(start, start + EVENTS_PER_PAGE);
+  }, [currentEvents, timelinePage]);
+
+  const timelinePageNumbers = useMemo(() => {
+    const total = Math.max(timelineTotalPages, 1);
+    const pages: Array<number | "..."> = [];
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i += 1) pages.push(i);
+      return pages;
+    }
+
+    if (timelinePage <= 4) {
+      pages.push(1, 2, 3, 4, 5, "...", total);
+      return pages;
+    }
+
+    if (timelinePage >= total - 3) {
+      pages.push(1, "...", total - 4, total - 3, total - 2, total - 1, total);
+      return pages;
+    }
+
+    pages.push(1, "...", timelinePage - 1, timelinePage, timelinePage + 1, "...", total);
+    return pages;
+  }, [timelinePage, timelineTotalPages]);
+
+  useEffect(() => {
+    setTimelinePage(1);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (timelinePage > timelineTotalPages) {
+      setTimelinePage(timelineTotalPages);
+    }
+  }, [timelinePage, timelineTotalPages]);
+
+  const agendaTabs: Array<{
+    key: "upcoming" | "ongoing" | "past";
+    label: string;
+    hint: string;
+    count: number;
+  }> = [
+    {
+      key: "upcoming",
+      label: "Mendatang",
+      hint: "Acara berikutnya",
+      count: upcomingEvents.length,
+    },
+    {
+      key: "ongoing",
+      label: "Berlangsung",
+      hint: "Sedang berjalan",
+      count: ongoingEvents.length,
+    },
+    {
+      key: "past",
+      label: "Selesai",
+      hint: "Arsip kegiatan",
+      count: pastEvents.length,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section - Contact Page Style */}
@@ -547,51 +627,51 @@ const EventsPage: React.FC = () => {
             </span>
             <span className="text-xs text-gray-400">01 / 03</span>
           </div>
-          {/* Tabs */}
-          <div className="flex bg-gray-100 rounded-full p-1 mb-16 max-w-2xl">
-            <button
-              onClick={() => setActiveTab("upcoming")}
-              className={`flex-1 px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
-                activeTab === "upcoming"
-                  ? "bg-[#0268ab] text-white shadow-lg"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Acara Mendatang
-            </button>
-            <button
-              onClick={() => setActiveTab("ongoing")}
-              className={`flex-1 px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
-                activeTab === "ongoing"
-                  ? "bg-[#0268ab] text-white shadow-lg"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Sedang Berlangsung
-            </button>
-            <button
-              onClick={() => setActiveTab("past")}
-              className={`flex-1 px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
-                activeTab === "past"
-                  ? "bg-[#0268ab] text-white shadow-lg"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Acara Selesai
-            </button>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            {/* Filter Agenda */}
+            <aside className="lg:col-span-4 xl:col-span-3">
+              <div className="lg:sticky lg:top-24">
+                <div className="mb-3 text-[11px] font-semibold tracking-[0.2em] text-gray-400 uppercase">
+                  Filter Agenda
+                </div>
+                <div className="space-y-1.5 border-l border-gray-200 pl-3">
+                  {agendaTabs.map((tab) => {
+                    const isActive = activeTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition-all ${
+                          isActive
+                            ? "bg-[#0268ab]/8 text-[#0268ab]"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
+                        title={tab.hint}
+                      >
+                        <div>
+                          <div className="text-sm font-semibold leading-none">{tab.label}</div>
+                          <div className="text-[11px] text-gray-500 mt-1">{tab.hint}</div>
+                        </div>
+                        <span
+                          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold ${
+                            isActive
+                              ? "bg-[#0268ab] text-white"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </aside>
 
-          {/* Timeline Layout */}
-          <div className="relative">
-            {/* Vertical Line */}
-            {currentEvents.length > 0 && (
-              <div className="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 bg-linear-to-b from-[#0268ab] via-[#0268ab]/50 to-transparent"></div>
-            )}
-
-            {/* Timeline Events */}
-            <div className="space-y-8">
+            {/* Timeline Content */}
+            <div className="lg:col-span-8 xl:col-span-9">
               {currentEvents.length === 0 ? (
-                <div className="text-center text-gray-500 text-sm py-6">
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-10 text-center text-sm text-gray-500">
                   {activeTab === "upcoming"
                     ? "Sedang tidak ada agenda mendatang"
                     : activeTab === "ongoing"
@@ -599,199 +679,165 @@ const EventsPage: React.FC = () => {
                       : "Sedang tidak ada agenda selesai"}
                 </div>
               ) : (
-                currentEvents.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="relative flex items-start gap-6 md:gap-8"
-                  >
-                    {/* Timeline Dot */}
-                    <div className="relative shrink-0">
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-br from-[#0268ab] to-[#014a8f] flex items-center justify-center shadow-md relative z-10">
-                        <Calendar className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                      </div>
-                      {/* Connecting Line */}
-                      {index < currentEvents.length - 1 && (
-                        <div className="absolute top-12 md:top-14 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-linear-to-b from-[#0268ab]/30 to-transparent"></div>
-                      )}
-                    </div>
+                <div className="relative sm:pl-2">
+                  <div className="hidden sm:block absolute left-8 top-2 bottom-2 w-px bg-gray-200"></div>
 
-                    {/* Event Card */}
-                    <div className="flex-1 min-w-0">
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 overflow-hidden group">
-                        {/* Event Header with Date Badge */}
-                        <div className="relative bg-linear-to-r from-[#0268ab]/5 to-[#0268ab]/2 p-4 md:p-5">
-                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="bg-[#0268ab] text-white text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
+                  <div className="space-y-4">
+                    {paginatedCurrentEvents.map((event) => {
+                      const isExpanded = expandedDescriptions[event.id] || false;
+                      const isLong = event.description.length > 220;
+                      const displayText =
+                        isExpanded || !isLong
+                          ? event.description
+                          : `${event.description.slice(0, 220)}...`;
+
+                      return (
+                        <article key={event.id} className="relative sm:pl-20">
+                          <div className="hidden sm:flex absolute left-0 top-0.5 h-16 w-16 flex-col items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#0268ab] leading-none">
+                              {event.month}
+                            </span>
+                            <span className="text-xl font-black text-gray-900 leading-none mt-1">
+                              {event.day}
+                            </span>
+                          </div>
+
+                          <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 hover:border-[#0268ab]/25 hover:shadow-sm transition-all">
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="rounded-full bg-[#0268ab]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0268ab]">
                                   {event.category}
                                 </span>
-                                <span className="text-xs text-gray-500">
-                                  {event.year}
+                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600 capitalize">
+                                  {event.status}
                                 </span>
                               </div>
-                              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1 group-hover:text-[#0268ab] transition-colors">
-                                {event.title}
-                              </h3>
-                              {(() => {
-                                const isExpanded =
-                                  expandedDescriptions[event.id] || false;
-                                const isLong = event.description.length > 330;
-                                const displayText =
-                                  isExpanded || !isLong
-                                    ? event.description
-                                    : `${event.description.slice(0, 330)}...`;
-
-                                return (
-                                  <div className="text-gray-600 text-sm leading-relaxed">
-                                    <p className="mb-1">{displayText}</p>
-                                    {isLong && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setExpandedDescriptions((prev) => ({
-                                            ...prev,
-                                            [event.id]: !isExpanded,
-                                          }))
-                                        }
-                                        className="text-[#0268ab] font-semibold text-xs hover:underline"
-                                      >
-                                        {isExpanded
-                                          ? "Sembunyikan"
-                                          : "Selengkapnya"}
-                                      </button>
-                                    )}
-                                  </div>
-                                );
-                              })()}
+                              <span className="sm:hidden text-[11px] text-gray-500 font-semibold">
+                                {event.day} {event.month} {event.year}
+                              </span>
                             </div>
 
-                            {/* Date Card */}
-                            <div className="shrink-0">
-                              <div className="bg-white rounded-lg shadow-sm p-3 text-center min-w-20">
-                                <div className="text-xs font-bold uppercase tracking-widest text-[#0268ab] mb-0.5">
-                                  {event.month}
-                                </div>
-                                <div className="text-xl md:text-2xl font-black text-gray-900 leading-none">
-                                  {event.day}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                            <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug mb-2">
+                              {event.title}
+                            </h3>
 
-                        {/* Event Details */}
-                        <div className="p-4 md:p-5">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <div className="w-8 h-8 rounded-full bg-[#0268ab]/10 flex items-center justify-center shrink-0">
-                                <Clock className="w-4 h-4 text-[#0268ab]" />
-                              </div>
-                              <div>
-                                <div className="text-xs text-gray-500">
-                                  Waktu
-                                </div>
-                                <div className="text-sm font-medium">
-                                  {event.time}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <div className="w-8 h-8 rounded-full bg-[#0268ab]/10 flex items-center justify-center shrink-0">
-                                <MapPin className="w-4 h-4 text-[#0268ab]" />
-                              </div>
-                              <div>
-                                <div className="text-xs text-gray-500">
-                                  Lokasi
-                                </div>
-                                <div className="text-sm font-medium">
-                                  {event.location}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <div className="w-8 h-8 rounded-full bg-[#0268ab]/10 flex items-center justify-center shrink-0">
-                                <Users className="w-4 h-4 text-[#0268ab]" />
-                              </div>
-                              <div>
-                                <div className="text-xs text-gray-500">
-                                  Peserta
-                                </div>
-                                <div className="text-sm font-medium">
-                                  {event.participants}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Organizer Info */}
-                          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                                <Calendar className="w-3.5 h-3.5 text-gray-600" />
-                              </div>
-                              <div>
-                                <div className="text-xs text-gray-500">
-                                  Penyelenggara
-                                </div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {event.organizer}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-2">
-                              {activeTab === "past" ? (
-                                <button className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-gray-200 transition-all duration-300">
-                                  Galeri
+                            <div className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3">
+                              <p>{displayText}</p>
+                              {isLong && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setExpandedDescriptions((prev) => ({
+                                      ...prev,
+                                      [event.id]: !isExpanded,
+                                    }))
+                                  }
+                                  className="mt-1 text-xs font-semibold text-[#0268ab] hover:underline"
+                                >
+                                  {isExpanded ? "Sembunyikan" : "Selengkapnya"}
                                 </button>
-                              ) : (
-                                <>
-                                  {/* <button className="flex items-center gap-1 text-[#0268ab] text-xs font-semibold hover:translate-x-1 transition-transform">
-                                    Detail <ChevronRight className="h-3 w-3" />
-                                  </button> */}
-                                  {event.registrationUrl && (
-                                    <a
-                                      href={event.registrationUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="bg-[#0268ab] text-white px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-[#014a8f] transition-all duration-300"
-                                    >
-                                      Daftar
-                                    </a>
-                                  )}
-                                </>
                               )}
                             </div>
-                          </div>
 
-                          {/* Past Event Status */}
-                          {activeTab === "past" && "attendees" in event && (
-                            <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-500 rounded-r">
-                              <div className="flex items-center">
-                                <span className="text-green-700 font-semibold text-xs mr-2">
-                                  ✓{" "}
-                                  {
-                                    (event as unknown as { status: string })
-                                      .status
-                                  }
-                                </span>
-                                <span className="text-gray-600 text-xs">
-                                  •{" "}
-                                  {
-                                    (event as unknown as { attendees: string })
-                                      .attendees
-                                  }
-                                </span>
-                              </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs sm:text-sm text-gray-600">
+                              <span className="inline-flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-[#0268ab]" />
+                                {event.time}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-[#0268ab]" />
+                                {event.location}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5 text-[#0268ab]" />
+                                {event.participants}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+
+                            <div className="mt-2 text-xs sm:text-sm text-gray-600">
+                              <span className="inline-flex items-center gap-1.5">
+                                <CalendarDays className="w-3.5 h-3.5 text-[#0268ab]" />
+                                Penyelenggara: <span className="font-semibold text-gray-800">{event.organizer}</span>
+                              </span>
+                            </div>
+
+                            {event.registrationUrl && activeTab !== "past" && (
+                              <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+                                <a
+                                  href={event.registrationUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0268ab] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#014a8f] transition-colors"
+                                >
+                                  Daftar
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
-                ))
+
+                  {timelineTotalPages > 1 && (
+                    <div className="mt-6 flex justify-center items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTimelinePage((prev) => Math.max(prev - 1, 1))}
+                        disabled={timelinePage === 1}
+                        className={`p-2 transition-colors ${
+                          timelinePage === 1
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-gray-400 hover:text-[#0268ab]"
+                        }`}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      {timelinePageNumbers.map((p, idx) => {
+                        if (p === "...") {
+                          return (
+                            <span key={`timeline-ellipsis-${idx}`} className="px-2 text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+
+                        const isActive = p === timelinePage;
+                        return (
+                          <button
+                            key={`timeline-page-${p}`}
+                            type="button"
+                            onClick={() => setTimelinePage(p)}
+                            className={`w-8 h-8 rounded-full text-xs font-bold transition-colors ${
+                              isActive
+                                ? "bg-[#0268ab] text-white"
+                                : "text-gray-500 hover:bg-gray-100 hover:text-[#0268ab]"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTimelinePage((prev) => Math.min(prev + 1, timelineTotalPages))
+                        }
+                        disabled={timelinePage === timelineTotalPages}
+                        className={`p-2 transition-colors ${
+                          timelinePage === timelineTotalPages
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-gray-400 hover:text-[#0268ab]"
+                        }`}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -799,7 +845,7 @@ const EventsPage: React.FC = () => {
       </section>
 
       {/* Event Categories Section */}
-      <section className="py-16 lg:py-24 bg-gray-50">
+      <section className="py-16 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
@@ -818,10 +864,13 @@ const EventsPage: React.FC = () => {
               .filter((c) => c.showInCategorySection && c.isActive)
               .map((category) => {
                 const accent = category.color || "#0268ab";
+                const categoryAgendaCount = agendas.filter(
+                  (agenda) => agenda.category?.id === category.id,
+                ).length;
                 return (
                   <div
                     key={category.id}
-                    className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+                    className="bg-white rounded-2xl p-8 shadow-none border border-gray-100 hover:shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-all duration-300 relative overflow-hidden"
                   >
                     <div className="absolute -bottom-12 -right-12 w-40 h-40 opacity-15">
                       <div className="w-full h-full flex items-center justify-center">
@@ -836,13 +885,19 @@ const EventsPage: React.FC = () => {
                     </div>
 
                     <div className="relative z-10">
-                      <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
-                        style={{
-                          background: `linear-gradient(135deg, ${accent}1a, ${accent}0d)`,
-                        }}
-                      >
-                        {renderIcon(category.icon)}
+                      <div className="mb-5 flex items-center justify-between gap-3">
+                        <span
+                          className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
+                          style={{
+                            color: accent,
+                            background: `${accent}14`,
+                          }}
+                        >
+                          Kategori Acara
+                        </span>
+                        <span className="text-xs font-semibold text-gray-500">
+                          {categoryAgendaCount} agenda
+                        </span>
                       </div>
                       <h4 className="font-bold text-xl text-gray-900 mb-3">
                         {category.name}
@@ -875,34 +930,57 @@ const EventsPage: React.FC = () => {
             <span className="text-xs text-gray-400">03 / 03</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="rounded-3xl border border-[#0268ab]/15 bg-linear-to-br from-[#0268ab]/8 via-white to-white p-6 sm:p-8 mb-6">
+            <p className="text-[11px] font-semibold tracking-[0.22em] text-[#0268ab] uppercase mb-2">
+              Panduan Singkat
+            </p>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-2">
+              Alur Pendaftaran Acara
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
+              Setiap metode memiliki langkah berbeda. Pilih opsi yang paling sesuai,
+              lalu ikuti tahapan di bawah ini agar proses registrasi berjalan cepat
+              dan tanpa kendala.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {registrationInfos.map((info, i) => {
               const IconComp = ICON_MAP[info.icon as IconKey] || Ticket;
               return (
-                <div
+                <article
                   key={i}
-                  className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+                  className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5"
                 >
-                  <div className="w-16 h-16 rounded-full bg-linear-to-br from-[#0268ab]/10 to-[#0268ab]/5 flex items-center justify-center mb-6">
-                    <IconComp className="w-8 h-8 text-[#0268ab]" />
+                  <span className="absolute -top-2 -right-1 text-6xl font-black text-[#0268ab]/7 pointer-events-none">
+                    {i + 1}
+                  </span>
+
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#0268ab]/10 flex items-center justify-center shrink-0">
+                      <IconComp className="w-5 h-5 text-[#0268ab]" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-base text-gray-900 leading-tight">
+                        {info.title}
+                      </h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        Opsi {String(i + 1).padStart(2, "0")}
+                      </p>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-xl text-gray-900 mb-3">
-                    {info.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-6">{info.desc}</p>
-                  <div className="space-y-3">
+
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">{info.desc}</p>
+
+                  <ul className="border-t border-gray-100 pt-3 space-y-2.5">
                     {info.steps.map((step, j) => (
-                      <div key={j} className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#0268ab]/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-xs font-bold text-[#0268ab]">
-                            {j + 1}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-600">{step}</span>
-                      </div>
+                      <li key={j} className="flex items-start gap-2.5 text-sm text-gray-700">
+                        <span className="mt-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#0268ab] shrink-0" />
+                        <span className="leading-relaxed">{step}</span>
+                      </li>
                     ))}
-                  </div>
-                </div>
+                  </ul>
+                </article>
               );
             })}
           </div>
