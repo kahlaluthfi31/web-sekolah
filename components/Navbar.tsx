@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { PageType } from "../App";
 import { signOut, useSession } from "next-auth/react";
 
@@ -11,17 +11,10 @@ interface NavbarProps {
   currentPage: string;
 }
 
-type CompetencyOption = {
-  id: number;
-  name: string;
-  detailType?: "PAGE" | "EXTERNAL";
-  externalUrl?: string | null;
-};
-
 type MajorOption = {
   id: number;
   name: string;
-  competencies: CompetencyOption[];
+  competencies: { id: number; name: string }[];
 };
 
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
@@ -280,47 +273,15 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                         </p>
                       )}
                       {!loadingMajors &&
-                        majors.map((major) => {
-                          const comps = major.competencies || [];
-                          if (comps.length <= 1) {
-                            return (
-                              <button
-                                key={major.id}
-                                onClick={scrollToPrograms}
-                                className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-[#e8f2ff] hover:text-[#0268ab] transition-colors"
-                              >
-                                {major.name}
-                              </button>
-                            );
-                          }
-
-                          return (
-                            <div key={major.id} className="group relative">
-                              <button
-                                onClick={() => {}}
-                                className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-800 hover:bg-[#e8f2ff] hover:text-[#0268ab] transition-colors"
-                              >
-                                <span className="font-medium leading-tight">
-                                  {major.name}
-                                </span>
-                                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#0268ab] transition-colors" />
-                              </button>
-                              <div className="absolute left-full top-0 w-64 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity overflow-visible">
-                                <div className="py-1 overflow-visible">
-                                  {comps.map((comp) => (
-                                    <button
-                                      key={comp.id}
-                                      onClick={scrollToPrograms}
-                                      className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-[#e8f2ff] hover:text-[#0268ab] transition-colors"
-                                    >
-                                      {comp.name}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        majors.map((major) => (
+                          <button
+                            key={major.id}
+                            onClick={scrollToPrograms}
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-[#e8f2ff] hover:text-[#0268ab] transition-colors"
+                          >
+                            {major.name}
+                          </button>
+                        ))}
                     </div>
                   </div>
                 )}

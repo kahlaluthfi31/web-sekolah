@@ -105,10 +105,13 @@ export default function CreateMajorPage() {
     headOfMajor: '',
     image: '',
     icon: '',
+    studentImage: '',
+    headerBgColor: '',
     detailType: 'PAGE' as 'PAGE' | 'EXTERNAL',
     externalUrl: '',
     isActive: true,
   })
+  const [activeTab, setActiveTab] = useState<'info' | 'settings' | 'competencies'>('info')
   const [competencies, setCompetencies] = useState<CompetencyForm[]>([])
 
   const addCompetency = () => setCompetencies(c => [
@@ -137,6 +140,8 @@ export default function CreateMajorPage() {
         headOfMajor: form.headOfMajor.trim() || null,
         image: form.image || null,
         icon: form.icon || null,
+  studentImage: form.studentImage || null,
+  headerBgColor: form.headerBgColor.trim() || null,
         detailType: form.detailType,
         externalUrl: form.detailType === 'EXTERNAL' ? form.externalUrl.trim() : null,
         isActive: form.isActive,
@@ -188,8 +193,31 @@ export default function CreateMajorPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Informasi Dasar */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: 'info', label: 'Informasi Program' },
+            { key: 'settings', label: 'Pengaturan Halaman' },
+            { key: 'competencies', label: 'Konsentrasi Keahlian' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                activeTab === tab.key
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'info' && (
+          <>
+            {/* Informasi Dasar */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
           <h3 className="text-sm font-semibold text-gray-900">Informasi Program Keahlian</h3>
 
           <div className="grid grid-cols-2 gap-4">
@@ -254,10 +282,10 @@ export default function CreateMajorPage() {
               square
             />
           </div>
-        </div>
+      </div>
 
-        {/* Tipe Halaman */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+      {/* Tipe Halaman */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
           <h3 className="text-sm font-semibold text-gray-900">Tipe Halaman Detail</h3>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -320,10 +348,47 @@ export default function CreateMajorPage() {
               <option value="inactive">Nonaktif</option>
             </select>
           </div>
-        </div>
+            </div>
+          </>
+        )}
 
-        {/* Konsentrasi Keahlian */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        {activeTab === 'settings' && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+            <h3 className="text-sm font-semibold text-gray-900">Pengaturan Halaman</h3>
+
+          <PhotoUpload
+            label="Student Image (PNG tanpa background)"
+            value={form.studentImage}
+            onChange={url => setForm(f => ({ ...f, studentImage: url }))}
+            hint="Gunakan PNG transparan untuk area kanan header"
+            square
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Warna Background Header</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={form.headerBgColor || '#111827'}
+                onChange={e => setForm(f => ({ ...f, headerBgColor: e.target.value }))}
+                className="h-10 w-16 rounded-lg border border-gray-200 bg-white"
+              />
+              <input
+                type="text"
+                value={form.headerBgColor}
+                onChange={e => setForm(f => ({ ...f, headerBgColor: e.target.value }))}
+                placeholder="#111827"
+                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">Opsional. Kosongkan untuk memakai warna default.</p>
+          </div>
+          </div>
+        )}
+
+        {activeTab === 'competencies' && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+          {/* Konsentrasi Keahlian */}
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Konsentrasi Keahlian</h3>
@@ -425,6 +490,7 @@ export default function CreateMajorPage() {
             ))}
           </div>
         </div>
+        )}
 
         <div className="flex gap-3">
           <button

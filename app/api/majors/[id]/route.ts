@@ -13,7 +13,15 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     const major = await prisma.major.findUnique({
       where: { id },
-      include: { competencies: true },
+      include: {
+        competencies: {
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+        },
+        gallery: {
+          orderBy: { orderPosition: 'asc' },
+        },
+      },
     })
 
     if (!major) {
@@ -90,7 +98,15 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const major = await prisma.major.findUnique({
       where: { id },
-      include: { competencies: true },
+      include: {
+        competencies: {
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+        },
+        gallery: {
+          orderBy: { orderPosition: 'asc' },
+        },
+      },
     })
 
     return NextResponse.json({ success: true, data: major, message: 'Jurusan berhasil diupdate' })
@@ -107,7 +123,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     const major = await prisma.major.findUnique({
       where: { id },
-      include: { competencies: true },
+      include: {
+        competencies: true,
+        gallery: {
+          orderBy: { orderPosition: 'asc' },
+        },
+      },
     })
     if (!major) {
       return NextResponse.json(apiError('Jurusan tidak ditemukan'), { status: 404 })

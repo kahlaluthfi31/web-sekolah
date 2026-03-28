@@ -19,6 +19,11 @@ interface Major {
   headOfMajor: string | null
   image: string | null
   icon: string | null
+  studentImage: string | null
+  headerBgColor: string | null
+  activeStudents: number | null
+  alumniCount: number | null
+  industryPartners: number | null
   detailType: 'PAGE' | 'EXTERNAL'
   externalUrl: string | null
   isActive: boolean
@@ -42,7 +47,9 @@ interface CompetencyForm {
 type FormState = {
   name: string; code: string; description: string; headOfMajor: string
   headOfMajorId: number | null
-  image: string; icon: string; detailType: 'PAGE' | 'EXTERNAL'
+  image: string; icon: string; studentImage: string; headerBgColor: string
+  activeStudents: string; alumniCount: string; industryPartners: string
+  detailType: 'PAGE' | 'EXTERNAL'
   externalUrl: string; isActive: boolean
 }
 interface GalleryItem { id: number; imageUrl: string; caption: string | null; orderPosition: number }
@@ -61,7 +68,9 @@ interface MajorDetail extends Major {
 
 const BLANK_FORM: FormState = {
   name: '', code: '', description: '', headOfMajor: '', headOfMajorId: null,
-  image: '', icon: '', detailType: 'PAGE', externalUrl: '', isActive: true,
+  image: '', icon: '', studentImage: '', headerBgColor: '',
+  activeStudents: '', alumniCount: '', industryPartners: '',
+  detailType: 'PAGE', externalUrl: '', isActive: true,
 }
 const BLANK_COMP: CompetencyForm = {
   name: '', description: '', detailType: 'PAGE', externalUrl: '', isActive: true,
@@ -458,15 +467,6 @@ function CompetencyRows({ competencies, onChange }: {
               className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">Tipe:</span>
-            <button type="button" onClick={() => update(i, 'detailType', 'PAGE')}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${comp.detailType === 'PAGE' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}`}>
-              <Globe className="w-3 h-3" /> Halaman
-            </button>
-            <button type="button" onClick={() => update(i, 'detailType', 'EXTERNAL')}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${comp.detailType === 'EXTERNAL' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white border-gray-200 text-gray-500'}`}>
-              <ExternalLink className="w-3 h-3" /> Eksternal
-            </button>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="text-xs text-gray-500">Aktif</span>
               <button type="button" onClick={() => update(i, 'isActive', !comp.isActive)}
@@ -475,11 +475,6 @@ function CompetencyRows({ competencies, onChange }: {
               </button>
             </div>
           </div>
-          {comp.detailType === 'EXTERNAL' && (
-            <input type="url" value={comp.externalUrl} placeholder="https://..."
-              onChange={e => update(i, 'externalUrl', e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
-          )}
         </div>
       ))}
     </div>
@@ -591,13 +586,67 @@ function MajorDataForm({ form, setForm, competencies, setCompetencies, error }: 
   )
 }
 
+// ─── MajorPageSettingsForm ─────────────────────────────────────────────────
+function MajorPageSettingsForm({ form, setForm }: {
+  form: FormState
+  setForm: React.Dispatch<React.SetStateAction<FormState>>
+}) {
+  return (
+    <div className="space-y-5">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pengaturan Halaman</p>
+      <PhotoUpload
+        label="Student Image (PNG tanpa background)"
+        value={form.studentImage}
+        onChange={url => setForm(f => ({ ...f, studentImage: url }))}
+        hint="Gambar PNG transparan untuk area kanan header"
+        square
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Siswa Aktif</label>
+          <input
+            type="number"
+            value={form.activeStudents}
+            onChange={e => setForm(f => ({ ...f, activeStudents: e.target.value }))}
+            placeholder="1200"
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Alumni</label>
+          <input
+            type="number"
+            value={form.alumniCount}
+            onChange={e => setForm(f => ({ ...f, alumniCount: e.target.value }))}
+            placeholder="3500"
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Industri Partner</label>
+          <input
+            type="number"
+            value={form.industryPartners}
+            onChange={e => setForm(f => ({ ...f, industryPartners: e.target.value }))}
+            placeholder="50"
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex items-center text-xs text-gray-400">
+          Total prestasi otomatis dari menu Prestasi Siswa.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── ModalShell ───────────────────────────────────────────────────────────────
 function ModalShell({
   title, subtitle, tab, onTabChange, onClose, disabled, children,
 }: {
   title: string; subtitle: string
-  tab: 'data' | 'gallery'
-  onTabChange: (t: 'data' | 'gallery') => void
+  tab: 'data' | 'settings' | 'gallery'
+  onTabChange: (t: 'data' | 'settings' | 'gallery') => void
   onClose: () => void; disabled: boolean
   children: React.ReactNode
 }) {
@@ -625,6 +674,10 @@ function ModalShell({
                   className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${tab === 'data' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                   Data Program
                 </button>
+                <button type="button" onClick={() => onTabChange('settings')}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${tab === 'settings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  Pengaturan Halaman
+                </button>
                 <button type="button" onClick={() => onTabChange('gallery')}
                   className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${tab === 'gallery' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                   <Images className="w-3.5 h-3.5" /> Galeri
@@ -641,7 +694,7 @@ function ModalShell({
 
 // ─── AddModal ─────────────────────────────────────────────────────────────────
 function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [tab, setTab] = useState<'data' | 'gallery'>('data')
+  const [tab, setTab] = useState<'data' | 'settings' | 'gallery'>('data')
   const [form, setForm] = useState<FormState>({ ...BLANK_FORM })
   const [competencies, setCompetencies] = useState<CompetencyForm[]>([{ ...BLANK_COMP }])
   const [saving, setSaving] = useState(false)
@@ -663,6 +716,11 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
         description: form.description.trim() || null,
         headOfMajor: form.headOfMajor.trim() || null,
         image: form.image || null, icon: form.icon || null,
+  studentImage: form.studentImage || null,
+  headerBgColor: form.headerBgColor.trim() || null,
+  activeStudents: form.activeStudents ? parseInt(form.activeStudents) : null,
+  alumniCount: form.alumniCount ? parseInt(form.alumniCount) : null,
+  industryPartners: form.industryPartners ? parseInt(form.industryPartners) : null,
         detailType: form.detailType,
         externalUrl: form.detailType === 'EXTERNAL' ? form.externalUrl.trim() : null,
         isActive: form.isActive,
@@ -704,6 +762,8 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
         {tab === 'data' ? (
           <MajorDataForm form={form} setForm={setForm}
             competencies={competencies} setCompetencies={setCompetencies} error={error} />
+        ) : tab === 'settings' ? (
+          <MajorPageSettingsForm form={form} setForm={setForm} />
         ) : !saved ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Save className="w-10 h-10 text-gray-300 mb-3" />
@@ -725,7 +785,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
         )}
       </div>
       <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-        {tab === 'data' ? (
+        {tab !== 'gallery' ? (
           <>
             <button type="button" onClick={onClose} disabled={saving}
               className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all">
@@ -760,7 +820,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
 function EditModal({ majorId, onClose, onSaved }: {
   majorId: number; onClose: () => void; onSaved: () => void
 }) {
-  const [tab, setTab] = useState<'data' | 'gallery'>('data')
+  const [tab, setTab] = useState<'data' | 'settings' | 'gallery'>('data')
   const [form, setForm] = useState<FormState>({ ...BLANK_FORM })
   const [competencies, setCompetencies] = useState<CompetencyForm[]>([])
   const [loading, setLoading] = useState(true)
@@ -779,6 +839,11 @@ function EditModal({ majorId, onClose, onSaved }: {
           description: d.description || '',
           headOfMajor: d.headOfMajor || '', headOfMajorId: null,
           image: d.image || '', icon: d.icon || '',
+          studentImage: d.studentImage || '',
+          headerBgColor: d.headerBgColor || '',
+          activeStudents: d.activeStudents?.toString() || '',
+          alumniCount: d.alumniCount?.toString() || '',
+          industryPartners: d.industryPartners?.toString() || '',
           detailType: d.detailType || 'PAGE',
           externalUrl: d.externalUrl || '',
           isActive: d.isActive ?? true,
@@ -812,6 +877,11 @@ function EditModal({ majorId, onClose, onSaved }: {
         description: form.description.trim() || null,
         headOfMajor: form.headOfMajor.trim() || null,
         image: form.image || null, icon: form.icon || null,
+  studentImage: form.studentImage || null,
+  headerBgColor: form.headerBgColor.trim() || null,
+  activeStudents: form.activeStudents ? parseInt(form.activeStudents) : null,
+  alumniCount: form.alumniCount ? parseInt(form.alumniCount) : null,
+  industryPartners: form.industryPartners ? parseInt(form.industryPartners) : null,
         detailType: form.detailType,
         externalUrl: form.detailType === 'EXTERNAL' ? form.externalUrl.trim() : null,
         isActive: form.isActive,
@@ -853,6 +923,8 @@ function EditModal({ majorId, onClose, onSaved }: {
             {tab === 'data' ? (
               <MajorDataForm form={form} setForm={setForm}
                 competencies={competencies} setCompetencies={setCompetencies} error={error} />
+            ) : tab === 'settings' ? (
+              <MajorPageSettingsForm form={form} setForm={setForm} />
             ) : (
               <GalleryTabContent competencies={competencies} />
             )}
@@ -862,7 +934,7 @@ function EditModal({ majorId, onClose, onSaved }: {
               className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all">
               {tab === 'gallery' ? 'Selesai' : 'Batal'}
             </button>
-            {tab === 'data' && (
+            {tab !== 'gallery' && (
               <button type="button" onClick={handleSave} disabled={saving}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

@@ -265,7 +265,7 @@ async function main() {
         { contentType: 'news', contentId: news1.id, userId: regularUser.id, commentText: 'Website baru ini sangat keren!', status: 'pending' },
         { contentType: 'news', contentId: news2.id, userId: regularUser.id, commentText: 'Selamat untuk tim robotika!', status: 'approved', approvedById: admin.id, approvedAt: new Date() },
         { contentType: 'news', contentId: news1.id, userId: adminUser.id, commentText: 'Terima kasih atas apresiasinya.', status: 'approved', approvedById: admin.id, approvedAt: new Date() },
-        { contentType: 'news', contentId: news2.id, userId: regularUser.id, commentText: 'Kapan ada lomba robotika lagi?', status: 'pending' },
+  { contentType: 'news', contentId: news2.id, userId: adminUser.id, commentText: 'Kapan ada lomba robotika lagi?', status: 'pending' },
         { contentType: 'achievement', contentId: achievementId, userId: regularUser.id, commentText: 'Keren banget prestasinya!', status: 'rejected' },
       ],
     })

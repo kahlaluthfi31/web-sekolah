@@ -9,6 +9,7 @@ import {
   GraduationCap, Loader2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { usePage } from '@/lib/usePage'
 
 /* ------------------------------------------------------------------ */
 /*  Icon mapping — berdasarkan kode jurusan                             */
@@ -66,6 +67,7 @@ interface Major {
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
 const ProgramKeahlian: React.FC = () => {
+  const { setPage } = usePage()
   const [majors, setMajors] = useState<Major[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -108,7 +110,15 @@ const ProgramKeahlian: React.FC = () => {
             {majors.map((major) => {
               const IconComponent = getIcon(major.code, major.name)
               return (
-                <div key={major.id} className="flex gap-4 group">
+                <button
+                  key={major.id}
+                  type="button"
+                  onClick={() => {
+                    sessionStorage.setItem('selected_major_id', String(major.id))
+                    setPage('program-keahlian')
+                  }}
+                  className="flex gap-4 group text-left"
+                >
 
                   {/* Logo / Icon */}
                   <div className="shrink-0">
@@ -140,7 +150,7 @@ const ProgramKeahlian: React.FC = () => {
                     </p>
                   </div>
 
-                </div>
+                </button>
               )
             })}
           </div>
