@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, ChevronLeft, User, Eye, Share2 } from "lucide-react";
+import { Calendar, ChevronLeft, User, Eye, Share2, MessageCircle, MoreVertical } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface NewsDetailsPageProps {
@@ -184,11 +184,15 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    const [commentsLoading, setCommentsLoading] = useState(false);
    const [commentsPage, setCommentsPage] = useState(1);
    const [commentsTotalPages, setCommentsTotalPages] = useState(1);
+   const [commentsTotal, setCommentsTotal] = useState(0);
    const [expandedComments, setExpandedComments] = useState<Record<number, boolean>>({});
    const [myComment, setMyComment] = useState<CommentItem | null>(null);
    const [commentText, setCommentText] = useState("");
+   const [isEditingComment, setIsEditingComment] = useState(false);
    const [commentSubmitting, setCommentSubmitting] = useState(false);
    const [commentMessage, setCommentMessage] = useState<string | null>(null);
+   const [openCommentMenu, setOpenCommentMenu] = useState<number | null>(null);
+   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
    const lastIncrementedId = useRef<number | null>(null);
    const lastSharedId = useRef<number | null>(null);
 
@@ -355,8 +359,12 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
             if (!active) return;
             setComments(Array.isArray(json?.data) ? (json.data as CommentItem[]) : []);
             setCommentsTotalPages(json?.pagination?.totalPages || 1);
+            setCommentsTotal(typeof json?.pagination?.total === "number" ? json.pagination.total : 0);
          } catch {
-            if (active) setComments([]);
+            if (active) {
+               setComments([]);
+               setCommentsTotal(0);
+            }
          } finally {
             if (active) setCommentsLoading(false);
          }
@@ -404,9 +412,11 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    useEffect(() => {
       if (!myComment) {
          setCommentText("");
+         setIsEditingComment(true);
          return;
       }
       setCommentText(myComment.commentText);
+      setIsEditingComment(false);
    }, [myComment]);
 
    const handleSubmitComment = async () => {
@@ -441,7 +451,9 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
             const approvedJson = await resApproved.json();
             setComments(Array.isArray(approvedJson?.data) ? approvedJson.data : []);
                setCommentsTotalPages(approvedJson?.pagination?.totalPages || 1);
+               setCommentsTotal(typeof approvedJson?.pagination?.total === "number" ? approvedJson.pagination.total : 0);
                setCommentsPage(1);
+               setIsEditingComment(false);
          } else {
             setCommentMessage(json?.message || "Gagal mengirim komentar.");
          }
@@ -499,6 +511,34 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
          ...prev,
          [id]: !prev[id],
       }));
+   };
+
+   const handleDeleteComment = async (commentId: number) => {
+      if (!confirm("Hapus komentar ini?")) return;
+      
+      setDeletingCommentId(commentId);
+      try {
+         const res = await fetch(`/api/comments/${commentId}`, {
+            method: "DELETE",
+         });
+         const json = await res.json();
+         if (res.ok) {
+            setComments((prev) => prev.filter((c) => c.id !== commentId));
+            setCommentsTotal((prev) => Math.max(0, prev - 1));
+            if (myComment?.id === commentId) {
+               setMyComment(null);
+               setCommentText("");
+               setIsEditingComment(false);
+            }
+            setOpenCommentMenu(null);
+         } else {
+            alert(json?.message || "Gagal menghapus komentar.");
+         }
+      } catch {
+         alert("Terjadi kesalahan saat menghapus komentar.");
+      } finally {
+         setDeletingCommentId(null);
+      }
    };
 
    const handleShare = async () => {
@@ -667,6 +707,17 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                            <div className="text-white/80 text-xs">Berita ini dibagikan</div>
                         </div>
                      </div>
+
+                     {/* Comments */}
+                     <div className="flex items-center gap-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                           <MessageCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                           <div className="text-white font-bold text-lg">{commentsTotal} kali</div>
+                           <div className="text-white/80 text-xs">Berita ini dikomentari</div>
+                        </div>
+                     </div>
                   </div>
                </div>
             </section>
@@ -731,130 +782,208 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                            </div>
 
                            <section className="mt-10 pt-8 border-t border-gray-200">
-                              <h3 className="text-lg font-bold text-gray-900 mb-2">Komentar</h3>
-                              <p className="text-sm text-gray-500 mb-5">
-                                 Satu akun hanya bisa memberikan satu komentar. Jika ingin mengubah komentar, silakan edit dan kirim ulang untuk verifikasi admin.
+                              <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                                 <h3 className="text-lg font-bold text-gray-900">Komentar</h3>
+                                 <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                                    {commentsTotal} komentar
+                                 </span>
+                              </div>
+
+                              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                                 Satu akun hanya bisa memberikan satu komentar. Jika ingin mengubah komentar, silakan edit lalu kirim ulang untuk verifikasi admin.
                               </p>
 
                               {sessionStatus !== "authenticated" ? (
-                                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 text-sm text-gray-600">
-                                    <p className="mb-4">Silakan login atau register untuk memberikan komentar.</p>
+                                 <div className="pb-6 border-b border-gray-200">
+                                    <p className="text-sm text-gray-600 mb-4">Silakan login atau register untuk memberikan komentar.</p>
                                     <div className="flex flex-wrap gap-3">
                                        <a
                                           href="/login"
-                                          className="px-4 py-2 rounded-lg bg-[#0268ab] text-white text-sm font-semibold"
+                                          className="px-4 py-2 rounded-lg bg-[#0268ab] text-white text-sm font-semibold hover:bg-[#015a94] transition-colors"
                                        >
                                           Login
                                        </a>
                                        <a
                                           href="/register"
-                                          className="px-4 py-2 rounded-lg border border-[#0268ab] text-[#0268ab] text-sm font-semibold"
+                                          className="px-4 py-2 rounded-lg border border-[#0268ab]/30 text-[#0268ab] text-sm font-semibold hover:bg-[#0268ab]/5 transition-colors"
                                        >
                                           Register
                                        </a>
                                     </div>
                                  </div>
-                              ) : (
-                                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                                    <div className="flex items-center justify-between mb-3">
-                                       <p className="text-sm font-semibold text-gray-900">
-                                          {myComment ? "Edit komentar Anda" : "Tulis komentar"}
-                                       </p>
-                                       {myComment && (
-                                          <span
-                                             className={`text-xs px-2.5 py-1 rounded-full ${
-                                                myComment.status === "approved"
-                                                   ? "bg-green-100 text-green-700"
-                                                   : myComment.status === "rejected"
-                                                   ? "bg-red-100 text-red-700"
-                                                   : "bg-yellow-100 text-yellow-700"
-                                             }`}
-                                          >
-                                             {myComment.status === "approved"
-                                                ? "Disetujui"
-                                                : myComment.status === "rejected"
-                                                ? "Ditolak"
-                                                : "Menunggu"}
-                                          </span>
-                                       )}
+                              ) : !myComment ? (
+                                 <div className="pb-8 border-b border-gray-200">
+                                    <div className="flex flex-col gap-4">
+                                       <div className="flex items-start gap-3">
+                                          <div className="w-10 h-10 rounded-full bg-[#0268ab]/10 flex items-center justify-center shrink-0 mt-1">
+                                             <User className="w-5 h-5 text-[#0268ab]" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                             <textarea
+                                                value={commentText}
+                                                onChange={(event) => setCommentText(event.target.value)}
+                                                rows={3}
+                                                className="w-full bg-transparent border-0 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none resize-none"
+                                                placeholder="Tulis komentar Anda di sini..."
+                                             />
+                                             <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                                <span className="text-xs text-gray-500">
+                                                   Komentar akan tampil setelah disetujui admin
+                                                </span>
+                                                <button
+                                                   onClick={handleSubmitComment}
+                                                   disabled={commentSubmitting || !commentText.trim()}
+                                                   className="px-5 py-2 rounded-lg bg-[#0268ab] text-white text-sm font-semibold disabled:opacity-50 hover:bg-[#015a94] transition-colors"
+                                                >
+                                                   {commentSubmitting ? "Mengirim..." : "Kirim"}
+                                                </button>
+                                             </div>
+                                             {commentMessage && (
+                                                <p className="mt-2 text-xs text-gray-600">{commentMessage}</p>
+                                             )}
+                                          </div>
+                                       </div>
                                     </div>
+                                 </div>
+                              ) : null}
+
+                              {isEditingComment && myComment && (
+                                 <div className="pb-6 border-b border-gray-200">
+                                    <p className="text-sm font-semibold text-gray-900 mb-3">Edit komentar</p>
+
                                     <textarea
                                        value={commentText}
                                        onChange={(event) => setCommentText(event.target.value)}
                                        rows={4}
-                                       className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0268ab]"
+                                       className="w-full bg-gray-50/60 border border-gray-200 rounded-lg px-3 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0268ab]/25 focus:border-[#0268ab]/40"
                                        placeholder="Tulis komentar Anda di sini..."
                                     />
-                                    {commentMessage && (
-                                       <p className="mt-2 text-xs text-gray-600">{commentMessage}</p>
-                                    )}
-                                    <button
-                                       onClick={handleSubmitComment}
-                                       disabled={commentSubmitting || !commentText.trim()}
-                                       className="mt-4 px-4 py-2 rounded-lg bg-[#0268ab] text-white text-sm font-semibold disabled:opacity-60"
-                                    >
-                                       {commentSubmitting
-                                          ? "Mengirim..."
-                                          : myComment
-                                          ? "Simpan Perubahan"
-                                          : "Kirim Komentar"}
-                                    </button>
+
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                       {commentMessage ? (
+                                          <p className="text-xs text-gray-600">{commentMessage}</p>
+                                       ) : (
+                                          <span className="text-xs text-gray-400">Komentar akan tampil setelah disetujui admin.</span>
+                                       )}
+
+                                       <div className="flex items-center gap-2">
+                                          <button
+                                             type="button"
+                                             onClick={() => {
+                                                setIsEditingComment(false);
+                                                setCommentText(myComment.commentText);
+                                                setCommentMessage(null);
+                                             }}
+                                             className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                                          >
+                                             Batal
+                                          </button>
+                                          <button
+                                             onClick={handleSubmitComment}
+                                             disabled={commentSubmitting || !commentText.trim()}
+                                             className="px-4 py-2 rounded-lg bg-[#0268ab] text-white text-sm font-semibold disabled:opacity-60 hover:bg-[#015a94] transition-colors"
+                                          >
+                                             {commentSubmitting ? "Mengirim..." : "Simpan Perubahan"}
+                                          </button>
+                                       </div>
+                                    </div>
                                  </div>
                               )}
 
-                              <div className="mt-6 space-y-4">
+                              <div className="mt-6">
                                  {commentsLoading ? (
                                     <p className="text-sm text-gray-500">Memuat komentar...</p>
                                  ) : comments.length === 0 ? (
                                     <p className="text-sm text-gray-500">Belum ada komentar.</p>
                                  ) : (
-                                    comments.map((comment) => (
-                                       <div key={comment.id} className="border border-gray-200 rounded-xl p-4">
-                                          <div className="flex items-center justify-between mb-2">
-                                             <p className="text-sm font-semibold text-gray-900">
-                                                {comment.user?.name || "Pengguna"}
+                                    <div className="divide-y divide-gray-200">
+                                       {comments.map((comment) => (
+                                          <div key={comment.id} className="py-5 relative group">
+                                             <div className="flex items-start justify-between gap-3 mb-2">
+                                                <div>
+                                                   <p className="text-sm font-semibold text-gray-900">
+                                                      {comment.user?.name || "Pengguna"}
+                                                   </p>
+                                                   <p className="text-xs text-gray-400 mt-0.5">
+                                                      {formatDate(comment.createdAt)}
+                                                   </p>
+                                                </div>
+                                                <div className="relative">
+                                                   <button
+                                                      type="button"
+                                                      onClick={() => setOpenCommentMenu(openCommentMenu === comment.id ? null : comment.id)}
+                                                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                   >
+                                                      <MoreVertical className="w-4 h-4" />
+                                                   </button>
+                                                   {openCommentMenu === comment.id && (
+                                                      <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                                         <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                               setMyComment(comment);
+                                                               setCommentText(comment.commentText);
+                                                               setIsEditingComment(true);
+                                                               setOpenCommentMenu(null);
+                                                            }}
+                                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg transition-colors"
+                                                         >
+                                                            Edit
+                                                         </button>
+                                                         <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteComment(comment.id)}
+                                                            disabled={deletingCommentId === comment.id}
+                                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 last:rounded-b-lg transition-colors disabled:opacity-50"
+                                                         >
+                                                            {deletingCommentId === comment.id ? "Menghapus..." : "Hapus"}
+                                                         </button>
+                                                      </div>
+                                                   )}
+                                                </div>
+                                             </div>
+
+                                             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                                {comment.commentText.length > COMMENT_PREVIEW_LIMIT && !expandedComments[comment.id]
+                                                   ? `${comment.commentText.slice(0, COMMENT_PREVIEW_LIMIT)}...`
+                                                   : comment.commentText}
                                              </p>
-                                             <span className="text-xs text-gray-400">
-                                                {formatDate(comment.createdAt)}
-                                             </span>
+
+                                             {comment.commentText.length > COMMENT_PREVIEW_LIMIT && (
+                                                <button
+                                                   type="button"
+                                                   onClick={() => toggleCommentExpand(comment.id)}
+                                                   className="mt-2 text-xs font-semibold text-[#0268ab] hover:text-[#015a94]"
+                                                >
+                                                   {expandedComments[comment.id] ? "Sembunyikan" : "Selengkapnya"}
+                                                </button>
+                                             )}
                                           </div>
-                                          <p className="text-sm text-gray-700 leading-relaxed">
-                                             {comment.commentText.length > COMMENT_PREVIEW_LIMIT && !expandedComments[comment.id]
-                                                ? `${comment.commentText.slice(0, COMMENT_PREVIEW_LIMIT)}...`
-                                                : comment.commentText}
-                                          </p>
-                                          {comment.commentText.length > COMMENT_PREVIEW_LIMIT && (
-                                             <button
-                                                type="button"
-                                                onClick={() => toggleCommentExpand(comment.id)}
-                                                className="mt-2 text-xs font-semibold text-[#0268ab]"
-                                             >
-                                                {expandedComments[comment.id] ? "Sembunyikan" : "Selengkapnya"}
-                                             </button>
-                                          )}
-                                       </div>
-                                    ))
+                                       ))}
+                                    </div>
                                  )}
                               </div>
 
                               {commentsTotalPages > 1 && (
-                                 <div className="mt-4 flex items-center gap-2 text-xs">
+                                 <div className="mt-5 flex items-center justify-between gap-3 text-xs">
                                     <button
                                        type="button"
                                        disabled={commentsPage === 1}
                                        onClick={() => setCommentsPage((prev) => Math.max(prev - 1, 1))}
-                                       className="px-3 py-1 rounded-lg border border-gray-200 disabled:opacity-50"
+                                       className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                                     >
                                        Sebelumnya
                                     </button>
+
                                     <span className="text-gray-500">
                                        Halaman {commentsPage} dari {commentsTotalPages}
                                     </span>
+
                                     <button
                                        type="button"
                                        disabled={commentsPage >= commentsTotalPages}
                                        onClick={() => setCommentsPage((prev) => Math.min(prev + 1, commentsTotalPages))}
-                                       className="px-3 py-1 rounded-lg border border-gray-200 disabled:opacity-50"
+                                       className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                                     >
                                        Berikutnya
                                     </button>

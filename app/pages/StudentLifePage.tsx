@@ -18,6 +18,12 @@ import {
 } from "lucide-react";
 import { usePageHeader } from "@/lib/usePageHeader";
 
+const STUDENT_LIFE_HEADER_FALLBACK = {
+  title: "Kehidupan Siswa",
+  subtitle:
+    "Lihat aktivitas harian, prestasi, dan pengembangan karakter siswa di lingkungan sekolah.",
+};
+
 type PaginationMeta = {
   page: number;
   limit: number;
@@ -123,7 +129,7 @@ const getRoutineIcon = (icon?: string | null) => {
 };
 
 const StudentLifePage: React.FC = () => {
-  const header = usePageHeader("students");
+  const header = usePageHeader("students", STUDENT_LIFE_HEADER_FALLBACK);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [achievementsLoading, setAchievementsLoading] = useState<boolean>(true);
   const [achievementsPage, setAchievementsPage] = useState<number>(1);

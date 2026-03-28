@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar, User, Newspaper, FileText, Clock } from 'lucide-react';
 import { usePageHeader } from '@/lib/usePageHeader';
 
 interface NewsPageListProps {
@@ -21,6 +21,17 @@ type NewsItem = {
   publishedAt: string | null;
   createdAt: string;
   updatedAt?: string;
+};
+
+type TrendingItem = {
+  id: number;
+  title: string;
+  slug?: string | null;
+  featuredImage: string | null;
+  category: string;
+  publishedAt: string | null;
+  createdAt: string;
+  commentCount: number;
 };
 
 type PaginationMeta = {
@@ -87,6 +98,7 @@ const formatExcerptGrid = (excerpt?: string | null) => {
 const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'Berita Teratas' | 'Berita Terbaru'>('Berita Terbaru');
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [trendingNews, setTrendingNews] = useState<TrendingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pagination, setPagination] = useState<PaginationMeta>({
@@ -127,6 +139,31 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
     };
   }, [currentPage]);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadInsights = async () => {
+      try {
+        const res = await fetch('/api/news/insights?limit=5');
+        const json = await res.json();
+
+        if (!active) return;
+
+        setTrendingNews(Array.isArray(json?.data?.trending) ? (json.data.trending as TrendingItem[]) : []);
+      } catch {
+        if (active) {
+          setTrendingNews([]);
+        }
+      }
+    };
+
+    loadInsights();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const sortedNews = useMemo(() => {
     return [...news].sort((a, b) => {
       const dateA = new Date(a.publishedAt || a.createdAt).getTime();
@@ -163,8 +200,22 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
     setCurrentPage(page);
   };
 
-  const handleNewsSelect = (item: NewsItem) => {
-    sessionStorage.setItem('selected_news_item', JSON.stringify(item));
+  const handleNewsSelect = (item: NewsItem | TrendingItem) => {
+    const selectedItem: NewsItem = {
+      id: item.id,
+      title: item.title,
+      slug: item.slug || null,
+      excerpt: 'excerpt' in item ? item.excerpt : null,
+      content: 'content' in item ? item.content : null,
+      featuredImage: item.featuredImage,
+      category: item.category,
+      author: 'author' in item ? item.author : null,
+      publishedAt: item.publishedAt,
+      createdAt: item.createdAt,
+      updatedAt: 'updatedAt' in item ? item.updatedAt : undefined,
+    };
+
+    sessionStorage.setItem('selected_news_item', JSON.stringify(selectedItem));
     const slug = item.slug?.trim();
     if (!onNavigate) {
       if (slug) {
@@ -179,9 +230,12 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
   };
 
   const featuredNews = sortedNews[0];
-  const latestNews = sortedNews.slice(0, 5);
+  const latestNews = [...sortedNews].sort((a, b) => {
+    const dateA = new Date(a.publishedAt || a.createdAt).getTime();
+    const dateB = new Date(b.publishedAt || b.createdAt).getTime();
+    return dateB - dateA;
+  }).slice(0, 5);
   const allNews = sortedNews;
-  const trendingNews: NewsItem[] = [];
   const sidebarNews = activeTab === 'Berita Teratas' ? trendingNews : latestNews;
 
   const isEdited = (item: NewsItem) => {
@@ -192,8 +246,12 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="pt-24 pb-16 relative overflow-hidden bg-linear-to-b from-[#0268ab] via-[#0268ab] to-[#0268ab]/80">
-        <div className="absolute inset-0 opacity-10">
+      <section className="pt-24 pb-16 relative overflow-hidden">
+        {/* Background dengan gradien opacity dari atas ke bawah menggunakan warna primary */}
+        <div className="absolute inset-0 bg-linear-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
+
+        {/* Dotted pattern overlay */}
+        <div className="absolute inset-0 opacity-15">
           <div
             className="absolute top-0 left-0 w-full h-full"
             style={{
@@ -203,18 +261,60 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
           />
         </div>
 
+        {/* School-related floating elements */}
         <div className="absolute top-10 right-20 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
         <div className="absolute bottom-10 left-20 w-48 h-48 bg-white opacity-5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+
+        {/* News-related illustrations */}
+        <div className="absolute top-20 left-10 text-white/10">
+          <Newspaper className="w-16 h-16" strokeWidth={1} />
+        </div>
+        <div className="absolute top-32 right-16 text-white/10">
+          <FileText className="w-12 h-12" strokeWidth={1} />
+        </div>
+        <div className="absolute bottom-20 left-32 text-white/10">
+          <Calendar className="w-14 h-14" strokeWidth={1} />
+        </div>
+        <div className="absolute top-1/3 right-32 text-white/10">
+          <Clock className="w-10 h-10" strokeWidth={1} />
+        </div>
+
+        {/* School elements */}
+        <div className="absolute bottom-32 right-20 text-white/8">
+          <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 3L1 9L12 15L23 9L12 3Z" />
+            <path d="M12 15L12 21" />
+            <path d="M8 17L8 21" />
+            <path d="M16 17L16 21" />
+            <path d="M1 9L1 21L23 21L23 9" />
+          </svg>
+        </div>
+        <div className="absolute top-40 left-40 text-white/8">
+          <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3H5C3.89 3 3 3.89 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.89 20.1 3 19 3ZM19 5V19H5V5H19Z" />
+            <path d="M12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7ZM12 15C14.67 15 17 16.17 17 17.5V19H7V17.5C7 16.17 9.33 15 12 15Z" />
+          </svg>
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-              {header.displayTitle || header.title}
-            </h1>
-            {header.subtitle && (
-              <p className="text-white/85 text-sm md:text-base leading-relaxed max-w-2xl">
-                {header.subtitle}
-              </p>
+            {header.loading ? (
+              <div className="space-y-4">
+                <div className="h-10 w-3/4 bg-white/20 rounded-lg animate-pulse" />
+                <div className="h-4 w-2/3 bg-white/15 rounded-lg animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line">
+                  {header.displayTitle || header.title}
+                </h1>
+                {header.subtitle && (
+                  <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+                    {header.subtitle}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -340,6 +440,9 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
                               {formatDate(item.publishedAt || item.createdAt)}
                               {isEdited(item) && <span className="text-gray-500"> (Diedit)</span>}
                             </span>
+                            {'commentCount' in item && activeTab === 'Berita Teratas' && (
+                              <span>{item.commentCount} komentar</span>
+                            )}
                           </div>
                         </div>
                       </div>
