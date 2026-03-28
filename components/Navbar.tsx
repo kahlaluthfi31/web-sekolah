@@ -127,16 +127,10 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
   }, []);
 
   const scrollToPrograms = () => {
-    onNavigate("home");
+    onNavigate("program-keahlian");
     setIsOpen(false);
     setShowDropdown(false);
     setShowProgramsDropdown(false);
-    setTimeout(() => {
-      const section = document.getElementById("program-keahlian");
-      if (section) {
-        section.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 120);
   };
 
   // Determine navbar style based on scroll position

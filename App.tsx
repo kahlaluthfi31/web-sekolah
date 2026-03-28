@@ -44,13 +44,17 @@ import ContactPage from '@/app/pages/ContactPage';
 
 import EventsPage from '@/app/pages/EventsPage';
 
+import ProgramKeahlianPage from '@/app/pages/ProgramKeahlianPage';
+
 import AnnouncementPopup from '@/components/AnnouncementPopup';
+
+import { PageProvider } from '@/lib/usePage';
 
 import { useSession } from 'next-auth/react';
 
 
 
-export type PageType = 'home' | 'about-us' | 'admissions' | 'faculty' | 'campus' | 'students-life' | 'news' | 'alumni' | 'news-details' | 'contact' | 'events';
+export type PageType = 'home' | 'about-us' | 'admissions' | 'faculty' | 'campus' | 'students-life' | 'news' | 'alumni' | 'news-details' | 'contact' | 'events' | 'program-keahlian';
 
 
 
@@ -70,7 +74,7 @@ function getInitialPage(): PageType {
 
 
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState<PageType>(getInitialPage);
 
@@ -332,6 +336,10 @@ const App: React.FC = () => {
 
         return <NewsDetailsPage onBack={() => navigateTo('news')} />;
 
+      case 'program-keahlian':
+
+        return <ProgramKeahlianPage />;
+
       case 'contact':
 
         return <ContactPage />;
@@ -470,6 +478,14 @@ const App: React.FC = () => {
 
   );
 
+};
+
+const App: React.FC = () => {
+  return (
+    <PageProvider>
+      <AppContent />
+    </PageProvider>
+  );
 };
 
 
