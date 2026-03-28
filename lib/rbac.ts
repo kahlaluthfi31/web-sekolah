@@ -190,7 +190,7 @@ export function getNavigation(role: UserRole, customMenuKeys?: string[] | null):
       children: [
         { title: 'Aktivitas Login', href: '/admin/dashboard/login-activity', icon: 'Activity', permission: 'login_activity.view' as const },
         { title: 'Log Perubahan', href: '/admin/dashboard/user-activity', icon: 'NotebookPen', permission: 'user_activity.view' as const },
-        { title: 'Next task', href: '/admin/dashboard/user-activity/next-task', icon: 'ListTodo', permission: 'user_activity.next' as const },
+  { title: 'Trace & Forensic', href: '/admin/dashboard/user-activity/next-task', icon: 'Crosshair', permission: 'user_activity.next' as const },
       ],
     },
 

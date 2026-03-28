@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
+import { trackActivity } from '@/lib/activity-logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+
     const data = await prisma.facility.create({
       data: {
         name: body.name,
@@ -40,6 +42,9 @@ export async function POST(request: NextRequest) {
         condition: body.condition || 'good',
       },
     })
+
+    await trackActivity(request, 'CREATE', 'facilities', null, data)
+
     return apiSuccess(data, 'Facility created', 201)
   } catch (error) {
     return handleError(error)

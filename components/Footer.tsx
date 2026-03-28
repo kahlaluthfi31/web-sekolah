@@ -1,6 +1,7 @@
 
-import React from 'react';
-import { Mail, Phone, MapPin, Instagram, Facebook, Youtube, Music2, MessageSquare } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { Mail, MapPin, Instagram, Facebook, Youtube, Music2, MessageSquare, Linkedin, Twitter, Send, MessageCircle, Link as LinkIcon } from 'lucide-react';
 import { PageType } from '../App';
 
 interface FooterProps {
@@ -8,15 +9,99 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
-  const footerLinks: Array<{ label: string; page: PageType }> = [
-    { label: 'Beranda', page: 'home' },
-    { label: 'Profil Sekolah', page: 'about-us' },
-    { label: 'Sarana Prasarana', page: 'campus' },
-    { label: 'Berita & Agenda', page: 'events' },
-    { label: 'Kehidupan Siswa', page: 'students-life' },
-    { label: 'PPDB', page: 'admissions' },
-    { label: 'Kontak', page: 'contact' },
-  ];
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json?.success && Array.isArray(json.data)) {
+          const map: Record<string, string> = {};
+          json.data.forEach((s: { settingKey: string; settingValue: string | null }) => {
+            map[s.settingKey] = s.settingValue ?? '';
+          });
+          setSettings(map);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const siteName = settings['site_name'] || 'SMK Negeri 1 Ciamis';
+  const address = settings['contact_address'] || 'Jl. Jenderal Sudirman No. 269, Ciamis, Jawa Barat, Indonesia';
+  const email = settings['contact_email_main'] || 'smkn1ciamis@smkn1ciamis.sch.id';
+  const emailAlt = settings['contact_email_alt'] || '';
+  const phone = settings['contact_phone_main'] || '(0265) 771204';
+  const whatsapp = settings['contact_whatsapp_main'] || '';
+  const socialLinks = useMemo(() => {
+    const collected = Object.entries(settings)
+      .filter(([key, value]) => key.startsWith('social_') && value)
+      .map(([key, value]) => {
+        const name = key.replace(/^social_/, '') || 'social';
+        return { key, name, url: value as string };
+      });
+
+    if (collected.length) return collected;
+
+    // Fallback defaults so footer stays filled even sebelum data diisi
+    return [
+      { key: 'social_instagram', name: 'instagram', url: 'https://www.instagram.com/smkn1ciamis' },
+      { key: 'social_youtube', name: 'youtube', url: 'https://www.youtube.com/@MultimediaSMKNegeri1Ciamis' },
+    ];
+  }, [settings]);
+
+  type LinkItem = { label: string; url: string; type?: 'internal' | 'external'; enabled?: boolean };
+  type NavSection = { title: string; links: LinkItem[]; enabled?: boolean };
+
+  const navSections: NavSection[] = useMemo(() => {
+    const raw = settings['footer_nav_sections_json'];
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as NavSection[];
+        if (Array.isArray(parsed)) return parsed;
+      } catch (err) {
+        console.warn('Invalid footer_nav_sections_json', err);
+      }
+    }
+    return [
+      {
+        title: 'Navigasi Cepat',
+        links: [
+          { label: 'Beranda', url: 'home', type: 'internal', enabled: true },
+          { label: 'Profil Sekolah', url: 'about-us', type: 'internal', enabled: true },
+          { label: 'Sarana Prasarana', url: 'campus', type: 'internal', enabled: true },
+          { label: 'Berita & Agenda', url: 'events', type: 'internal', enabled: true },
+          { label: 'Kehidupan Siswa', url: 'students-life', type: 'internal', enabled: true },
+          { label: 'PPDB', url: 'admissions', type: 'internal', enabled: true },
+          { label: 'Kontak', url: 'contact', type: 'internal', enabled: true },
+        ],
+      },
+    ];
+  }, [settings]);
+
+  const cleanNumber = (value: string) => value.replace(/[^0-9+]/g, '') || value;
+
+  const handleNavigate = (link: LinkItem) => {
+    if (link.type === 'external' || (!link.type && !onNavigate)) {
+      if (link.url) window.open(link.url, '_blank', 'noopener');
+      return;
+    }
+    // internal
+    const page = link.url as PageType;
+    onNavigate?.(page);
+  };
+
+  const resolveSocialIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('instagram') || n === 'ig') return Instagram;
+    if (n.includes('facebook') || n === 'fb') return Facebook;
+    if (n.includes('youtube') || n.includes('yt')) return Youtube;
+    if (n.includes('tiktok') || n.includes('tik-tok')) return Music2;
+    if (n.includes('linkedin') || n.includes('linked')) return Linkedin;
+    if (n.includes('twitter') || n.includes('x_') || n === 'x') return Twitter;
+    if (n.includes('telegram')) return Send;
+    if (n.includes('whatsapp') || n.includes('wa')) return MessageCircle;
+    return LinkIcon;
+  };
 
   return (
     <footer className="bg-[#0b5f97] text-white border-t border-white/15 mt-0">
@@ -27,13 +112,15 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             onClick={() => onNavigate?.('home')}
             className="inline-flex items-center gap-3 mb-10 group"
           >
-            <img
+            <Image
               src="/images/web/logo-smkn1-ciamis.png"
               alt="Logo SMK Negeri 1 Ciamis"
+              width={44}
+              height={44}
               className="w-11 h-11 object-contain"
             />
             <div className="text-left leading-tight">
-              <p className="text-xl font-bold text-white group-hover:text-[#82d1ff] transition-colors leading-none">SMK Negeri 1 Ciamis</p>
+              <p className="text-xl font-bold text-white group-hover:text-[#82d1ff] transition-colors leading-none">{siteName}</p>
               <p className="text-sm text-white/70 mt-0.5 leading-snug">Sekolah Pusat Keunggulan</p>
             </div>
           </button>
@@ -44,17 +131,26 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <MapPin className="w-4 h-4 text-[#63c5ff]" />
                 <h4 className="font-semibold">Alamat Sekolah</h4>
               </div>
-              <p className="text-sm leading-7 text-white/80">Jl. Jenderal Sudirman No. 269, Ciamis, Jawa Barat, Indonesia</p>
+              <p className="text-sm leading-7 text-white/80">{address}</p>
             </div>
 
             <div className="p-1 xl:pr-6 xl:border-r xl:border-white/20">
               <div className="flex items-center gap-2.5 mb-2 text-white">
                 <Mail className="w-4 h-4 text-[#63c5ff]" />
-                <h4 className="font-semibold">Surel</h4>
+                <h4 className="font-semibold">Email</h4>
               </div>
-              <a href="mailto:smkn1ciamis@smkn1ciamis.sch.id" className="text-sm leading-7 text-white/80 hover:text-white transition-colors">
-                smkn1ciamis@smkn1ciamis.sch.id
-              </a>
+              <div className="flex flex-col gap-1.5">
+                <a href={`mailto:${email}`} className="text-sm leading-6 text-white/80 hover:text-white transition-colors">
+                  <span className="block font-medium text-white">Utama</span>
+                  <span className="block">{email}</span>
+                </a>
+                {emailAlt && (
+                  <a href={`mailto:${emailAlt}`} className="text-sm leading-6 text-white/80 hover:text-white transition-colors">
+                    <span className="block font-medium text-white">Alternatif</span>
+                    <span className="block">{emailAlt}</span>
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="p-1 xl:pr-6 xl:border-r xl:border-white/20">
@@ -62,9 +158,23 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <MessageSquare className="w-4 h-4 text-[#63c5ff]" />
                 <h4 className="font-semibold">Kontak</h4>
               </div>
-              <a href="tel:+62265771204" className="block text-sm leading-7 text-white/80 hover:text-white transition-colors">
-                (0265) 771204
-              </a>
+              <div className="flex flex-col gap-1.5 text-sm leading-6 text-white/80">
+                <a href={`tel:${cleanNumber(phone)}`} className="hover:text-white transition-colors">
+                  <span className="block font-medium text-white">Telepon Utama</span>
+                  <span className="block">{phone}</span>
+                </a>
+                {whatsapp && (
+                  <a
+                    href={`https://wa.me/${cleanNumber(whatsapp).replace(/^\+/, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    <span className="block font-medium text-white">WhatsApp Utama</span>
+                    <span className="block">{whatsapp}</span>
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="p-1">
@@ -72,53 +182,53 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <h4 className="font-semibold">Media Sosial</h4>
               </div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <a
-                  href="https://www.instagram.com/smkn1ciamis"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Instagram"
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
-                <span className="text-white/80" aria-label="Facebook">
-                  <Facebook className="w-4 h-4" />
-                </span>
-                <a
-                  href="https://www.youtube.com/@MultimediaSMKNegeri1Ciamis"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="YouTube"
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <Youtube className="w-4 h-4" />
-                </a>
-                <span className="text-white/80" aria-label="TikTok">
-                  <Music2 className="w-4 h-4" />
-                </span>
+                {socialLinks.map((social) => {
+                  const Icon = resolveSocialIcon(social.name);
+                  const label = social.name.replace(/_/g, ' ');
+                  return (
+                    <a
+                      key={social.key}
+                      href={social.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={label}
+                      className="text-white/80 hover:text-white transition-colors"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>
 
           <div className="border-t border-white/20 pt-8 md:pt-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <h4 className="font-semibold text-lg mb-6">Navigasi Cepat</h4>
-                <div className="flex flex-col gap-3">
-                  {footerLinks.map((link) => (
-                    <button
-                      key={link.page}
-                      type="button"
-                      onClick={() => onNavigate?.(link.page)}
-                      className="text-sm text-white/75 hover:text-white transition-colors text-left"
-                    >
-                      {link.label}
-                    </button>
+            <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 lg:gap-10">
+                {navSections
+                  .filter((section) => section.enabled !== false)
+                  .map((section, idx) => (
+                    <div key={`${section.title}-${idx}`} className="space-y-3">
+                      <h4 className="font-semibold text-lg">{section.title}</h4>
+                      <div className="flex flex-col gap-2.5">
+                        {section.links
+                          .filter((l) => l.enabled !== false)
+                          .map((link, i) => (
+                            <button
+                              key={`${section.title}-${i}-${link.label}`}
+                              type="button"
+                              onClick={() => handleNavigate(link)}
+                              className="text-sm text-white/75 hover:text-white transition-colors text-left"
+                            >
+                              {link.label}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
                   ))}
-                </div>
               </div>
 
-              <div>
+              {/* <div>
                 <h4 className="font-semibold text-lg mb-6">Lokasi Sekolah</h4>
                 <div className="rounded-xl overflow-hidden border border-white/15 h-56">
                   <iframe
@@ -126,12 +236,12 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
-                    allowFullScreen=""
+                    allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

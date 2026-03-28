@@ -140,7 +140,7 @@ const App: React.FC = () => {
 
       const displayName = session?.user?.name?.split(' ')[0] || session?.user?.name || 'Pengguna';
 
-      const msg = welcome === 'new' ? `Selamat Datang ${displayName}` : `Selamat Datang Kembali ${displayName}`;
+      const msg = welcome === 'new' ? `Selamat Datang ${displayName}` : `Selamat Datang kembali ${displayName}`;
 
       setWelcomeMessage(msg);
 

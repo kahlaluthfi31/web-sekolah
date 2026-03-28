@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { GraduationCap, UserCircle2, ChevronLeft, ChevronRight, Users, Award } from 'lucide-react'
+import { usePageHeader } from '@/lib/usePageHeader'
 
 //  Types 
 interface StructureGroup {
@@ -149,10 +150,6 @@ function StrukturSection() {
           <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">Organisasi Sekolah</span>
           <span className="text-xs text-gray-400">01 / 02</span>
         </div>
-
-        <p className="text-gray-600 text-base md:text-lg max-w-2xl mb-12">
-          Susunan organisasi tenaga pendidik dan kependidikan SMK Negeri 1 Ciamis.
-        </p>
         {loading ? (
           <div className="flex flex-col items-center gap-6">
             {[1,2,3].map(i => (
@@ -437,9 +434,18 @@ function RiwayatKepsekSection() {
 }
 
 //  Page Root 
-const FacultyPage: React.FC = () => (
-  <div className="min-h-screen bg-gray-50">
-    <section className="pt-24 pb-16 relative overflow-hidden">
+const FacultyPage: React.FC = () => {
+  const header = usePageHeader('faculty', {
+    title: 'Struktur Sekolah',
+    subtitle:
+      'Mengenal lebih dekat tenaga pendidik dan pimpinan yang mendedikasikan diri untuk kemajuan sekolah.',
+  })
+
+  const displayLines = (header.displayTitle || header.title || '').split('\n')
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <section className="pt-24 pb-16 relative overflow-hidden">
       <div className="absolute inset-0 bg-linear-to-b from-[#0268ab] via-[#0268ab]/80 to-transparent"></div>
 
       <div className="absolute inset-0 opacity-15">
@@ -467,20 +473,25 @@ const FacultyPage: React.FC = () => (
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-3xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            Struktur
-            <span className="block text-5xl md:text-6xl lg:text-7xl font-light mt-2">Sekolah</span>
-          </h1>
-          <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
-            Mengenal lebih dekat tenaga pendidik dan pimpinan yang mendedikasikan diri untuk kemajuan sekolah.
-          </p>
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              {displayLines[0] || 'Struktur Sekolah'}
+              {displayLines[1] && (
+                <span className="block text-5xl md:text-6xl lg:text-7xl font-light mt-2">{displayLines[1]}</span>
+              )}
+            </h1>
+            {header.subtitle && (
+              <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+                {header.subtitle}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
-    <StrukturSection />
-    <RiwayatKepsekSection />
-  </div>
-)
+      </section>
+      <StrukturSection />
+      <RiwayatKepsekSection />
+    </div>
+  )
+}
 
 export default FacultyPage

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface PageHeaderData {
   title: string
@@ -19,8 +19,22 @@ function injectLineBreak(raw: string): string {
 }
 
 export function usePageHeader(pageKey: string, fallback?: PageHeaderData) {
+  const fallbackRef = useRef<PageHeaderData | undefined>(fallback)
   const [header, setHeader] = useState<PageHeaderData | null>(fallback ?? null)
   const [loading, setLoading] = useState(true)
+
+  // Keep fallback stable without retriggering fetch loop when callers pass new object each render
+  useEffect(() => {
+    fallbackRef.current = fallback
+    if (fallback) {
+      setHeader({
+        ...fallback,
+        displayTitle: injectLineBreak(fallback.title),
+        loading: false,
+      })
+      setLoading(false)
+    }
+  }, [fallback?.title, fallback?.subtitle])
 
   useEffect(() => {
     let isMounted = true
@@ -41,8 +55,8 @@ export function usePageHeader(pageKey: string, fallback?: PageHeaderData) {
 
         if (isActive === false) return
 
-        const effectiveTitle = title || fallback?.title || ''
-        const effectiveSubtitle = subtitle ?? fallback?.subtitle ?? ''
+  const effectiveTitle = title || fallbackRef.current?.title || ''
+  const effectiveSubtitle = subtitle ?? fallbackRef.current?.subtitle ?? ''
 
         setHeader({
           title: effectiveTitle,
@@ -52,10 +66,10 @@ export function usePageHeader(pageKey: string, fallback?: PageHeaderData) {
         })
       } catch (error) {
         console.error('Page header fetch failed', error)
-        if (fallback) {
+        if (fallbackRef.current) {
           setHeader({
-            ...fallback,
-            displayTitle: injectLineBreak(fallback.title),
+            ...fallbackRef.current,
+            displayTitle: injectLineBreak(fallbackRef.current.title),
             loading: false,
           })
         }
@@ -68,7 +82,7 @@ export function usePageHeader(pageKey: string, fallback?: PageHeaderData) {
     return () => {
       isMounted = false
     }
-  }, [pageKey, fallback])
+  }, [pageKey])
 
   if (!header) {
     return { title: '', subtitle: '', displayTitle: '', loading }
