@@ -9,6 +9,7 @@ export const newsCreateSchema = z.object({
   featuredImage: z.string().optional(),
   category: z.enum(['berita', 'kejuaraan', 'pengumuman', 'event']),
   authorId: z.number().optional(),
+  authorName: z.string().max(255).optional(),
   creatorName: z.string().max(255).optional(),
   creatorCategory: z.string().max(100).optional(),
   isPublished: z.boolean().default(false),

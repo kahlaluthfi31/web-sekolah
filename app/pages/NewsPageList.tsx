@@ -12,6 +12,7 @@ interface NewsPageListProps {
 type NewsItem = {
   id: number;
   title: string;
+  slug?: string | null;
   excerpt: string | null;
   content?: string | null;
   featuredImage: string | null;
@@ -40,6 +41,7 @@ const PLACEHOLDER_IMG =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2NzUiIHZpZXdCb3g9IjAgMCAxMjAwIDY3NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjc1IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9IjQ4MCAyNzBINzIwVjQwNUg0ODBWMjcwWiIgZmlsbD0iI0QxRDVEQiIvPgo8c3ZnIHdpZHRoPSIyNDAiIGhlaWdodD0iMTM1IiB2aWV3Qm94PSIwIDAgMjQwIDEzNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxMzUiIGZpbGw9IiNGM0Y0RjYiLz4KPHBhdGggZD0iMTExLjIgNTQuM0gxMjguOFY4MC43SDExMS4yVjU0LjNaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K";
 
 const PAGE_SIZE = 8;
+const SESSION_KEY = 'smk_last_page';
 
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return '-';
@@ -163,7 +165,17 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
 
   const handleNewsSelect = (item: NewsItem) => {
     sessionStorage.setItem('selected_news_item', JSON.stringify(item));
-    onNavigate?.('news-details');
+    const slug = item.slug?.trim();
+    if (!onNavigate) {
+      if (slug) {
+        window.location.href = `/berita/${slug}`;
+        return;
+      }
+      sessionStorage.setItem(SESSION_KEY, 'news-details');
+      window.location.href = '/';
+      return;
+    }
+    onNavigate('news-details');
   };
 
   const featuredNews = sortedNews[0];

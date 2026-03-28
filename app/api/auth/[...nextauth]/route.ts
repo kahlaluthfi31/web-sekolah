@@ -180,14 +180,6 @@ const authConfig: NextAuthConfig = {
         }
       }
     },
-    async signOut() {
-      try {
-        return true
-      } catch (error) {
-        console.error('Sign out error', error)
-        return true
-      }
-    },
   },
   secret: process.env.NEXTAUTH_SECRET || 'dev-secret-change-me',
   trustHost: true,

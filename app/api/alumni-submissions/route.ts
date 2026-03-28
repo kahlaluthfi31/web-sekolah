@@ -1,13 +1,12 @@
 import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, handleError, apiError } from '@/lib/api-response'
 import { alumniSubmissionCreateSchema } from '@/lib/validations'
-import { authOptions } from '../auth/[...nextauth]/route'
+import { auth } from '../auth/[...nextauth]/route'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+  const session = await auth()
     if (!session?.user?.id) {
       return apiError('Silakan login untuk melanjutkan.', 401)
     }
@@ -35,7 +34,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+  const session = await auth()
     if (!session?.user?.id) {
       return apiError('Silakan login untuk mengirim testimoni.', 401)
     }

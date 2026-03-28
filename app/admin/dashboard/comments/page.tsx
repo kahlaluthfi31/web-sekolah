@@ -138,7 +138,7 @@ export default function CommentsPage() {
   }
 
   const handleViewNews = (slug?: string | null) => {
-    if (slug) window.open('/news/' + slug, '_blank')
+    if (slug) window.open('/berita/' + slug, '_blank')
     else alert('Berita tidak ditemukan atau tidak memiliki slug.')
   }
 

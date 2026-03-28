@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiPagination, handleError } from '@/lib/api-response'
+import { CommentContentType } from '@prisma/client'
+import { apiPagination, apiSuccess, apiError, handleError } from '@/lib/api-response'
+import { auth } from '@/app/api/auth/[...nextauth]/route'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,13 +10,27 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const status = searchParams.get('status')
-    const contentType = searchParams.get('contentType')
+  const contentType = searchParams.get('contentType') as CommentContentType | null
+    const contentId = searchParams.get('contentId')
     const search = searchParams.get('search')
+    const mine = searchParams.get('mine') === 'true'
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
     if (status) where.status = status
-    if (contentType) where.contentType = contentType
+  if (contentType) where.contentType = contentType
+    if (contentId) {
+      const parsedContentId = parseInt(contentId)
+      if (!Number.isNaN(parsedContentId)) {
+        where.contentId = parsedContentId
+      }
+    }
+    if (mine) {
+      const session = await auth()
+      const userId = session?.user?.id
+      if (!userId) return apiError('Unauthorized', 401)
+      where.userId = parseInt(userId)
+    }
     if (search) {
       where.OR = [
         { commentText: { contains: search } },
@@ -71,6 +87,58 @@ export async function GET(request: NextRequest) {
     )
 
     return apiPagination(dataWithTitles, page, limit, total)
+  } catch (error) {
+    return handleError(error)
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth()
+    const userId = session?.user?.id
+    if (!userId) return apiError('Unauthorized', 401)
+
+    const body = await request.json()
+  const contentType = body?.contentType as CommentContentType | undefined
+  const contentId = typeof body?.contentId === 'number' ? body.contentId : parseInt(body?.contentId)
+    const commentText = String(body?.commentText || '').trim()
+
+    if (!contentType || !commentText || Number.isNaN(contentId) || contentId <= 0) {
+      return apiError('Data komentar tidak lengkap', 400)
+    }
+
+    const existing = await prisma.comment.findFirst({
+      where: {
+        contentType,
+        contentId,
+        userId: parseInt(userId),
+      },
+    })
+
+    if (existing) {
+      const updated = await prisma.comment.update({
+        where: { id: existing.id },
+        data: {
+          commentText,
+          status: 'pending',
+          approvedById: null,
+          approvedAt: null,
+        },
+      })
+      return apiSuccess(updated, 'Komentar diperbarui dan menunggu verifikasi')
+    }
+
+    const created = await prisma.comment.create({
+      data: {
+        contentType,
+        contentId,
+        userId: parseInt(userId),
+        commentText,
+        status: 'pending',
+      },
+    })
+
+    return apiSuccess(created, 'Komentar dikirim dan menunggu verifikasi')
   } catch (error) {
     return handleError(error)
   }

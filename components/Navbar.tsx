@@ -182,6 +182,16 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
     // { name: 'News Details', page: 'news-details' },
   ];
 
+  const handleMainNavClick = (page: PageType) => {
+    if (page === "news") {
+      if (typeof window !== "undefined") {
+        window.location.href = "/berita";
+      }
+      return;
+    }
+    onNavigate(page);
+  };
+
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${navbarStyle}`}
@@ -325,7 +335,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
               {mainNavItems.slice(1).map((item) => (
                 <React.Fragment key={item.name}>
                   <button
-                    onClick={() => onNavigate(item.page)}
+                    onClick={() => handleMainNavClick(item.page)}
                     className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
                   >
                     {item.name}
@@ -390,7 +400,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
               <React.Fragment key={item.name}>
                 <button
                   onClick={() => {
-                    onNavigate(item.page);
+                    handleMainNavClick(item.page);
                     setIsOpen(false);
                   }}
                   className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50"

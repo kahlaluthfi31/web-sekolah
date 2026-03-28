@@ -37,6 +37,8 @@ model User {
   adminPermission      AdminPermission?
   passwordResetTokens  PasswordResetToken[]
   loginActivities      LoginActivity[]
+  newsViews            NewsView[]
+  newsShares           NewsShare[]
 
   @@map("users")
 }
@@ -459,9 +461,11 @@ model News {
   featuredImage   String?      @map("featured_image") @db.VarChar(255)
   category        NewsCategory
   authorId        Int?         @map("author_id")
+  authorName      String?      @map("author_name") @db.VarChar(255)
   creatorName     String?      @map("creator_name") @db.VarChar(255)
   creatorCategory String?      @map("creator_category") @db.VarChar(100)
   views           Int          @default(0)
+  shares          Int          @default(0)
   isPublished     Boolean      @default(false) @map("is_published")
   publishedAt     DateTime?    @map("published_at")
   createdAt       DateTime     @default(now()) @map("created_at")
@@ -470,8 +474,40 @@ model News {
   // Relations
   author User?      @relation("NewsAuthor", fields: [authorId], references: [id])
   tags   NewsTag[]
+  viewsLog NewsView[]
+  sharesLog NewsShare[]
 
   @@map("news")
+}
+
+model NewsView {
+  id        Int      @id @default(autoincrement())
+  newsId    Int      @map("news_id")
+  viewerKey String   @map("viewer_key") @db.VarChar(191)
+  userId    Int?     @map("user_id")
+  guestId   String?  @map("guest_id") @db.VarChar(191)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  news News @relation(fields: [newsId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([newsId, viewerKey])
+  @@map("news_views")
+}
+
+model NewsShare {
+  id        Int      @id @default(autoincrement())
+  newsId    Int      @map("news_id")
+  viewerKey String   @map("viewer_key") @db.VarChar(191)
+  userId    Int?     @map("user_id")
+  guestId   String?  @map("guest_id") @db.VarChar(191)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  news News @relation(fields: [newsId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([newsId, viewerKey])
+  @@map("news_shares")
 }
 
 enum NewsCategory {
@@ -740,6 +776,7 @@ model Comment {
   approvedById Int?              @map("approved_by")
   approvedAt  DateTime?          @map("approved_at")
   createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
 
   // Relations
   user       User          @relation(fields: [userId], references: [id])
@@ -747,6 +784,7 @@ model Comment {
   likes      CommentLike[]
 
   @@map("comments")
+  @@unique([contentType, contentId, userId])
 }
 
 enum CommentContentType {

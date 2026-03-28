@@ -20,8 +20,10 @@ interface News {
   category: string
   isPublished: boolean
   views: number
+  shares?: number
   creatorName: string | null
   creatorCategory: string | null
+  authorName?: string | null
   createdAt: string
   author: { id: number; name: string } | null
   tags: { id: number; tagName: string }[]
@@ -39,12 +41,46 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const CREATOR_CATEGORIES = ['Guru','Siswa Piket Kelas 10','Siswa Piket Kelas 11','Siswa Piket Kelas 12','Tim Medsos']
 
+class NewsImageUploadAdapter {
+  loader: { file: Promise<File> }
+  abortController: AbortController | null = null
+
+  constructor(loader: { file: Promise<File> }) {
+    this.loader = loader
+  }
+
+  upload() {
+    return this.loader.file.then(async (file) => {
+      this.abortController = new AbortController()
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        signal: this.abortController.signal,
+      })
+      const json = await res.json()
+      if (!json?.success || !json?.data?.url) {
+        throw new Error(json?.message || 'Gagal upload gambar')
+      }
+      return { default: json.data.url as string }
+    })
+  }
+
+  abort() {
+    if (this.abortController) this.abortController.abort()
+  }
+}
+
 const CkEditor = dynamic(async () => {
   const { CKEditor } = await import('@ckeditor/ckeditor5-react')
-  const Classic = (await import('@ckeditor/ckeditor5-build-classic')).default
+  const ClassicModule = await import('@ckeditor/ckeditor5-build-classic')
+  const Classic = ((ClassicModule as { default?: unknown; ClassicEditor?: unknown }).default
+    ?? (ClassicModule as { ClassicEditor?: unknown }).ClassicEditor
+    ?? ClassicModule) as unknown
   type CKProps = Omit<React.ComponentProps<typeof CKEditor>, 'editor'>
   return function CkEditorWrapper(props: CKProps) {
-    return <CKEditor editor={Classic} {...props} />
+    return <CKEditor editor={Classic as never} {...props} />
   }
 }, { ssr: false })
 
@@ -104,19 +140,24 @@ function DeleteModal({ news, onConfirm, onCancel, deleting }: { news: News; onCo
 
 function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | null; userSession: UserSession | null; onClose: () => void; onSaved: () => void }) {
   const isEdit = !!news
+  const [isClient, setIsClient] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [form, setForm] = useState({ title: '', slug: '', excerpt: '', content: '', featuredImage: '', category: 'berita', isPublished: false, tags: '', creatorName: '', creatorCategory: '' })
+  const [form, setForm] = useState({ title: '', slug: '', excerpt: '', content: '', featuredImage: '', category: 'berita', isPublished: false, tags: '', creatorName: '', creatorCategory: '', authorName: '' })
 
   useEffect(() => {
     if (news) {
-      setForm({ title: news.title || '', slug: news.slug || '', excerpt: news.excerpt || '', content: news.content || '', featuredImage: news.featuredImage || '', category: news.category || 'berita', isPublished: news.isPublished || false, tags: news.tags?.map(t => t.tagName).join(' ') || '', creatorName: news.creatorName || '', creatorCategory: news.creatorCategory || '' })
+      setForm({ title: news.title || '', slug: news.slug || '', excerpt: news.excerpt || '', content: news.content || '', featuredImage: news.featuredImage || '', category: news.category || 'berita', isPublished: news.isPublished || false, tags: news.tags?.map(t => t.tagName).join(' ') || '', creatorName: news.creatorName || '', creatorCategory: news.creatorCategory || '', authorName: news.authorName || '' })
       if (news.featuredImage) setImagePreview(news.featuredImage)
     }
   }, [news])
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Auto-generate slug from title (both create & edit)
   useEffect(() => {
@@ -192,31 +233,38 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Judul <span className="text-red-500">*</span></label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan judul berita..." required /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Slug (URL) <span className="text-xs text-gray-400 font-normal">— otomatis dari judul</span></label><input type="text" value={form.slug} readOnly className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-100 text-gray-500 cursor-not-allowed" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Ringkasan</label><textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows={3} placeholder="Ringkasan singkat berita..." /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Penulis <span className="text-xs text-gray-400 font-normal">(opsional)</span></label><input type="text" value={form.authorName} onChange={e => setForm(f => ({ ...f, authorName: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="cth: Kahla Luthfiyah Halim" /></div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Konten <span className="text-red-500">*</span></label>
                     <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
-                      <CkEditor
-                        data={form.content}
-                        onChange={(_event, editor) => {
-                          const html = editor.getData()
-                          setForm(f => ({ ...f, content: html }))
-                        }}
-                        config={{
-                          toolbar: [
-                            'heading', '|',
-                            'bold', 'italic', 'underline', 'strikethrough', '|',
-                            'bulletedList', 'numberedList', '|',
-                            'link', 'insertTable', 'blockQuote', 'undo', 'redo', '|',
-                            'alignment', 'fontSize', 'fontColor', 'fontBackgroundColor', '|',
-                            'imageUpload'
-                          ],
-                          image: {
+                      {isClient ? (
+                        <CkEditor
+                          data={form.content}
+                          onReady={(editor) => {
+                            editor.plugins.get('FileRepository').createUploadAdapter = (loader: { file: Promise<File> }) => new NewsImageUploadAdapter(loader)
+                          }}
+                          onChange={(_event, editor) => {
+                            const html = editor.getData()
+                            setForm(f => ({ ...f, content: html }))
+                          }}
+                          config={{
                             toolbar: [
-                              'imageTextAlternative', 'imageStyle:alignLeft', 'imageStyle:full', 'imageStyle:alignRight'
-                            ]
-                          },
-                        }}
-                      />
+                              'heading', '|',
+                              'bold', 'italic', '|',
+                              'bulletedList', 'numberedList', '|',
+                              'link', 'insertTable', 'blockQuote', 'undo', 'redo', '|',
+                              'imageUpload'
+                            ],
+                            image: {
+                              toolbar: [
+                                'imageTextAlternative', 'imageStyle:alignLeft', 'imageStyle:full', 'imageStyle:alignRight'
+                              ]
+                            },
+                          }}
+                        />
+                      ) : (
+                        <div className="p-4 text-xs text-gray-400">Memuat editor...</div>
+                      )}
                     </div>
                     <p className="text-xs text-gray-400 mt-1">Konten disimpan sebagai HTML. Anda bisa menambah gambar di antara paragraf.</p>
                   </div>
@@ -297,6 +345,17 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
               }
               .ck-editor__main > .ck-editor__editable {
                 border-radius: 0 0 12px 12px;
+              }
+              .ck-content ul {
+                list-style-type: disc;
+                padding-left: 1.5rem;
+              }
+              .ck-content ol {
+                list-style-type: decimal;
+                padding-left: 1.5rem;
+              }
+              .ck-content li {
+                margin: 0.25rem 0;
               }
             `}</style>
           </div>

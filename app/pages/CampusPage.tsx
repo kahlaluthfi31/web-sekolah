@@ -447,7 +447,7 @@ const CampusPage: React.FC = () => {
               <aside className="lg:col-span-4 xl:col-span-3 rounded-2xl p-5 h-fit">
                 <div className="max-w-3xl mb-8">
                   <h1 className="text-4xl font-semibold uppercase text-gray-700 mb-2">
-                    Jelajahi Kampus {" "} <br />
+                    Jelajahi Sekolah {" "} <br />
                     <span className="text-[#0268ab] uppercase tracking-wide">
                       Secara Virtual
                     </span>
