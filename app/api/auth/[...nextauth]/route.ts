@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import NextAuth from 'next-auth'
+import NextAuth, { type NextAuthConfig } from 'next-auth'
 import type { Account, Profile, Session, User } from 'next-auth'
 import type { JWT } from 'next-auth/jwt'
 import GoogleProvider from 'next-auth/providers/google'
@@ -12,7 +12,6 @@ const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 
 const providers = [
-  // Google is optional — only register when env vars are present to avoid runtime JSON errors
   ...(googleClientId && googleClientSecret
     ? [
         GoogleProvider({
@@ -54,10 +53,10 @@ if (!googleClientId || !googleClientSecret) {
   console.warn('Google OAuth tidak diaktifkan: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET belum di-set')
 }
 
-export const authOptions = {
+const authConfig: NextAuthConfig = {
   providers,
   session: {
-    strategy: 'jwt' as const,
+    strategy: 'jwt',
   },
   pages: {
     signIn: '/login',
@@ -65,7 +64,6 @@ export const authOptions = {
   callbacks: {
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
       try {
-        // Tangani /api/auth/error agar dikirim ke login/register dengan pesan error
         const errorParam = (() => {
           try {
             const u = new URL(url, baseUrl)
@@ -75,11 +73,10 @@ export const authOptions = {
           }
         })()
 
-      if (errorParam) {
-        return `${baseUrl}/login?error=${encodeURIComponent(errorParam)}`
-      }
+        if (errorParam) {
+          return `${baseUrl}/login?error=${encodeURIComponent(errorParam)}`
+        }
 
-        // default: allow NextAuth defaults (same-origin only), preserve relative URLs with query
         if (url.startsWith('/')) return `${baseUrl}${url}`
         if (url.startsWith(baseUrl)) return url
         return baseUrl
@@ -98,7 +95,6 @@ export const authOptions = {
           const picture = (profile as { picture?: string } | null)?.picture || null
 
           if (!existing) {
-            // User baru via Google -> otomatis aktif sebagai user biasa
             await prisma.user.create({
               data: {
                 name: user.name || 'Pengguna Google',
@@ -110,7 +106,6 @@ export const authOptions = {
               },
             })
           } else {
-            // Jika sebelumnya non-aktif, aktifkan kembali saat login via Google
             const ensureActive = existing.status !== 'active'
             await prisma.user.update({
               where: { id: existing.id },
@@ -131,9 +126,8 @@ export const authOptions = {
 
       return true
     },
-    async jwt({ token, user, account }: { token: JWT; user?: User | null; account?: Account | null }) {
+    async jwt({ token, user }: { token: JWT; user?: User | null }) {
       try {
-        // Saat login, paksa pakai ID user di database (bukan sub Google yang panjang)
         if (user?.email) {
           const dbUser = await prisma.user.findUnique({ where: { email: user.email } })
           if (dbUser) {
@@ -142,14 +136,12 @@ export const authOptions = {
             token.email = dbUser.email
           }
         } else if (user?.id) {
-          // fallback: credentials login sudah mengirim id numerik sebagai string
           token.sub = user.id
           token.role = (user as { role?: string }).role || token.role || 'user'
           token.email = user.email
         }
       } catch (err) {
         console.error('JWT callback error', err)
-        // Set default values to prevent undefined token
         if (user?.email) {
           token.email = user.email
           token.role = 'user'
@@ -163,38 +155,33 @@ export const authOptions = {
         const userEmail = (token as { email?: string }).email || ''
         const userId = token.sub || ''
 
-        // Ensure session.user exists
-        if (session.user) {
-          session.user.id = userId
-          session.user.email = userEmail
-          ;(session.user as any).role = userRole
-        } else {
-          session.user = {
-            id: userId,
-            email: userEmail,
-            name: (token as { name?: string }).name || 'User',
-            image: null,
-          } as any
-          ;(session.user as any).role = userRole
-        }
+        type SessionUser = Session['user'] & { id: string; role?: string }
+
+        const buildUser = (base?: Session['user'] | null): SessionUser => ({
+          id: userId,
+          email: userEmail,
+          name: base?.name ?? (token as { name?: string }).name ?? 'User',
+          image: base?.image ?? null,
+          role: userRole,
+        })
+
+        session.user = session.user ? buildUser(session.user) : buildUser()
 
         return session
       } catch (error) {
         console.error('Session callback error', error)
-        // Return default session to prevent crashes
         return {
           ...session,
           user: {
-            ...session.user,
+            ...(session.user || {}),
             id: token.sub || '',
             email: (token as { email?: string }).email || '',
-          } as any,
+          },
         }
       }
     },
     async signOut() {
       try {
-        // Cleanup on sign out
         return true
       } catch (error) {
         console.error('Sign out error', error)
@@ -211,8 +198,6 @@ export const authOptions = {
   },
 }
 
-const { handlers, auth, signIn, signOut } = NextAuth(authOptions)
+export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth(authConfig)
 
-export const GET = handlers.GET
-export const POST = handlers.POST
-export { auth, signIn, signOut }
+export { authConfig as authOptions }

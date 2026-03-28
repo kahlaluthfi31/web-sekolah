@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import type { PannellumConfig } from "@/components/VirtualTourViewer";
-import { Compass, Info, Route, ExternalLink } from "lucide-react";
+import type { PannellumConfig, PannellumScene } from "@/components/VirtualTourViewer";
+import { Compass, Info, Route } from "lucide-react";
 import { usePageHeader } from "@/lib/usePageHeader";
 
 const VirtualTourViewer = dynamic(
@@ -20,7 +20,6 @@ const CampusPage: React.FC = () => {
   const [tourConfig, setTourConfig] = useState<PannellumConfig | null>(null);
   const [loadingTour, setLoadingTour] = useState(true);
   const [tourError, setTourError] = useState<string>("");
-  const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
   const prevTourConfigRef = useRef<string>("");
 
   type FacilityCard = {
@@ -109,8 +108,8 @@ const CampusPage: React.FC = () => {
 
         const scenes: Scene[] = json.data;
         const defaultScene = scenes.find((s) => s.isDefault) ?? scenes[0];
-        const sceneKeyById = new Map(scenes.map((s) => [s.id, s.sceneKey]));
-        const scenesMap: Record<string, unknown> = {};
+  const sceneKeyById = new Map(scenes.map((s) => [s.id, s.sceneKey]));
+  const scenesMap: Record<string, PannellumScene> = {};
 
         for (const scene of scenes) {
           scenesMap[scene.sceneKey] = {
@@ -137,14 +136,13 @@ const CampusPage: React.FC = () => {
 
         const config: PannellumConfig = {
           default: { firstScene: defaultScene.sceneKey },
-          scenes: scenesMap as Record<string, PannellumScene>,
+          scenes: scenesMap,
         };
 
         const configStr = JSON.stringify(config);
         if (prevTourConfigRef.current !== configStr) {
           prevTourConfigRef.current = configStr;
           setTourConfig(config);
-          setActiveSceneId(config.default.firstScene);
         }
       } catch (err) {
         console.error("Failed to load virtual tour config", err);
@@ -157,7 +155,8 @@ const CampusPage: React.FC = () => {
   }, []);
 
   const galleryPhotos = useMemo(() => {
-    if (!facilities || facilities.length === 0) return [] as { title: string; desc: string; img: string }[];
+    if (!facilities || facilities.length === 0)
+      return [] as { title: string; desc: string; img: string }[];
     return facilities.map((item) => ({
       title: item.name || "Fasilitas",
       desc: item.category || "",
@@ -195,7 +194,9 @@ const CampusPage: React.FC = () => {
   };
 
   const prevModal = () => {
-    setModalIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length);
+    setModalIndex(
+      (prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length,
+    );
   };
 
   const handlePageChange = (page: number) => {
@@ -393,8 +394,100 @@ const CampusPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Experience Campus Virtual Tour */}
       <section className="py-16 lg:py-20 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-5">
+            <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">
+              Virtual Tour
+            </span>
+            <span className="text-xs text-gray-400">02 / 03</span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="w-full lg:col-span-7 bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
+              <div className="relative bg-gray-100" style={{ height: "420px" }}>
+                {loadingTour ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-10 h-10 border-2 border-gray-300 border-t-[#0268ab] rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-sm text-gray-600">Memuat Virtual Tour...</p>
+                    </div>
+                  </div>
+                ) : tourConfig &&
+                  tourConfig.default?.firstScene &&
+                  Object.keys(tourConfig.scenes || {}).length > 0 ? (
+                  <div className="h-full flex flex-col">
+                    <div className="flex-1">
+                      <VirtualTourViewer
+                        config={tourConfig}
+                        height="420px"
+                        showCoords={false}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center max-w-md px-6">
+                      <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Info className="w-7 h-7 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Virtual Tour Belum Tersedia
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {tourError ||
+                          "Kami sedang menyiapkan pengalaman virtual tour terbaik untuk Anda."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="w-full lg:col-span-5">
+              <aside className="lg:col-span-4 xl:col-span-3 rounded-2xl p-5 h-fit">
+                <div className="max-w-3xl mb-8">
+                  <h1 className="text-4xl font-semibold uppercase text-gray-700 mb-2">
+                    Jelajahi Kampus {" "} <br />
+                    <span className="text-[#0268ab] uppercase tracking-wide">
+                      Secara Virtual
+                    </span>
+                  </h1>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Nikmati tur 360° untuk melihat ruang kelas, laboratorium,
+                    dan lingkungan sekolah tanpa harus datang langsung. Klik
+                    tombol di bawah untuk memulai pengalaman.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Cara Penggunaan
+                  </h3>
+                </div>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="flex items-start gap-2.5">
+                    <Compass className="w-4 h-4 text-[#0268ab] mt-0.5" />
+                    <span>
+                      Klik dan seret untuk melihat sekeliling panorama.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Route className="w-4 h-4 text-[#0268ab] mt-0.5" />
+                    <span>Klik hotspot untuk berpindah ke lokasi lain atau melihat informasi sebuah tempat.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Info className="w-4 h-4 text-[#0268ab] mt-0.5" />
+                    <span>
+                      Gunakan kontrol viewer untuk reset dan fullscreen.
+                    </span>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* Experience Campus Virtual Tour */}
+      {/* <section className="py-16 lg:py-20 bg-gray-50 border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-5">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">
@@ -474,7 +567,8 @@ const CampusPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> 
+      */}
 
       {/* Dokumentasi Sekolah */}
       <section className="py-16 lg:py-20 bg-white">
@@ -487,7 +581,9 @@ const CampusPage: React.FC = () => {
           </div>
 
           {galleryPhotos.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">Belum ada foto fasilitas.</div>
+            <div className="text-center text-gray-500 py-8">
+              Belum ada foto fasilitas.
+            </div>
           ) : (
             <div className="grid grid-cols-4 grid-rows-2 gap-1 w-full mb-8">
               {currentImages.map((item, i) => {
@@ -529,8 +625,12 @@ const CampusPage: React.FC = () => {
                         <div className="absolute bottom-0 left-0 right-0 p-4">
                           <div className="flex items-end justify-between">
                             <div>
-                              <h4 className="text-white font-semibold text-sm mb-1">{item.title}</h4>
-                              <p className="text-white/60 text-xs">{item.desc}</p>
+                              <h4 className="text-white font-semibold text-sm mb-1">
+                                {item.title}
+                              </h4>
+                              <p className="text-white/60 text-xs">
+                                {item.desc}
+                              </p>
                             </div>
                             <div className="bg-white/20 backdrop-blur-sm p-1.5 rounded-lg">
                               <svg
@@ -584,7 +684,7 @@ const CampusPage: React.FC = () => {
           )}
 
           {/* Minimalist Pagination */}
-              {galleryPhotos.length > 0 && totalPages > 1 && (
+          {galleryPhotos.length > 0 && totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-gray-100">
               <div className="text-xs text-gray-500">
                 {startIndex + 1}-{Math.min(endIndex, galleryPhotos.length)} dari{" "}
@@ -667,7 +767,10 @@ const CampusPage: React.FC = () => {
       </section>
 
       {showGalleryModal && galleryPhotos.length > 0 && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4" onClick={closeModal}>
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4"
+          onClick={closeModal}
+        >
           <div
             className="relative w-full max-w-5xl bg-white rounded-2xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -682,7 +785,7 @@ const CampusPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="relative w-full h-[70vh] min-h-[320px] bg-black">
+            <div className="relative w-full h-[70vh] min-h-80 bg-black">
               <Image
                 src={galleryPhotos[modalIndex].img}
                 alt={galleryPhotos[modalIndex].title}
@@ -715,8 +818,12 @@ const CampusPage: React.FC = () => {
             </div>
 
             <div className="p-4 bg-white border-t border-gray-100">
-              <h4 className="text-lg font-semibold text-gray-900 mb-1">{galleryPhotos[modalIndex].title}</h4>
-              <p className="text-sm text-gray-600">{galleryPhotos[modalIndex].desc || ""}</p>
+              <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                {galleryPhotos[modalIndex].title}
+              </h4>
+              <p className="text-sm text-gray-600">
+                {galleryPhotos[modalIndex].desc || ""}
+              </p>
             </div>
           </div>
         </div>

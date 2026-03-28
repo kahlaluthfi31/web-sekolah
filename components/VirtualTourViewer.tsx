@@ -50,6 +50,7 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
   const originalUrlRef = useRef<Record<string, string>>({})
   const retriedOriginalRef = useRef<Set<string>>(new Set())
   const objectUrlsRef = useRef<string[]>([])
+  const maxTextureCacheRef = useRef<number | null>(null)
   const [preparedScenes, setPreparedScenes] = useState<Record<string, PannellumScene>>({})
   const [scenesReady, setScenesReady] = useState(false)
   const rafRef = useRef<number | null>(null)
@@ -61,22 +62,46 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
   const [copied, setCopied] = useState(false)
   const [currentSceneTitle, setCurrentSceneTitle] = useState<string>('')
   const [containerReady, setContainerReady] = useState(false)
+  const onSceneChangeRef = useRef<VirtualTourViewerProps['onSceneChange']>(onSceneChange)
 
   useEffect(() => {
-    const destroyViewer = () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    onSceneChangeRef.current = onSceneChange
+  }, [onSceneChange])
+
+  const destroyViewer = ({ revoke = false }: { revoke?: boolean } = {}) => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
       rafRef.current = null
-      if (viewerRef.current) {
-        try { viewerRef.current.destroy?.() } catch { /* ignore */ }
-        viewerRef.current = null
-      }
-      downscaledScenesRef.current = new Set()
-  objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u))
-  objectUrlsRef.current = []
     }
 
+    // Destroy Pannellum instance to release WebGL context
+    if (viewerRef.current) {
+      try {
+        viewerRef.current.destroy?.()
+      } catch {
+        /* ignore */
+      }
+      viewerRef.current = null
+    }
+
+    // Remove leftover DOM nodes to avoid lingering contexts
+    if (containerRef.current) {
+      containerRef.current.innerHTML = ''
+    }
+
+    // Reset per-viewer caches
+    downscaledScenesRef.current = new Set()
+    retriedOriginalRef.current = new Set()
+
+    if (revoke) {
+      objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u))
+      objectUrlsRef.current = []
+    }
+  }
+
+  useEffect(() => {
     return () => {
-      destroyViewer()
+      destroyViewer({ revoke: true })
       if (sizeObserverRef.current) {
         sizeObserverRef.current.disconnect()
         sizeObserverRef.current = null
@@ -126,7 +151,7 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
       ctx.drawImage(img, 0, 0, width, targetHeight)
-      return canvas.toDataURL('image/jpeg', 0.85)
+    return canvas.toDataURL('image/jpeg', 0.85)
     } catch (e) {
       console.error('Downscale failed for scene', sceneId, e)
       return null
@@ -135,11 +160,40 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
 
   const getMaxTextureSize = () => {
     if (typeof window === 'undefined') return 0
+    if (maxTextureCacheRef.current && maxTextureCacheRef.current > 0) return maxTextureCacheRef.current
+
     const canvas = document.createElement('canvas')
-    const gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null
-    if (!gl) return 0
-    const size = gl.getParameter(gl.MAX_TEXTURE_SIZE)
-    return typeof size === 'number' && size > 0 ? size : 0
+
+    // Try WebGL2 first, then fallback to WebGL1 with varied attributes
+    const contextAttempts: Array<{ type: 'webgl2' | 'webgl'; attrs?: WebGLContextAttributes | undefined }> = [
+      { type: 'webgl2', attrs: { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' } },
+      { type: 'webgl2', attrs: { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'default' } },
+      { type: 'webgl', attrs: { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' } },
+      { type: 'webgl', attrs: { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'default' } },
+      { type: 'webgl', attrs: undefined },
+    ]
+
+    let size = 0
+    for (const attempt of contextAttempts) {
+      const gl = attempt.type === 'webgl2'
+        ? (canvas.getContext('webgl2', attempt.attrs) as WebGL2RenderingContext | null)
+        : ((canvas.getContext('webgl', attempt.attrs) || canvas.getContext('experimental-webgl', attempt.attrs)) as WebGLRenderingContext | null)
+
+      if (!gl) continue
+      const value = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+      if (typeof value === 'number' && value > size) {
+        size = value
+      }
+      // Immediately release the test context to avoid hitting GPU context limits
+      const lose = gl.getExtension('WEBGL_lose_context')
+      lose?.loseContext()
+
+      // If we found a reasonable size, stop early
+      if (size >= 1024) break
+    }
+
+    maxTextureCacheRef.current = size > 0 ? size : 0
+    return maxTextureCacheRef.current
   }
 
   const prepareScenes = useMemo(() => {
@@ -192,7 +246,8 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
   useEffect(() => {
     let cancelled = false
     const maxTextureSize = getMaxTextureSize() || 4096
-    const targetMax = Math.min(4096, maxTextureSize || 4096)
+    // Keep quality high like admin preview while still guarding high-end limits
+    const targetMax = Math.max(1024, Math.min(2048, maxTextureSize || 4096))
   let hadFetchError = false
 
   const describe = (id: string, msg: string) => `Scene ${id}: ${msg}`
@@ -200,44 +255,11 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
     setScenesReady(false)
     setPreparedScenes({})
 
-    // Clean previous object URLs to avoid leaks
-    objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u))
-    objectUrlsRef.current = []
-
     const ensureScenes = async () => {
       const entries = await Promise.all(
         Object.entries(prepareScenes).map(async ([id, scene]) => {
-          let panoramaUrl = scene.panorama
+          const panoramaUrl = scene.panorama
           if (!panoramaUrl) return [id, scene] as const
-
-          const fetchPanorama = async (url: string) => {
-            const res = await fetch(url, { cache: 'no-store' })
-            if (!res.ok) throw new Error(`status ${res.status}`)
-            const blob = await res.blob()
-            const objectUrl = URL.createObjectURL(blob)
-            objectUrlsRef.current.push(objectUrl)
-            return objectUrl
-          }
-
-          try {
-            panoramaUrl = await fetchPanorama(scene.panorama)
-          } catch (e) {
-            console.warn('Proxy fetch failed, trying original', id, e)
-            const originalUrl = originalUrlRef.current?.[id]
-            if (originalUrl && originalUrl !== scene.panorama) {
-              try {
-                panoramaUrl = await fetchPanorama(originalUrl)
-              } catch (e2) {
-                hadFetchError = true
-                setFetchErrorDetail(describe(id, `proxy & original gagal (${String(e2)})`))
-                console.error('Original fetch also failed', id, e2)
-                panoramaUrl = scene.panorama
-              }
-            } else {
-              hadFetchError = true
-              setFetchErrorDetail(describe(id, `proxy gagal (${String(e)})`))
-            }
-          }
 
           try {
             const img = new Image()
@@ -255,7 +277,32 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
               return [id, { ...scene, panorama: dataUrl || panoramaUrl }]
             }
           } catch (e) {
-            console.warn('Preprocess scene failed, keep original', id, e)
+            console.warn('Preprocess scene failed, try original URL', id, e)
+            const originalUrl = originalUrlRef.current?.[id]
+            if (originalUrl && originalUrl !== panoramaUrl) {
+              try {
+                const img = new Image()
+                img.crossOrigin = 'anonymous'
+                const loadPromise = new Promise<HTMLImageElement>((resolve, reject) => {
+                  img.onload = () => resolve(img)
+                  img.onerror = () => reject(new Error('load failed'))
+                })
+                img.src = originalUrl
+                const loaded = await loadPromise
+                if (loaded.width > targetMax) {
+                  const dataUrl = await downscalePanorama(id, originalUrl, targetMax)
+                  return [id, { ...scene, panorama: dataUrl || originalUrl }]
+                }
+                return [id, { ...scene, panorama: originalUrl }]
+              } catch (e2) {
+                hadFetchError = true
+                setFetchErrorDetail(describe(id, `proxy & original gagal (${String(e2)})`))
+                console.error('Original load also failed', id, e2)
+              }
+            } else {
+              hadFetchError = true
+              setFetchErrorDetail(describe(id, `proxy gagal (${String(e)})`))
+            }
           }
           return [id, { ...scene, panorama: panoramaUrl }]
         }),
@@ -283,48 +330,39 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
     if (!scriptLoaded) return
     if (!containerRef.current) return
     if (!containerReady) return
-  if (!config || !config.default?.firstScene || Object.keys(preparedScenes).length === 0 || !scenesReady) return
+    if (!config || !config.default?.firstScene || Object.keys(preparedScenes).length === 0 || !scenesReady) return
 
-    const supportedTextureSize = getMaxTextureSize()
-    if (!supportedTextureSize || supportedTextureSize <= 0) {
-      startTransition(() => setViewerError('Perangkat atau browser tidak mendukung WebGL. Coba gunakan browser lain atau perbarui driver.'))
+    const measuredTextureSize = getMaxTextureSize()
+    const supportedTextureSize = measuredTextureSize && measuredTextureSize > 0 ? measuredTextureSize : 1024
+    if (!supportedTextureSize || supportedTextureSize < 512) {
+      startTransition(() => setViewerError('Perangkat atau browser tidak mendukung WebGL (maks tekstur terlalu kecil). Coba aktifkan WebGL atau gunakan perangkat lain.'))
       return
     }
 
-    const downscaleTarget = Math.min(2048, supportedTextureSize || 2048)
+    const downscaleTarget = Math.max(1024, Math.min(2048, supportedTextureSize || 2048))
 
-    const firstSceneKey = preparedScenes[config.default.firstScene]
-      ? config.default.firstScene
-      : Object.keys(preparedScenes)[0]
+    const targetScene = activeSceneId && preparedScenes[activeSceneId]
+      ? activeSceneId
+      : preparedScenes[config.default.firstScene]
+        ? config.default.firstScene
+        : Object.keys(preparedScenes)[0]
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    rafRef.current = null
-    if (viewerRef.current) {
-      try { viewerRef.current.destroy?.() } catch { }
-      viewerRef.current = null
-    }
+  // Always destroy the previous viewer before creating a new one to avoid WebGL context overflow
+  // Do NOT revoke object URLs here because preparedScenes may still reference them
+  destroyViewer({ revoke: false })
 
   startTransition(() => setViewerError(''))
   startTransition(() => setFetchErrorDetail(''))
 
-    const firstTitle = preparedScenes[firstSceneKey]?.title ?? firstSceneKey
+    const firstTitle = preparedScenes[targetScene]?.title ?? targetScene
     startTransition(() => {
       setCurrentSceneTitle(firstTitle)
     })
 
-    const destroyViewer = () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-      if (viewerRef.current) {
-        try { viewerRef.current.destroy?.() } catch { /* ignore */ }
-        viewerRef.current = null
-      }
-    }
-
     try {
       viewerRef.current = window.pannellum.viewer(containerRef.current, {
         default: {
-          firstScene: firstSceneKey,
+          firstScene: targetScene,
           sceneFadeDuration: 1000,
           autoLoad: true,
           showControls: true,
@@ -337,7 +375,8 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
           mouseZoom: true,
           draggable: true,
           // Try to avoid GPU limit issues by capping texture size (ignored if unsupported)
-          maxTextureSize: Math.min(4096, supportedTextureSize || 4096),
+          // Keep requested texture size at or below the downscale target to avoid GPU errors
+          maxTextureSize: Math.min(downscaleTarget, supportedTextureSize || downscaleTarget),
         },
         scenes: preparedScenes,
       })
@@ -345,7 +384,13 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
       viewerRef.current.on('error', (err: string) => {
         console.error('Pannellum error:', err)
         const currentScene = viewerRef.current?.getScene?.()
-        const isTooBig = typeof err === 'string' && /too big for your device|supports images up to 0px/i.test(err)
+  const isTooBig = typeof err === 'string' && /too big for your device|supports images up to 0px/i.test(err)
+  const isZeroSupport = typeof err === 'string' && /supports images up to 0px/i.test(err)
+
+        if (isZeroSupport) {
+          startTransition(() => setViewerError('Browser/WebGL menolak tekstur (0px). Coba refresh, aktifkan akselerasi hardware, tutup tab 3D lain, atau gunakan perangkat/browser lain.'))
+          return
+        }
 
         if (currentScene && isTooBig && !downscaledScenesRef.current.has(currentScene)) {
           downscaledScenesRef.current.add(currentScene)
@@ -395,7 +440,7 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
         startTransition(() => {
           setCurrentSceneTitle(title)
         })
-        onSceneChange?.(sceneId)
+  onSceneChangeRef.current?.(sceneId)
       })
 
       // Override tombol fullscreen Pannellum agar fullscreen wrapper kita (termasuk overlay)
@@ -441,17 +486,16 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
     }
 
     return () => {
-      destroyViewer()
+      destroyViewer({ revoke: false })
     }
     // We intentionally exclude coords from deps to avoid recreating the viewer every mouse move.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scriptLoaded, containerReady, config, preparedScenes, scenesReady, showCoords, onSceneChange])
+  }, [scriptLoaded, containerReady, config, preparedScenes, scenesReady, showCoords])
 
-  // Apply external scene change requests
+  // Apply external scene change requests without recreating the viewer (prevents init loops on public page)
   useEffect(() => {
-  if (!viewerRef.current || !activeSceneId || !scenesReady) return
+    if (!viewerRef.current || !activeSceneId || !scenesReady) return
     if (viewerError) startTransition(() => setViewerError(''))
-    if (activeSceneId) downscaledScenesRef.current.delete(activeSceneId)
     const current = viewerRef.current.getScene?.()
     if (current !== activeSceneId && config.scenes[activeSceneId]) {
       try {
@@ -460,7 +504,7 @@ export default function VirtualTourViewer({ config, height = '600px', showCoords
         console.error('Failed to switch scene', e)
       }
     }
-  }, [activeSceneId, preparedScenes, config.scenes, viewerError, scenesReady])
+  }, [activeSceneId, config.scenes, viewerError, scenesReady])
 
   const handleCopyCoords = () => {
     navigator.clipboard.writeText(`${coords.pitch}, ${coords.yaw}`)

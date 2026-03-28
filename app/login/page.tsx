@@ -1,14 +1,7 @@
-import { redirect } from 'next/navigation'
-
-import { auth } from '../api/auth/[...nextauth]/route'
 import LoginClient from './LoginClient'
 
-export default async function UserLoginPage() {
-  const session = await auth()
-
-  if (session) {
-    redirect('/')
-  }
-
+// Server-side session helpers are not available in this NextAuth beta setup.
+// Let the client handle redirect when already authenticated.
+export default function UserLoginPage() {
   return <LoginClient />
 }
