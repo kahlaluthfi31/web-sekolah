@@ -6,9 +6,10 @@ import Image from 'next/image'
 import {
   Plus, Search, MoreVertical, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X, Save,
-  ArrowLeft, AlertTriangle, Eye, Upload,
+  ArrowLeft, AlertTriangle, Eye, Upload, MessageCircle, Newspaper,
 } from 'lucide-react'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
+import CommentsPage from '../comments/page'
 
 interface News {
   id: number
@@ -369,6 +370,7 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
 // ─── Main Page ────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════
 export default function NewsListPage() {
+  const [activeTab, setActiveTab] = useState<'news' | 'comments'>('news')
   const [news, setNews] = useState<News[]>([])
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
@@ -479,6 +481,23 @@ export default function NewsListPage() {
         
       </div>
 
+      <div className='flex gap-1 p-1 bg-gray-100 rounded-xl w-fit'>
+        <button
+          onClick={() => setActiveTab('news')}
+          className={'px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ' + (activeTab === 'news' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900')}
+        >
+          <Newspaper className='w-4 h-4' /> Daftar Berita
+        </button>
+        <button
+          onClick={() => setActiveTab('comments')}
+          className={'px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ' + (activeTab === 'comments' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900')}
+        >
+          <MessageCircle className='w-4 h-4' /> Komentar
+        </button>
+      </div>
+
+      {activeTab === 'news' && (
+      <>
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -589,6 +608,11 @@ export default function NewsListPage() {
           </div>
         )}
       </div>
+
+  </>
+  )}
+
+  {activeTab === 'comments' && <CommentsPage embedded />}
 
       {showFormModal && (
         <NewsFormModal news={editingNews} userSession={userSession} onClose={() => { setShowFormModal(false); setEditingNews(null) }} onSaved={handleSaved} />

@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, ChevronLeft, User, Eye, Share2, MessageCircle, MoreVertical } from "lucide-react";
+import { Calendar, ChevronLeft, User, Eye, Share2, MessageCircle, MoreVertical, AlertTriangle, Trash2, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface NewsDetailsPageProps {
@@ -90,6 +90,14 @@ const formatDateTime = (dateStr: string | null) => {
    }
 };
 
+const getOwnCommentStatusMeta = (status?: string | null) => {
+   const normalized = status?.toLowerCase();
+   if (normalized === "rejected") {
+      return { label: "Ditolak", className: "bg-red-100 text-red-700" };
+   }
+   return { label: "Menunggu verifikasi", className: "bg-amber-100 text-amber-700" };
+};
+
 
 const escapeHtml = (value: string) => {
    return value
@@ -172,7 +180,7 @@ const sanitizeAndNormalizeNewsContent = (raw: string) => {
 };
 
 const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
-   const { status: sessionStatus } = useSession();
+   const { data: session, status: sessionStatus } = useSession();
    const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
    const [allNews, setAllNews] = useState<NewsItem[]>([]);
    const [loading, setLoading] = useState(true);
@@ -193,8 +201,23 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    const [commentMessage, setCommentMessage] = useState<string | null>(null);
    const [openCommentMenu, setOpenCommentMenu] = useState<number | null>(null);
    const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+   const [deleteCommentTarget, setDeleteCommentTarget] = useState<CommentItem | null>(null);
    const lastIncrementedId = useRef<number | null>(null);
    const lastSharedId = useRef<number | null>(null);
+   const currentUserId = useMemo(() => Number(session?.user?.id || 0), [session?.user?.id]);
+
+   useEffect(() => {
+      if (openCommentMenu === null) return;
+
+      const handleScrollCloseMenu = () => {
+         setOpenCommentMenu(null);
+      };
+
+      window.addEventListener("scroll", handleScrollCloseMenu, true);
+      return () => {
+         window.removeEventListener("scroll", handleScrollCloseMenu, true);
+      };
+   }, [openCommentMenu]);
 
    useEffect(() => {
       let mounted = true;
@@ -353,7 +376,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
          setCommentsLoading(true);
          try {
             const res = await fetch(
-               `/api/comments?contentType=news&contentId=${selectedNews.id}&limit=${COMMENTS_PER_PAGE}&page=${commentsPage}`,
+               `/api/comments?contentType=news&contentId=${selectedNews.id}&status=approved&limit=${COMMENTS_PER_PAGE}&page=${commentsPage}`,
             );
             const json = await res.json();
             if (!active) return;
@@ -446,7 +469,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
             const updated = json?.data as CommentItem | undefined;
             if (updated) setMyComment(updated);
             const resApproved = await fetch(
-         `/api/comments?contentType=news&contentId=${selectedNews.id}&limit=${COMMENTS_PER_PAGE}&page=1`,
+               `/api/comments?contentType=news&contentId=${selectedNews.id}&status=approved&limit=${COMMENTS_PER_PAGE}&page=1`,
             );
             const approvedJson = await resApproved.json();
             setComments(Array.isArray(approvedJson?.data) ? approvedJson.data : []);
@@ -513,9 +536,15 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
       }));
    };
 
-   const handleDeleteComment = async (commentId: number) => {
-      if (!confirm("Hapus komentar ini?")) return;
-      
+   const handleDeleteComment = (comment: CommentItem) => {
+      setDeleteCommentTarget(comment);
+      setOpenCommentMenu(null);
+   };
+
+   const handleDeleteCommentConfirm = async () => {
+      if (!deleteCommentTarget) return;
+      const commentId = deleteCommentTarget.id;
+
       setDeletingCommentId(commentId);
       try {
          const res = await fetch(`/api/comments/${commentId}`, {
@@ -530,6 +559,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                setCommentText("");
                setIsEditingComment(false);
             }
+            setDeleteCommentTarget(null);
             setOpenCommentMenu(null);
          } else {
             alert(json?.message || "Gagal menghapus komentar.");
@@ -697,6 +727,17 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                         </div>
                      </div>
 
+                     {/* Comments */}
+                     <div className="flex items-center gap-3">
+                        <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                           <MessageCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                           <div className="text-white font-bold text-lg">{commentsTotal} kali</div>
+                           <div className="text-white/80 text-xs">Berita ini dikomentari</div>
+                        </div>
+                     </div>
+
                      {/* Shares */}
                      <div className="flex items-center gap-3">
                         <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
@@ -708,16 +749,6 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                         </div>
                      </div>
 
-                     {/* Comments */}
-                     <div className="flex items-center gap-3">
-                        <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
-                           <MessageCircle className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                           <div className="text-white font-bold text-lg">{commentsTotal} kali</div>
-                           <div className="text-white/80 text-xs">Berita ini dikomentari</div>
-                        </div>
-                     </div>
                   </div>
                </div>
             </section>
@@ -890,6 +921,49 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                  </div>
                               )}
 
+                              {sessionStatus === "authenticated" &&
+                                 myComment &&
+                                 myComment.status?.toLowerCase() !== "approved" &&
+                                 !isEditingComment && (
+                                 <div className="pb-6 border-b border-gray-200">
+                                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                                       <div>
+                                          <p className="text-sm font-semibold text-gray-900">Komentar Anda</p>
+                                          <p className="text-xs text-gray-400 mt-0.5">{formatDate(myComment.updatedAt || myComment.createdAt)}</p>
+                                       </div>
+                                       <span
+                                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getOwnCommentStatusMeta(myComment.status).className}`}
+                                       >
+                                          {getOwnCommentStatusMeta(myComment.status).label}
+                                       </span>
+                                    </div>
+
+                                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{myComment.commentText}</p>
+
+                                    <div className="mt-3 flex items-center gap-2">
+                                       <button
+                                          type="button"
+                                          onClick={() => {
+                                             setCommentText(myComment.commentText);
+                                             setCommentMessage(null);
+                                             setIsEditingComment(true);
+                                          }}
+                                          className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                                       >
+                                          Edit
+                                       </button>
+                                       <button
+                                          type="button"
+                                          onClick={() => handleDeleteComment(myComment)}
+                                          disabled={deletingCommentId === myComment.id}
+                                          className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+                                       >
+                                          {deletingCommentId === myComment.id ? "Menghapus..." : "Hapus"}
+                                       </button>
+                                    </div>
+                                 </div>
+                              )}
+
                               <div className="mt-6">
                                  {commentsLoading ? (
                                     <p className="text-sm text-gray-500">Memuat komentar...</p>
@@ -901,14 +975,17 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                           <div key={comment.id} className="py-5 relative group">
                                              <div className="flex items-start justify-between gap-3 mb-2">
                                                 <div>
-                                                   <p className="text-sm font-semibold text-gray-900">
-                                                      {comment.user?.name || "Pengguna"}
-                                                   </p>
+                                                   <div className="flex flex-wrap items-center gap-2">
+                                                      <p className="text-sm font-semibold text-gray-900">
+                                                         {comment.user?.name || "Pengguna"}
+                                                      </p>
+                                                   </div>
                                                    <p className="text-xs text-gray-400 mt-0.5">
                                                       {formatDate(comment.createdAt)}
                                                    </p>
                                                 </div>
-                                                <div className="relative">
+                                                   {comment.user?.id === currentUserId && (
+                                                   <div className="relative">
                                                    <button
                                                       type="button"
                                                       onClick={() => setOpenCommentMenu(openCommentMenu === comment.id ? null : comment.id)}
@@ -932,7 +1009,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                                          </button>
                                                          <button
                                                             type="button"
-                                                            onClick={() => handleDeleteComment(comment.id)}
+                                                               onClick={() => handleDeleteComment(comment)}
                                                             disabled={deletingCommentId === comment.id}
                                                             className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 last:rounded-b-lg transition-colors disabled:opacity-50"
                                                          >
@@ -941,6 +1018,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                                       </div>
                                                    )}
                                                 </div>
+                                                )}
                                              </div>
 
                                              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
@@ -987,6 +1065,62 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                     >
                                        Berikutnya
                                     </button>
+                                 </div>
+                              )}
+
+                              {deleteCommentTarget && (
+                                 <div className="fixed inset-0 z-60 overflow-hidden">
+                                    <div
+                                       className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                                       onClick={() => !deletingCommentId && setDeleteCommentTarget(null)}
+                                    />
+                                    <div className="fixed inset-0 flex items-center justify-center p-4">
+                                       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+                                          <div className="flex justify-center">
+                                             <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center">
+                                                <AlertTriangle className="w-7 h-7 text-red-600" />
+                                             </div>
+                                          </div>
+                                          <div className="text-center space-y-2">
+                                             <h3 className="text-lg font-bold text-gray-900">Hapus Komentar</h3>
+                                             <p className="text-sm text-gray-500">
+                                                Yakin ingin menghapus komentar{" "}
+                                                <span className="font-semibold text-gray-700">
+                                                   &lsquo;
+                                                   {deleteCommentTarget.commentText.length > 80
+                                                      ? `${deleteCommentTarget.commentText.slice(0, 80)}...`
+                                                      : deleteCommentTarget.commentText}
+                                                   &rsquo;
+                                                </span>
+                                                ?
+                                             </p>
+                                             <p className="text-xs text-gray-400">Tindakan ini tidak dapat dibatalkan.</p>
+                                          </div>
+                                          <div className="flex gap-3">
+                                             <button
+                                                type="button"
+                                                onClick={() => setDeleteCommentTarget(null)}
+                                                disabled={deletingCommentId === deleteCommentTarget.id}
+                                                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50"
+                                             >
+                                                Batal
+                                             </button>
+                                             <button
+                                                type="button"
+                                                onClick={handleDeleteCommentConfirm}
+                                                disabled={deletingCommentId === deleteCommentTarget.id}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all disabled:opacity-50"
+                                             >
+                                                {deletingCommentId === deleteCommentTarget.id ? (
+                                                   <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                   <Trash2 className="w-4 h-4" />
+                                                )}
+                                                {deletingCommentId === deleteCommentTarget.id ? "Menghapus..." : "Ya, Hapus"}
+                                             </button>
+                                          </div>
+                                       </div>
+                                    </div>
                                  </div>
                               )}
                            </section>

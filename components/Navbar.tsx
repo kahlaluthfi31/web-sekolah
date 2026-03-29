@@ -126,6 +126,14 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
     setShowProgramsDropdown(false);
   };
 
+  const handleNavigateMajor = (majorId: number) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("selected_major_id", String(majorId));
+      window.dispatchEvent(new Event("selected-major-changed"));
+    }
+    scrollToPrograms();
+  };
+
   // Determine navbar style based on scroll position
   // Logic: transparent di atas, glass saat scroll di hero, solid setelah lewati hero
   let navbarStyle = "";
@@ -276,7 +284,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                         majors.map((major) => (
                           <button
                             key={major.id}
-                            onClick={scrollToPrograms}
+                            onClick={() => handleNavigateMajor(major.id)}
                             className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-[#e8f2ff] hover:text-[#0268ab] transition-colors"
                           >
                             {major.name}
@@ -412,7 +420,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                       <button
                         key={major.id}
                         onClick={() => {
-                          scrollToPrograms();
+                          handleNavigateMajor(major.id);
                           setIsOpen(false);
                         }}
                         className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#0268ab]"
@@ -434,7 +442,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                           <button
                             key={comp.id}
                             onClick={() => {
-                              scrollToPrograms();
+                              handleNavigateMajor(major.id);
                               setIsOpen(false);
                             }}
                             className="block w-full text-left px-3 py-1.5 text-sm text-gray-600 hover:text-[#0268ab] hover:bg-blue-50 rounded-md transition-colors"

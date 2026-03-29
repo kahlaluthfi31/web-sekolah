@@ -937,7 +937,7 @@ const EventsPage: React.FC = () => {
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-2">
               Alur Pendaftaran Acara
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
+            <p className="text-sm text-gray-600 leading-relaxed w-full">
               Setiap metode memiliki langkah berbeda. Pilih opsi yang paling sesuai,
               lalu ikuti tahapan di bawah ini agar proses registrasi berjalan cepat
               dan tanpa kendala.

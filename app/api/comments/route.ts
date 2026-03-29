@@ -96,7 +96,16 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth()
     const userId = session?.user?.id
-    if (!userId) return apiError('Unauthorized', 401)
+    const parsedUserId = Number(userId)
+    if (!userId || !Number.isInteger(parsedUserId) || parsedUserId <= 0) {
+      return apiError('Unauthorized', 401)
+    }
+
+    const userExists = await prisma.user.findUnique({
+      where: { id: parsedUserId },
+      select: { id: true },
+    })
+    if (!userExists) return apiError('User tidak ditemukan', 404)
 
     const body = await request.json()
   const contentType = body?.contentType as CommentContentType | undefined
@@ -111,7 +120,7 @@ export async function POST(request: NextRequest) {
       where: {
         contentType,
         contentId,
-        userId: parseInt(userId),
+  userId: parsedUserId,
       },
     })
 
@@ -132,7 +141,7 @@ export async function POST(request: NextRequest) {
       data: {
         contentType,
         contentId,
-        userId: parseInt(userId),
+  userId: parsedUserId,
         commentText,
         status: 'pending',
       },

@@ -461,9 +461,6 @@ const StudentLifePage: React.FC = () => {
                             {achievement.studentName}
                             {achievement.class ? ` • ${achievement.class}` : ""}
                           </span>
-                          <button className="text-[#0268ab] text-xs font-semibold hover:text-[#014a8f] transition-colors">
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
                         </div>
                       </div>
                     </div>

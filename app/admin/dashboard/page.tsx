@@ -5,10 +5,12 @@ import Link from 'next/link'
 import {
   Newspaper, Users, Trophy, Volleyball, CalendarDays,
   GraduationCap, MessageCircle, Mail, BookOpen, Building2,
-  TrendingUp, Clock, AlertCircle,
+  TrendingUp, Clock, AlertCircle, ShieldCheck, Activity,
 } from 'lucide-react'
 
 async function getStats(role: UserRole) {
+  const isSuperAdmin = role === 'superadmin'
+
   const [
     newsCount,
     teacherCount,
@@ -22,6 +24,8 @@ async function getStats(role: UserRole) {
     unreadMessages,
     userCount,
     recentNews,
+    totalLoginActivities,
+    totalEditDeleteActivities,
   ] = await Promise.all([
     prisma.news.count(),
     prisma.teacher.count(),
@@ -39,6 +43,14 @@ async function getStats(role: UserRole) {
       orderBy: { createdAt: 'desc' },
       select: { id: true, title: true, category: true, createdAt: true, isPublished: true },
     }),
+    isSuperAdmin ? prisma.loginActivity.count() : Promise.resolve(0),
+    isSuperAdmin
+      ? prisma.activityLog.count({
+          where: {
+            action: { in: ['EDIT', 'DELETE'] },
+          },
+        })
+      : Promise.resolve(0),
   ])
 
   return {
@@ -54,6 +66,8 @@ async function getStats(role: UserRole) {
     unreadMessages,
     userCount,
     recentNews,
+    totalLoginActivities,
+    totalEditDeleteActivities,
   }
 }
 
@@ -61,6 +75,7 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) return null
   const role = session.role as UserRole
+  const isSuperAdmin = role === 'superadmin'
 
   const stats = await getStats(role)
 
@@ -91,8 +106,46 @@ export default async function DashboardPage() {
       {/* Welcome */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Selamat Datang, {session.name}!</h2>
-        <p className="text-gray-500 mt-1">Berikut ringkasan data website sekolah Anda.</p>
+        <p className="text-gray-500 mt-1">
+          {isSuperAdmin
+            ? 'Ringkasan lengkap kontrol sistem, termasuk monitoring aktivitas login serta aktivitas edit/hapus.'
+            : 'Berikut ringkasan data website sekolah Anda.'}
+        </p>
       </div>
+
+      {isSuperAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link
+            href="/admin/dashboard/login-activity"
+            className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-gray-100 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-indigo-50 text-indigo-600 border border-indigo-100">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalLoginActivities}</p>
+            <p className="text-sm text-gray-500 mt-0.5">Aktivitas Login Tercatat</p>
+            <div className="mt-2 flex items-center gap-1 text-xs text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <TrendingUp className="w-3 h-3" />
+              <span>Lihat detail aktivitas login</span>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/dashboard/user-activity"
+            className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-gray-100 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-rose-50 text-rose-600 border border-rose-100">
+              <Activity className="w-5 h-5" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalEditDeleteActivities}</p>
+            <p className="text-sm text-gray-500 mt-0.5">Aktivitas Edit/Hapus</p>
+            <div className="mt-2 flex items-center gap-1 text-xs text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <TrendingUp className="w-3 h-3" />
+              <span>Lihat log perubahan data</span>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* Alerts */}
       <div className="flex flex-col sm:flex-row gap-4">
@@ -221,6 +274,24 @@ export default async function DashboardPage() {
               >
                 <Users className="w-4 h-4" />
                 Kelola Pengguna ({stats.userCount})
+              </Link>
+            )}
+            {hasPermission(role, 'login_activity.view') && (
+              <Link
+                href="/admin/dashboard/login-activity"
+                className="flex items-center gap-3 px-4 py-3 bg-indigo-50 rounded-xl text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-all"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Aktivitas Login ({stats.totalLoginActivities})
+              </Link>
+            )}
+            {hasPermission(role, 'user_activity.view') && (
+              <Link
+                href="/admin/dashboard/user-activity"
+                className="flex items-center gap-3 px-4 py-3 bg-rose-50 rounded-xl text-sm font-medium text-rose-700 hover:bg-rose-100 transition-all"
+              >
+                <Activity className="w-4 h-4" />
+                Aktivitas Edit/Hapus ({stats.totalEditDeleteActivities})
               </Link>
             )}
             {hasPermission(role, 'comments.approve') && (

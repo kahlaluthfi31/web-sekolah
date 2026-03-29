@@ -93,7 +93,7 @@ function ActionDropdown({
   )
 }
 
-export default function CommentsPage() {
+export default function CommentsPage({ embedded = false }: { embedded?: boolean }) {
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -160,10 +160,12 @@ export default function CommentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Manajemen Komentar</h2>
-        <p className="text-sm text-gray-500">Moderasi komentar pada berita</p>
-      </div>
+      {!embedded && (
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Manajemen Komentar</h2>
+          <p className="text-sm text-gray-500">Moderasi komentar pada berita</p>
+        </div>
+      )}
 
       {/* Filters — same style as alumni */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">

@@ -29,6 +29,7 @@ type TrendingItem = {
   slug?: string | null;
   featuredImage: string | null;
   category: string;
+  author?: { name?: string | null } | null;
   publishedAt: string | null;
   createdAt: string;
   commentCount: number;
@@ -238,8 +239,8 @@ const NewsPageList: React.FC<NewsPageListProps> = ({ onNavigate }) => {
   const allNews = sortedNews;
   const sidebarNews = activeTab === 'Berita Teratas' ? trendingNews : latestNews;
 
-  const isEdited = (item: NewsItem) => {
-    if (!item.updatedAt) return false;
+  const isEdited = (item: NewsItem | TrendingItem) => {
+    if (!('updatedAt' in item) || !item.updatedAt) return false;
     return new Date(item.updatedAt).getTime() - new Date(item.createdAt).getTime() > 1000;
   };
 

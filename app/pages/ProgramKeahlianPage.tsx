@@ -24,6 +24,7 @@ interface ProgramData {
 
 const ProgramKeahlianPage: React.FC = () => {
   const { setPage } = usePage();
+  const [selectedMajorId, setSelectedMajorId] = useState<string | null>(null);
   const [programData, setProgramData] = useState<ProgramData | null>(null);
   const [relatedPrograms, setRelatedPrograms] = useState<Array<{ id: number; name: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -35,13 +36,28 @@ const ProgramKeahlianPage: React.FC = () => {
   const [galleryTitle, setGalleryTitle] = useState('');
 
   useEffect(() => {
+    const readSelectedMajorId = () => {
+      if (typeof window === 'undefined') return;
+      setSelectedMajorId(sessionStorage.getItem('selected_major_id'));
+    };
+
+    readSelectedMajorId();
+    window.addEventListener('storage', readSelectedMajorId);
+    window.addEventListener('selected-major-changed', readSelectedMajorId);
+
+    return () => {
+      window.removeEventListener('storage', readSelectedMajorId);
+      window.removeEventListener('selected-major-changed', readSelectedMajorId);
+    };
+  }, []);
+
+  useEffect(() => {
     let mounted = true;
 
     const loadProgram = async () => {
       setLoading(true);
       try {
-        const storedId = sessionStorage.getItem('selected_major_id');
-        let majorId = storedId;
+        let majorId = selectedMajorId;
 
         if (!majorId) {
           const listRes = await fetch('/api/majors/list');
@@ -127,7 +143,7 @@ const ProgramKeahlianPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedMajorId]);
 
   if (loading) {
     return (
