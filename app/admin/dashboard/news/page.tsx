@@ -43,15 +43,18 @@ const CATEGORY_COLORS: Record<string, string> = {
 const CREATOR_CATEGORIES = ['Guru','Siswa Piket Kelas 10','Siswa Piket Kelas 11','Siswa Piket Kelas 12','Tim Medsos']
 
 class NewsImageUploadAdapter {
-  loader: { file: Promise<File> }
+  loader: { file: Promise<File | null> }
   abortController: AbortController | null = null
 
-  constructor(loader: { file: Promise<File> }) {
+  constructor(loader: { file: Promise<File | null> }) {
     this.loader = loader
   }
 
   upload() {
     return this.loader.file.then(async (file) => {
+      if (!file) {
+        throw new Error('File tidak ditemukan')
+      }
       this.abortController = new AbortController()
       const formData = new FormData()
       formData.append('file', file)
@@ -242,7 +245,7 @@ function NewsFormModal({ news, userSession, onClose, onSaved }: { news: News | n
                         <CkEditor
                           data={form.content}
                           onReady={(editor) => {
-                            editor.plugins.get('FileRepository').createUploadAdapter = (loader: { file: Promise<File> }) => new NewsImageUploadAdapter(loader)
+                            editor.plugins.get('FileRepository').createUploadAdapter = (loader: { file: Promise<File | null> }) => new NewsImageUploadAdapter(loader)
                           }}
                           onChange={(_event, editor) => {
                             const html = editor.getData()
