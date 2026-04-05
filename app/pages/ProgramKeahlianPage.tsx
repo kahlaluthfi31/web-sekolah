@@ -196,7 +196,7 @@ const ProgramKeahlianPage: React.FC = () => {
     <div className="min-h-screen bg-white">
       {/* Header with Cover Image */}
       <div
-        className="relative h-80 md:h-96"
+  className="relative overflow-hidden min-h-85 sm:min-h-95 md:h-96"
         style={{ backgroundColor: programData.headerBgColor || '#111827' }}
       >
         {!coverError && programData.gambarCover && (
@@ -211,35 +211,35 @@ const ProgramKeahlianPage: React.FC = () => {
         <div className="absolute inset-0 bg-black/60"></div>
         
         {/* Content Overlay - Split Layout */}
-        <div className="absolute inset-0 flex items-center">
+        <div className="absolute inset-0 flex items-end md:items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="flex flex-col lg:flex-row items-center justify-between w-full">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between w-full pb-5 md:pb-0">
               {/* Left Side - Text Content (60%) */}
-              <div className="w-full lg:w-3/5 text-white text-left lg:text-left mb-6 lg:mb-0">
+              <div className="w-full lg:w-3/5 text-white text-left lg:text-left mb-4 md:mb-6 lg:mb-0 pr-0 lg:pr-4">
                 {programData.logoProgram && !logoError ? (
                   <img
                     src={programData.logoProgram}
                     alt={`Logo ${programData.nama}`}
-                    className="w-18 h-18 object-contain mb-4 rounded-full bg-white/80 border border-white/20"
+                    className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 object-contain mb-3 rounded-full bg-white/80 border border-white/20"
                     onError={() => setLogoError(true)}
                   />
                 ) : null}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                   {programData.nama}
                 </h1>
-                <div className="flex items-center text-white/90 text-sm md:text-base">
+                <div className="flex items-center text-white/90 text-xs sm:text-sm md:text-base mt-1.5">
                   <User className="w-4 h-4 mr-2" />
                   <span>Kepala Program : {programData.kepalaProgram}</span>
                 </div>
               </div>
               
               {/* Right Side - Student Image (40%) */}
-              <div className="w-full lg:w-2/5 flex items-end justify-center lg:justify-end h-full">
+              <div className="hidden md:flex w-full lg:w-2/5 items-end justify-center lg:justify-end h-full self-end">
                 {programData.studentImage ? (
                   <img 
                     src={programData.studentImage}
                     alt="Student"
-                    className="h-full max-h-80 md:max-h-96 object-contain object-bottom"
+                    className="h-full max-h-72 md:max-h-96 object-contain object-bottom"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -312,7 +312,7 @@ const ProgramKeahlianPage: React.FC = () => {
                   <div className="grid md:grid-cols-2 gap-3">
                     {programData.konsentrasiKeahlian.map((konsentrasi, index) => (
                       <div key={index} className="flex items-start gap-3 py-3 px-4 bg-gray-50 rounded-lg">
-                        <div className="w-1.5 h-1 bg-[#0268ab] rounded-full mt-2"></div>
+                        <div className="w-1.5 h-1.5 bg-[#0268ab] rounded-full mt-2 shrink-0"></div>
                         <div>
                           <p className="text-gray-800 text-sm font-semibold">{konsentrasi.name}</p>
                           {konsentrasi.description && (

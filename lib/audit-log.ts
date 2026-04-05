@@ -25,21 +25,56 @@ function isPrivateIp(ip: string | null): boolean {
     ip.startsWith('172.29.') ||
     ip.startsWith('172.30.') ||
     ip.startsWith('172.31.') ||
+    ip.startsWith('169.254.') ||
+    ip.startsWith('fc') ||
+    ip.startsWith('fd') ||
+    ip.startsWith('fe80:') ||
     ip === '127.0.0.1' ||
     ip === '::1'
   )
 }
 
+function normalizeIp(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  let ip = raw.trim()
+  if (!ip) return null
+
+  if (ip.includes(':') && ip.includes('.') && !ip.startsWith('::ffff:')) {
+    const parts = ip.split(':')
+    if (parts.length === 2) ip = parts[0]
+  }
+
+  if (ip.startsWith('::ffff:')) {
+    ip = ip.replace('::ffff:', '')
+  }
+
+  return ip || null
+}
+
+function firstForwardedIp(headerValue: string | null): string | null {
+  if (!headerValue) return null
+  const entries = headerValue.split(',').map((entry) => normalizeIp(entry)).filter(Boolean) as string[]
+  if (entries.length === 0) return null
+  return entries.find((candidate) => !isPrivateIp(candidate) && candidate.toLowerCase() !== 'unknown') || entries[0]
+}
+
 async function resolveClientIp(request: NextRequest): Promise<string> {
-  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-  const cfConnecting = request.headers.get('cf-connecting-ip')?.trim()
-  const xRealIp = request.headers.get('x-real-ip')?.trim()
-  const runtimeIp = (request as unknown as { ip?: string }).ip?.trim()
-  const socketIp = (request as unknown as { socket?: { remoteAddress?: string } }).socket?.remoteAddress?.trim()
+  const forwardedFor = firstForwardedIp(request.headers.get('x-forwarded-for'))
+  const cfConnecting = normalizeIp(request.headers.get('cf-connecting-ip'))
+  const trueClientIp = normalizeIp(request.headers.get('true-client-ip'))
+  const xRealIp = normalizeIp(request.headers.get('x-real-ip'))
+  const xClientIp = normalizeIp(request.headers.get('x-client-ip'))
+  const runtimeIp = normalizeIp((request as unknown as { ip?: string }).ip)
+  const socketIp = normalizeIp((request as unknown as { socket?: { remoteAddress?: string } }).socket?.remoteAddress)
 
-  let ip = forwardedFor || cfConnecting || xRealIp || runtimeIp || socketIp || 'unknown'
+  const candidates = [cfConnecting, trueClientIp, xRealIp, xClientIp, forwardedFor, runtimeIp, socketIp].filter(Boolean) as string[]
 
-  if (isPrivateIp(ip) || ip === 'unknown') {
+  let ip =
+    candidates.find((candidate) => !isPrivateIp(candidate) && candidate.toLowerCase() !== 'unknown') ||
+    candidates[0] ||
+    'unknown'
+
+  if (process.env.NODE_ENV !== 'production' && (isPrivateIp(ip) || ip === 'unknown')) {
     try {
       const res = await fetch('https://api.ipify.org?format=json', { next: { revalidate: 60 } })
       if (res.ok) {

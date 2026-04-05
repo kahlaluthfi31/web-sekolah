@@ -8,6 +8,8 @@ import {
   ChevronLeft, ChevronRight, X, Save, Upload, ImageIcon, Images,
   CheckCircle2,
 } from 'lucide-react'
+import Cropper from 'react-easy-crop'
+import type { Area, Point } from 'react-easy-crop'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -79,54 +81,204 @@ const PLACEHOLDER_IMAGE = 'https://placehold.co/800x400/e2e8f0/94a3b8?text=No+Im
 
 // ─── PhotoUpload ──────────────────────────────────────────────────────────────
 function PhotoUpload({
-  label, value, onChange, hint, square = false,
+  label, value, onChange, hint, square = false, enableCrop = false, cropAspect = 16 / 9,
 }: {
   label: string; value: string; onChange: (url: string) => void
   hint?: string; square?: boolean
+  enableCrop?: boolean
+  cropAspect?: number
 }) {
   const [uploading, setUploading] = useState(false)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropSource, setCropSource] = useState<string | null>(null)
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
+  const [cropZoom, setCropZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+  const [pendingFileName, setPendingFileName] = useState('cover.jpg')
   const inputRef = useRef<HTMLInputElement>(null)
-  const handleFile = async (file: File) => {
+
+  const uploadBlob = async (blob: Blob, fileName: string) => {
     setUploading(true)
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', blob, fileName)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       const json = await res.json()
       const url = json?.data?.url || json?.url || ''
       if (url) onChange(url)
     } finally { setUploading(false) }
   }
+
+  const createCroppedBlob = useCallback(async ({
+    source,
+    area,
+  }: {
+    source: string
+    area: Area
+  }): Promise<Blob> => {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new window.Image()
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error('Gagal memuat gambar untuk crop'))
+      image.src = source
+    })
+
+    const outW = 1600
+    const outH = Math.round(outW / cropAspect)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = outW
+    canvas.height = outH
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas context tidak tersedia')
+
+    ctx.drawImage(
+      img,
+      area.x,
+      area.y,
+      area.width,
+      area.height,
+      0,
+      0,
+      outW,
+      outH,
+    )
+
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error('Gagal membuat hasil crop'))
+        resolve(blob)
+      }, 'image/jpeg', 0.92)
+    })
+  }, [cropAspect])
+
+  const handleFile = async (file: File) => {
+    if (!enableCrop) {
+      await uploadBlob(file, file.name)
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCropSource(typeof reader.result === 'string' ? reader.result : null)
+      setCrop({ x: 0, y: 0 })
+      setCropZoom(1)
+      setCroppedAreaPixels(null)
+      setPendingFileName(file.name || 'cover.jpg')
+      setCropOpen(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleApplyCrop = async () => {
+    if (!cropSource || !croppedAreaPixels) return
+    try {
+      const blob = await createCroppedBlob({
+        source: cropSource,
+        area: croppedAreaPixels,
+      })
+      const normalizedName = pendingFileName.replace(/\.[^.]+$/, '') || 'cover'
+      await uploadBlob(blob, `${normalizedName}-cropped.jpg`)
+      setCropOpen(false)
+      setCropSource(null)
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleCancelCrop = () => {
+    setCropOpen(false)
+    setCropSource(null)
+  }
+
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-      <div className="flex items-start gap-3">
-        <div className={`relative bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ${square ? 'w-20 h-20' : 'w-24 h-16'}`}>
-          {value ? (
-            <>
-              <Image src={value} alt="preview" fill className="object-contain p-1" unoptimized />
-              <button type="button" onClick={() => onChange('')}
-                className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600">
-                <X className="w-3 h-3" />
-              </button>
-            </>
-          ) : (
-            <ImageIcon className="w-6 h-6 text-gray-300" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <input ref={inputRef} type="file" accept="image/*" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
-          <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition-all">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? 'Mengunggah...' : 'Pilih File'}
-          </button>
-          {hint && <p className="text-xs text-gray-400 mt-1.5">{hint}</p>}
-          {value && <p className="text-xs text-gray-400 mt-1 truncate max-w-45">{value.split('/').pop()}</p>}
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+        <div className="flex items-start gap-3">
+          <div className={`relative bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ${square ? 'w-20 h-20' : 'w-24 h-16'}`}>
+            {value ? (
+              <>
+                <Image src={value} alt="preview" fill className="object-contain p-1" unoptimized />
+                <button type="button" onClick={() => onChange('')}
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600">
+                  <X className="w-3 h-3" />
+                </button>
+              </>
+            ) : (
+              <ImageIcon className="w-6 h-6 text-gray-300" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <input ref={inputRef} type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+            <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition-all">
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {uploading ? 'Mengunggah...' : 'Pilih File'}
+            </button>
+            {hint && <p className="text-xs text-gray-400 mt-1.5">{hint}</p>}
+            {enableCrop && <p className="text-xs text-blue-500 mt-1">Setelah pilih file, geser gambar untuk menentukan area cover yang ditampilkan.</p>}
+            {value && <p className="text-xs text-gray-400 mt-1 truncate max-w-45">{value.split('/').pop()}</p>}
+          </div>
         </div>
       </div>
-    </div>
+      {cropOpen && cropSource && (
+        <div className="fixed inset-0 z-70">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCancelCrop} />
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h4 className="text-base font-bold text-gray-900">Atur Crop Cover Program Keahlian</h4>
+                <p className="text-xs text-gray-500 mt-1">Geser gambar di dalam frame untuk memilih bagian cover yang akan tampil di halaman Program Keahlian.</p>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500">Area Cover (16:9)</p>
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-blue-200 bg-gray-900">
+                    <Cropper
+                      image={cropSource}
+                      crop={crop}
+                      zoom={cropZoom}
+                      aspect={cropAspect}
+                      showGrid
+                      onCropChange={setCrop}
+                      onZoomChange={setCropZoom}
+                      onCropComplete={(_croppedArea: Area, croppedAreaPixelsValue: Area) => setCroppedAreaPixels(croppedAreaPixelsValue)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500">Zoom ({cropZoom.toFixed(1)}x)</label>
+                    <input type="range" min={1} max={3} step={0.1} value={cropZoom}
+                      onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                      className="w-full mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Tips</label>
+                    <div className="mt-1 text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 leading-relaxed">
+                      Klik + geser gambar untuk memindahkan area potong, lalu atur zoom sesuai kebutuhan.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+                <button type="button" onClick={handleCancelCrop}
+                  className="px-4 py-2 text-sm rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-100">
+                  Batal
+                </button>
+                <button type="button" onClick={handleApplyCrop} disabled={uploading}
+                  className="px-4 py-2 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2">
+                  {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Gunakan Hasil Crop
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -531,7 +683,7 @@ function MajorDataForm({ form, setForm, competencies, setCompetencies, error }: 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <PhotoUpload label="Gambar Cover" value={form.image}
-            onChange={url => setForm(f => ({ ...f, image: url }))} hint="Banner/cover program keahlian" />
+            onChange={url => setForm(f => ({ ...f, image: url }))} hint="Banner/cover program keahlian" enableCrop cropAspect={16 / 9} />
           <PhotoUpload label="Logo / Icon" value={form.icon}
             onChange={url => setForm(f => ({ ...f, icon: url }))} hint="Logo Program Keahlian" square />
         </div>

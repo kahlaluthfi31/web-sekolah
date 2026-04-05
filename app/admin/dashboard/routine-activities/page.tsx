@@ -174,7 +174,7 @@ export default function RoutineActivitiesPage() {
     time: '',
     description: '',
     icon: 'CalendarDays',
-    orderPosition: 0,
+    orderPosition: 1,
     isActive: true,
   })
 
@@ -237,13 +237,23 @@ export default function RoutineActivitiesPage() {
     setSaving(true)
     setError(null)
     try {
+      const normalizedOrder = Math.max(1, Number(form.orderPosition) || 1)
+      const duplicateInCurrentPage = data.some((item) =>
+        item.orderPosition === normalizedOrder && (!editing || item.id !== editing.id),
+      )
+      if (duplicateInCurrentPage) {
+        setError('Urutan tampil sudah dipakai pada data lain. Gunakan angka yang berbeda.')
+        setSaving(false)
+        return
+      }
+
       const payload = {
         name: form.name.trim(),
         days: form.days.trim() || null,
         time: form.time.trim() || null,
         description: form.description.trim() || null,
         icon: form.icon || null,
-        orderPosition: Number(form.orderPosition) || 0,
+        orderPosition: normalizedOrder,
         isActive: form.isActive,
       }
       const url = editing ? '/api/routine-activities/' + editing.id : '/api/routine-activities'
@@ -477,8 +487,9 @@ export default function RoutineActivitiesPage() {
                   <label className="text-sm font-medium text-gray-700">Urutan Tampil</label>
                   <input
                     type="number"
+                    min="1"
                     value={form.orderPosition}
-                    onChange={e => setForm(f => ({ ...f, orderPosition: Number(e.target.value) }))}
+                    onChange={e => setForm(f => ({ ...f, orderPosition: Math.max(1, Number(e.target.value) || 1) }))}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>

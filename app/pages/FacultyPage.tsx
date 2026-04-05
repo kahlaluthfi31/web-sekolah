@@ -259,7 +259,7 @@ function StrukturSection() {
             </div>
 
             <p className="text-[11px] text-gray-400 mt-3">
-              Desktop: gunakan pinch trackpad atau Alt + scroll untuk zoom. Mobile: gunakan pinch dua jari untuk zoom in/out.
+              Desktop : gunakan pinch trackpad atau Alt + scroll untuk zoom. Mobile: gunakan pinch dua jari untuk zoom in/out.
             </p>
           </>
         )}
@@ -401,12 +401,12 @@ function RiwayatKepsekSection() {
                       </h4>
                       <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
                         <span>
-                          Periode: <span className="font-semibold text-gray-800">{h.startYear} - {isActive ? 'Sekarang' : h.endYear}</span>
+                          Periode : <span className="font-semibold text-gray-800">{h.startYear} - {isActive ? 'Sekarang' : h.endYear}</span>
                         </span>
                       </div>
                       {h.bidang && (
                         <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed mb-2">
-                          Bidang: {h.bidang}
+                          Bidang : {h.bidang}
                         </p>
                       )}
                       <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">

@@ -200,6 +200,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    const [commentSubmitting, setCommentSubmitting] = useState(false);
    const [commentMessage, setCommentMessage] = useState<string | null>(null);
    const [openCommentMenu, setOpenCommentMenu] = useState<number | null>(null);
+   const [openOwnCommentMenu, setOpenOwnCommentMenu] = useState(false);
    const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
    const [deleteCommentTarget, setDeleteCommentTarget] = useState<CommentItem | null>(null);
    const lastIncrementedId = useRef<number | null>(null);
@@ -207,17 +208,18 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    const currentUserId = useMemo(() => Number(session?.user?.id || 0), [session?.user?.id]);
 
    useEffect(() => {
-      if (openCommentMenu === null) return;
+      if (openCommentMenu === null && !openOwnCommentMenu) return;
 
       const handleScrollCloseMenu = () => {
          setOpenCommentMenu(null);
+         setOpenOwnCommentMenu(false);
       };
 
       window.addEventListener("scroll", handleScrollCloseMenu, true);
       return () => {
          window.removeEventListener("scroll", handleScrollCloseMenu, true);
       };
-   }, [openCommentMenu]);
+   }, [openCommentMenu, openOwnCommentMenu]);
 
    useEffect(() => {
       let mounted = true;
@@ -279,6 +281,11 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    }, [allNews, selectedNews]);
 
    const handleSelectNews = (item: NewsItem | TrendingItem) => {
+      if (item.slug) {
+         window.location.href = `/berita/${item.slug}`;
+         return;
+      }
+
       const normalized: NewsItem = {
          id: item.id,
          title: item.title,
@@ -539,6 +546,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
    const handleDeleteComment = (comment: CommentItem) => {
       setDeleteCommentTarget(comment);
       setOpenCommentMenu(null);
+      setOpenOwnCommentMenu(false);
    };
 
    const handleDeleteCommentConfirm = async () => {
@@ -931,36 +939,49 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                           <p className="text-sm font-semibold text-gray-900">Komentar Anda</p>
                                           <p className="text-xs text-gray-400 mt-0.5">{formatDate(myComment.updatedAt || myComment.createdAt)}</p>
                                        </div>
-                                       <span
-                                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getOwnCommentStatusMeta(myComment.status).className}`}
-                                       >
-                                          {getOwnCommentStatusMeta(myComment.status).label}
-                                       </span>
+                                       <div className="flex items-start gap-2">
+                                          <span
+                                             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getOwnCommentStatusMeta(myComment.status).className}`}
+                                          >
+                                             {getOwnCommentStatusMeta(myComment.status).label}
+                                          </span>
+                                          <div className="relative">
+                                             <button
+                                                type="button"
+                                                onClick={() => setOpenOwnCommentMenu((prev) => !prev)}
+                                                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                                             >
+                                                <MoreVertical className="w-4 h-4" />
+                                             </button>
+                                             {openOwnCommentMenu && (
+                                                <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                                   <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                         setCommentText(myComment.commentText);
+                                                         setCommentMessage(null);
+                                                         setIsEditingComment(true);
+                                                         setOpenOwnCommentMenu(false);
+                                                      }}
+                                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg transition-colors"
+                                                   >
+                                                      Edit
+                                                   </button>
+                                                   <button
+                                                      type="button"
+                                                      onClick={() => handleDeleteComment(myComment)}
+                                                      disabled={deletingCommentId === myComment.id}
+                                                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 last:rounded-b-lg transition-colors disabled:opacity-50"
+                                                   >
+                                                      {deletingCommentId === myComment.id ? "Menghapus..." : "Hapus"}
+                                                   </button>
+                                                </div>
+                                             )}
+                                          </div>
+                                       </div>
                                     </div>
 
                                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{myComment.commentText}</p>
-
-                                    <div className="mt-3 flex items-center gap-2">
-                                       <button
-                                          type="button"
-                                          onClick={() => {
-                                             setCommentText(myComment.commentText);
-                                             setCommentMessage(null);
-                                             setIsEditingComment(true);
-                                          }}
-                                          className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
-                                       >
-                                          Edit
-                                       </button>
-                                       <button
-                                          type="button"
-                                          onClick={() => handleDeleteComment(myComment)}
-                                          disabled={deletingCommentId === myComment.id}
-                                          className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
-                                       >
-                                          {deletingCommentId === myComment.id ? "Menghapus..." : "Hapus"}
-                                       </button>
-                                    </div>
                                  </div>
                               )}
 
@@ -994,7 +1015,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                                                       <MoreVertical className="w-4 h-4" />
                                                    </button>
                                                    {openCommentMenu === comment.id && (
-                                                      <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                                      <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                                                          <button
                                                             type="button"
                                                             onClick={() => {
@@ -1152,6 +1173,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                               {detailTrendingNews.length > 0 ? (
                                  detailTrendingNews.map((item) => (
                                     <button
+                                       type="button"
                                        key={`trend-${item.id}`}
                                        onClick={() => handleSelectNews(item)}
                                        className="w-full text-left flex items-start gap-3 group"
@@ -1182,6 +1204,7 @@ const NewsDetailsPage: React.FC<NewsDetailsPageProps> = ({ onBack }) => {
                            <div className="space-y-3">
                               {detailRecommendedNews.map((item) => (
                                  <button
+                                    type="button"
                                     key={`rec-${item.id}`}
                                     onClick={() => handleSelectNews(item)}
                                     className="w-full text-left flex items-start gap-3 group"

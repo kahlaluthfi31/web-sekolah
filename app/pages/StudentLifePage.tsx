@@ -14,7 +14,6 @@ import {
   CalendarDays,
   Clock3,
   X,
-  ArrowRight,
 } from "lucide-react";
 import { usePageHeader } from "@/lib/usePageHeader";
 
@@ -695,7 +694,7 @@ const StudentLifePage: React.FC = () => {
           {eskulActivitiesLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="h-44 md:h-48 bg-white rounded-xl border border-gray-100 animate-pulse" />
+                <div key={idx} className="h-48 md:h-52 bg-white rounded-xl border border-gray-100 animate-pulse" />
               ))}
             </div>
           )}
@@ -824,7 +823,7 @@ function FeaturedActivityCard({ activity, onOpen }: { activity: EskulActivity; o
       className="relative group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-gray-200 transition-all duration-300 cursor-pointer md:col-span-2 lg:col-span-2 lg:row-span-2"
       onClick={() => onOpen(activity.id)}
     >
-      <div className="h-64 md:h-80 lg:h-96 flex items-center justify-center p-0">
+      <div className="h-64 md:h-80 lg:h-116 flex items-center justify-center p-0">
         {activity.image ? (
           <img src={activity.image} alt={activity.activityTitle} className="w-full h-full object-cover" />
         ) : (
@@ -856,12 +855,12 @@ function SmallActivityCard({ activity, onOpen }: { activity: EskulActivity; onOp
   const dateLabel = formatActivityDate(activity.activityDate);
   return (
     <div
-      className="relative group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-gray-200 transition-all duration-300 cursor-pointer"
+      className="relative group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-gray-200 transition-all duration-300 cursor-pointer"
       onClick={() => onOpen(activity.id)}
     >
-      <div className="h-40 md:h-44 flex items-center justify-center p-0">
+      <div className="h-44 md:h-52 lg:h-56 flex items-center justify-center p-0 rounded-xl overflow-hidden">
         {activity.image ? (
-          <img src={activity.image} alt={activity.activityTitle} className="w-full h-full object-cover" />
+          <img src={activity.image} alt={activity.activityTitle} className="block w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-linear-to-br from-gray-100 to-white flex items-center justify-center p-4">
             <div className="text-center">
@@ -871,7 +870,7 @@ function SmallActivityCard({ activity, onOpen }: { activity: EskulActivity; onOp
           </div>
         )}
       </div>
-      <div className="absolute inset-0 bg-linear-to-t from-[#0268ab]/65 via-[#0268ab]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute inset-0 rounded-xl overflow-hidden bg-linear-to-t from-[#0268ab]/65 via-[#0268ab]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <div className="absolute inset-0 p-3 flex flex-col justify-end gap-1">
           <div className="flex items-center justify-between text-xs text-white/85">
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 text-[#0268ab] font-semibold uppercase tracking-wide text-[10px]">

@@ -2,7 +2,7 @@
 
 
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import Navbar from '@/components/Navbar';
 
@@ -59,6 +59,7 @@ export type PageType = 'home' | 'about-us' | 'admissions' | 'faculty' | 'campus'
 
 
 const SESSION_KEY = 'smk_last_page';
+const AUDIO_PLAYED_KEY = 'smk_audio_played_once';
 
 
 
@@ -72,23 +73,32 @@ function getInitialPage(): PageType {
 
 }
 
+function getInitialAudioPlayed(): boolean {
+
+  if (typeof window === 'undefined') return false;
+
+  return sessionStorage.getItem(AUDIO_PLAYED_KEY) === '1';
+
+}
+
 
 
 const AppContent: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState<PageType>(getInitialPage);
 
-  const [hostName, setHostName] = useState('localhost:3000');
-
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const [audioConsent, setAudioConsent] = useState<'allow' | 'deny' | null>(null);
-
-  const [showAudioPrompt, setShowAudioPrompt] = useState(false);
+  const [hasPlayedAudioOnce, setHasPlayedAudioOnce] = useState<boolean>(getInitialAudioPlayed);
+  const hasPlayedAudioOnceRef = useRef(hasPlayedAudioOnce);
 
   const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
 
   const { data: session } = useSession();
+
+  useEffect(() => {
+    hasPlayedAudioOnceRef.current = hasPlayedAudioOnce;
+  }, [hasPlayedAudioOnce]);
 
 
 
@@ -115,16 +125,6 @@ const AppContent: React.FC = () => {
     // Preload video immediately
 
     preloadVideo();
-
-  }, []);
-
-
-
-  useEffect(() => {
-
-    if (typeof window === 'undefined') return;
-
-    setHostName(window.location.host || 'localhost:3000');
 
   }, []);
 
@@ -166,27 +166,11 @@ const AppContent: React.FC = () => {
 
 
 
-  useEffect(() => {
-
-    if (typeof window === 'undefined') return;
-
-
-
-    if (!audioConsent && currentPage === 'home') {
-
-      setShowAudioPrompt(true);
-
-    } else {
-
-      setShowAudioPrompt(false);
-
-    }
-
-  }, [audioConsent, currentPage]);
-
-
-
   const navigateTo = (page: PageType) => {
+
+    if (!hasPlayedAudioOnceRef.current) {
+      void playAudio();
+    }
 
     sessionStorage.setItem(SESSION_KEY, page);
 
@@ -198,9 +182,9 @@ const AppContent: React.FC = () => {
 
 
 
-  const playAudio = useCallback(async () => {
+  const playAudio = async () => {
 
-    if (!audioRef.current) return;
+    if (!audioRef.current || hasPlayedAudioOnceRef.current) return;
 
     try {
 
@@ -208,59 +192,42 @@ const AppContent: React.FC = () => {
 
       await audioRef.current.play();
 
+      setHasPlayedAudioOnce(true);
+      hasPlayedAudioOnceRef.current = true;
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(AUDIO_PLAYED_KEY, '1');
+      }
+
     } catch (error) {
 
       console.log('⚠️ Audio playback blocked or failed:', error);
 
     }
 
-  }, []);
+  };
 
 
 
   useEffect(() => {
+    if (typeof window === 'undefined' || hasPlayedAudioOnce) return;
 
-    if (currentPage !== 'home') {
+    const triggerAudio = () => {
+      void playAudio();
+    };
 
-      audioRef.current?.pause();
+    window.addEventListener('scroll', triggerAudio, { passive: true });
+    window.addEventListener('click', triggerAudio);
+    window.addEventListener('touchstart', triggerAudio, { passive: true });
+    window.addEventListener('keydown', triggerAudio);
 
-      return;
-
-    }
-
-
-
-    if (audioConsent === 'allow') {
-
-      playAudio();
-
-    }
-
-  }, [currentPage, audioConsent, playAudio]);
-
-
-
-  const handleAllowAudio = async () => {
-
-    setAudioConsent('allow');
-
-    setShowAudioPrompt(false);
-
-    await playAudio();
-
-  };
-
-
-
-  const handleDenyAudio = () => {
-
-    setAudioConsent('deny');
-
-    setShowAudioPrompt(false);
-
-    audioRef.current?.pause();
-
-  };
+    return () => {
+      window.removeEventListener('scroll', triggerAudio);
+      window.removeEventListener('click', triggerAudio);
+      window.removeEventListener('touchstart', triggerAudio);
+      window.removeEventListener('keydown', triggerAudio);
+    };
+  }, [hasPlayedAudioOnce]);
 
 
 
@@ -415,53 +382,6 @@ const AppContent: React.FC = () => {
         </div>
 
       )}
-
-
-
-      {showAudioPrompt && currentPage === 'home' && (
-
-  <div className="fixed left-1/2 -translate-x-1/2 bottom-4 z-110 w-[86%] max-w-sm rounded-md border border-gray-200 bg-white shadow-xl px-3 py-2">
-
-          <p className="text-xs text-center text-gray-800 font-semibold mb-1.5">{hostName} akan memutar audio</p>
-
-          <div className="flex items-center justify-center gap-2">
-
-            <button
-
-              type="button"
-
-              onClick={handleDenyAudio}
-
-              className="px-3 py-1.5 rounded-sm border border-gray-300 text-xs text-gray-700 bg-white hover:bg-gray-100 transition"
-
-            >
-
-              Deny
-
-            </button>
-
-            <button
-
-              type="button"
-
-              onClick={handleAllowAudio}
-
-              className="px-3 py-1.5 rounded-sm bg-blue-600 text-xs text-white hover:bg-blue-700 transition shadow-sm"
-
-            >
-
-              Allow
-
-            </button>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-
       <AnnouncementPopup onNavigate={navigateTo} currentPage={currentPage} />
 
       <Navbar onNavigate={navigateTo} currentPage={currentPage} />

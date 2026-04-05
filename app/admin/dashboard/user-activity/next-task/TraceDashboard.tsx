@@ -118,7 +118,7 @@ export default function TraceDashboard({ initialRecords }: Props) {
         </div>
 
         <div className="grid lg:grid-cols-[2fr,1fr] gap-6 items-start">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
+          <div className="relative z-0 bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
             <div className="p-4 border-b border-slate-200 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
                 <Crosshair className="w-5 h-5" />
@@ -131,7 +131,7 @@ export default function TraceDashboard({ initialRecords }: Props) {
               </div>
             </div>
 
-            <div className="bg-white" style={{ height: 520 }}>
+            <div className="relative z-0 bg-white" style={{ height: 520 }}>
               <TraceMap center={center} marker={center} />
             </div>
           </div>

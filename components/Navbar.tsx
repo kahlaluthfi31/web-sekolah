@@ -119,6 +119,21 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
     fetchBlud();
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [isOpen]);
+
   const scrollToPrograms = () => {
     onNavigate("program-keahlian");
     setIsOpen(false);
@@ -184,12 +199,18 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
       }
       return;
     }
+    if (page === "events") {
+      if (typeof window !== "undefined") {
+        window.location.href = "/agenda";
+      }
+      return;
+    }
     onNavigate(page);
   };
 
   return (
     <nav
-      className={`fixed w-full z-50 transition-all duration-300 ${navbarStyle}`}
+      className={`fixed w-full z-50 overflow-visible transition-all duration-300 ${navbarStyle}`}
     >
       <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
@@ -222,7 +243,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
             <div className="ml-10 flex items-center space-x-6">
               <button
                 onClick={() => onNavigate("home")}
-                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === "home" && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
+                className={`text-sm font-medium transition-colors hover:text-[#90b5f0] ${currentPage === "home" && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
               >
                 Beranda
               </button>
@@ -230,7 +251,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
               <div className="relative group" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isSolidWhite ? "text-gray-700" : "text-white"}`}
+                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#90b5f0] ${isSolidWhite ? "text-gray-700" : "text-white"}`}
                 >
                   Tentang Kami{" "}
                   <ChevronDown
@@ -247,7 +268,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                             onNavigate(item.page);
                             setShowDropdown(false);
                           }}
-                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#0268ab] transition-colors"
+                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#f7fbff] hover:text-[#90b5f0] transition-colors"
                         >
                           {item.name}
                         </button>
@@ -260,7 +281,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
               <div className="relative" ref={programDropdownRef}>
                 <button
                   onClick={() => setShowProgramsDropdown(!showProgramsDropdown)}
-                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#0268ab] ${isSolidWhite ? "text-gray-700" : "text-white"}`}
+                  className={`flex items-center text-sm font-medium transition-colors hover:text-[#90b5f0] ${isSolidWhite ? "text-gray-700" : "text-white"}`}
                 >
                   Program Keahlian{" "}
                   <ChevronDown
@@ -285,7 +306,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                           <button
                             key={major.id}
                             onClick={() => handleNavigateMajor(major.id)}
-                            className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-[#e8f2ff] hover:text-[#0268ab] transition-colors"
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-800 hover:bg-[#f4f9ff] hover:text-[#90b5f0] transition-colors"
                           >
                             {major.name}
                           </button>
@@ -299,7 +320,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                 <React.Fragment key={item.name}>
                   <button
                     onClick={() => handleMainNavClick(item.page)}
-                    className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === item.page && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
+                    className={`text-sm font-medium transition-colors hover:text-[#90b5f0] ${currentPage === item.page && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
                   >
                     {item.name}
                   </button>
@@ -308,7 +329,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                       href={bludUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${isSolidWhite ? "text-gray-700" : "text-white"}`}
+                      className={`text-sm font-medium transition-colors hover:text-[#90b5f0] ${isSolidWhite ? "text-gray-700" : "text-white"}`}
                     >
                       BLUD
                     </a>
@@ -318,7 +339,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
 
               <button
                 onClick={() => onNavigate("contact")}
-                className={`text-sm font-medium transition-colors hover:text-[#0268ab] ${currentPage === "contact" && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
+                className={`text-sm font-medium transition-colors hover:text-[#90b5f0] ${currentPage === "contact" && isSolidWhite ? "text-[#0268ab]" : isSolidWhite ? "text-gray-700" : "text-white"}`}
               >
                 Kontak
               </button>
@@ -352,7 +373,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
       {/* Mobile menu */}
       {isOpen && (
         <div
-          className={`xl:hidden animate-in slide-in-from-top duration-300 ${
+          className={`xl:hidden absolute inset-x-0 top-14 z-[60] max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain animate-in slide-in-from-top duration-300 ${
             isSolidWhite
               ? "bg-white shadow-lg"
               : "bg-white/95 backdrop-blur-lg shadow-2xl"
@@ -394,7 +415,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                     onNavigate(item.page);
                     setIsOpen(false);
                   }}
-                  className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#0268ab]"
+                  className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#90b5f0] hover:bg-[#f7fbff] rounded-md transition-colors"
                 >
                   {item.name}
                 </button>
@@ -423,7 +444,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                           handleNavigateMajor(major.id);
                           setIsOpen(false);
                         }}
-                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#0268ab]"
+                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-[#90b5f0] hover:bg-[#f7fbff] rounded-md transition-colors"
                       >
                         {major.name}
                       </button>
@@ -445,7 +466,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
                               handleNavigateMajor(major.id);
                               setIsOpen(false);
                             }}
-                            className="block w-full text-left px-3 py-1.5 text-sm text-gray-600 hover:text-[#0268ab] hover:bg-blue-50 rounded-md transition-colors"
+                            className="block w-full text-left px-3 py-1.5 text-sm text-gray-600 hover:text-[#90b5f0] hover:bg-[#f4f9ff] rounded-md transition-colors"
                           >
                             {comp.name}
                           </button>

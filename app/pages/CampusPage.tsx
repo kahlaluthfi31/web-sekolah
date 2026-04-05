@@ -14,9 +14,11 @@ const VirtualTourViewer = dynamic(
 
 const CampusPage: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualTourSectionRef = useRef<HTMLElement>(null);
   const [facilities, setFacilities] = useState<FacilityCard[]>([]);
   const [loadingFacilities, setLoadingFacilities] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const FACILITY_DESCRIPTION_TOGGLE_MIN_CHARS = 120;
   const [tourConfig, setTourConfig] = useState<PannellumConfig | null>(null);
   const [loadingTour, setLoadingTour] = useState(true);
   const [tourError, setTourError] = useState<string>("");
@@ -108,8 +110,8 @@ const CampusPage: React.FC = () => {
 
         const scenes: Scene[] = json.data;
         const defaultScene = scenes.find((s) => s.isDefault) ?? scenes[0];
-  const sceneKeyById = new Map(scenes.map((s) => [s.id, s.sceneKey]));
-  const scenesMap: Record<string, PannellumScene> = {};
+        const sceneKeyById = new Map(scenes.map((s) => [s.id, s.sceneKey]));
+        const scenesMap: Record<string, PannellumScene> = {};
 
         for (const scene of scenes) {
           scenesMap[scene.sceneKey] = {
@@ -118,18 +120,18 @@ const CampusPage: React.FC = () => {
             hotSpots: scene.hotspots.map((h) =>
               h.targetSceneId
                 ? {
-                    pitch: h.pitch,
-                    yaw: h.yaw,
-                    type: "scene" as const,
-                    text: h.text,
-                    sceneId: sceneKeyById.get(h.targetSceneId) ?? "",
-                  }
+                  pitch: h.pitch,
+                  yaw: h.yaw,
+                  type: "scene" as const,
+                  text: h.text,
+                  sceneId: sceneKeyById.get(h.targetSceneId) ?? "",
+                }
                 : {
-                    pitch: h.pitch,
-                    yaw: h.yaw,
-                    type: "info" as const,
-                    text: h.text,
-                  },
+                  pitch: h.pitch,
+                  yaw: h.yaw,
+                  type: "info" as const,
+                  text: h.text,
+                },
             ),
           };
         }
@@ -152,6 +154,24 @@ const CampusPage: React.FC = () => {
       }
     };
     loadTour();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const target = sessionStorage.getItem("campus_scroll_target");
+    if (target !== "virtual-tour") return;
+
+    const scrollToTarget = () => {
+      virtualTourSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      sessionStorage.removeItem("campus_scroll_target");
+    };
+
+    const timer = window.setTimeout(scrollToTarget, 120);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const galleryPhotos = useMemo(() => {
@@ -313,6 +333,9 @@ const CampusPage: React.FC = () => {
                 const qtyLabel =
                   item.quantityType === "kapasitas" ? "Kapasitas" : "Qty";
                 const isExpanded = expandedIds.has(item.id);
+                const descriptionLength = (item.description || "").trim().length;
+                const shouldShowDescriptionToggle =
+                  descriptionLength > FACILITY_DESCRIPTION_TOGGLE_MIN_CHARS;
                 const toggleExpand = () => {
                   setExpandedIds((prev) => {
                     const next = new Set(prev);
@@ -371,12 +394,12 @@ const CampusPage: React.FC = () => {
                         </span>
                       </div>
                       <p
-                        className={`text-xs text-gray-400 leading-relaxed ${isExpanded ? "" : "line-clamp-2"}`}
+                        className={`text-xs text-gray-400 leading-relaxed ${isExpanded || !shouldShowDescriptionToggle ? "" : "line-clamp-2"}`}
                       >
                         {item.description ||
                           "Belum ada deskripsi untuk fasilitas ini."}
                       </p>
-                      {item.description && item.description.length > 0 && (
+                      {item.description && shouldShowDescriptionToggle && (
                         <button
                           type="button"
                           onClick={toggleExpand}
@@ -394,7 +417,11 @@ const CampusPage: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-16 lg:py-20 bg-gray-50 border-y border-gray-100">
+      <section
+        ref={virtualTourSectionRef}
+        id="virtual-tour"
+        className="py-16 lg:py-20 bg-gray-50 border-y border-gray-100"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-5">
             <span className="text-xs font-semibold tracking-[0.3em] text-gray-400 uppercase">
@@ -404,7 +431,7 @@ const CampusPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="w-full lg:col-span-7 bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
+            <div className="w-full lg:col-span-7 bg-white rounded-3xl overflow-hidden shadow-md border border-gray-100">
               <div className="relative bg-gray-100" style={{ height: "420px" }}>
                 {loadingTour ? (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -585,13 +612,13 @@ const CampusPage: React.FC = () => {
               Belum ada foto fasilitas.
             </div>
           ) : (
-            <div className="grid grid-cols-4 grid-rows-2 gap-1 w-full mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 auto-rows-[130px] md:auto-rows-auto gap-1 w-full mb-8">
               {currentImages.map((item, i) => {
                 const gridSizes = [
-                  "col-span-2 row-span-2",
+                  "col-span-2 row-span-1 md:row-span-2",
                   "col-span-1 row-span-1",
                   "col-span-1 row-span-1",
-                  "col-span-1 row-span-2",
+                  "col-span-1 row-span-1 md:row-span-2",
                   "col-span-1 row-span-1",
                   "col-span-1 row-span-1",
                   "col-span-1 row-span-1",
@@ -607,7 +634,7 @@ const CampusPage: React.FC = () => {
                     onClick={() => openModal(globalIndex)}
                     className={`relative ${currentSize} group cursor-pointer overflow-hidden rounded-lg text-left`}
                   >
-                    <div className="relative w-full h-full min-h-38">
+                    <div className="relative w-full h-full min-h-32.5 md:min-h-38">
                       <Image
                         src={item.img}
                         className="object-cover group-hover:scale-105 transition-transform duration-500 w-full h-full"
@@ -658,7 +685,7 @@ const CampusPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => openModal(0)}
-                className="col-span-1 row-span-1 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="hidden md:flex col-span-2 md:col-span-1 row-span-1 bg-gray-100 rounded-lg items-center justify-center hover:bg-gray-200 transition-colors"
                 disabled={galleryPhotos.length === 0}
               >
                 <div className="text-center p-4">
@@ -691,16 +718,16 @@ const CampusPage: React.FC = () => {
                 {galleryPhotos.length}
               </div>
 
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto justify-center sm:justify-end">
                 {/* Previous Button */}
                 <button
                   onClick={handlePrevious}
                   disabled={currentPage === 1}
-                  className={`p-2 rounded-lg transition-all duration-300 ${
-                    currentPage === 1
+                  aria-label="Halaman sebelumnya"
+                  className={`p-2 rounded-lg transition-all duration-300 ${currentPage === 1
                       ? "text-gray-300 cursor-not-allowed"
                       : "text-gray-600 hover:text-[#0268ab] hover:bg-[#0268ab]/10"
-                  }`}
+                    }`}
                 >
                   <svg
                     className="w-4 h-4"
@@ -718,17 +745,16 @@ const CampusPage: React.FC = () => {
                 </button>
 
                 {/* Page Numbers */}
-                <div className="flex items-center space-x-1">
+                <div className="hidden sm:flex items-center space-x-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (page) => (
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-300 ${
-                          currentPage === page
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-300 ${currentPage === page
                             ? "bg-[#0268ab] text-white"
                             : "text-gray-600 hover:text-[#0268ab] hover:bg-[#0268ab]/10"
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -736,15 +762,19 @@ const CampusPage: React.FC = () => {
                   )}
                 </div>
 
+                <div className="sm:hidden text-xs font-medium text-gray-600 min-w-18 text-center">
+                  {currentPage} / {totalPages}
+                </div>
+
                 {/* Next Button */}
                 <button
                   onClick={handleNext}
                   disabled={currentPage === totalPages}
-                  className={`p-2 rounded-lg transition-all duration-300 ${
-                    currentPage === totalPages
+                  aria-label="Halaman selanjutnya"
+                  className={`p-2 rounded-lg transition-all duration-300 ${currentPage === totalPages
                       ? "text-gray-300 cursor-not-allowed"
                       : "text-gray-600 hover:text-[#0268ab] hover:bg-[#0268ab]/10"
-                  }`}
+                    }`}
                 >
                   <svg
                     className="w-4 h-4"

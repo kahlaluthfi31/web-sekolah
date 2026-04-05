@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import Cropper, { Area } from "react-easy-crop";
 import {
   Plus,
   Search,
@@ -304,6 +305,51 @@ function getOneHourLater(): string {
     ":" +
     String(now.getMinutes()).padStart(2, "0")
   );
+}
+
+function createImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", () => reject(new Error("Invalid image")));
+    image.src = src;
+  });
+}
+
+async function getCroppedImageBlob(
+  imageSrc: string,
+  crop: Area,
+): Promise<Blob> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas context tidak tersedia");
+
+  canvas.width = Math.max(1, Math.round(crop.width));
+  canvas.height = Math.max(1, Math.round(crop.height));
+
+  ctx.drawImage(
+    image,
+    crop.x,
+    crop.y,
+    crop.width,
+    crop.height,
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Gagal memproses gambar"));
+      },
+      "image/jpeg",
+      0.92,
+    );
+  });
 }
 
 function ActionDropdown({
@@ -1672,6 +1718,11 @@ function AgendaFormModal({
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [cropZoom, setCropZoom] = useState(1);
+  const [croppedPixels, setCroppedPixels] = useState<Area | null>(null);
+  const [processingCrop, setProcessingCrop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const today = new Date().toISOString().split("T")[0];
   const [useTimeEndText, setUseTimeEndText] = useState(false);
@@ -1812,25 +1863,67 @@ function AgendaFormModal({
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("File harus berupa gambar");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setError("");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = String(reader.result || "");
+      if (!base64) {
+        setError("Gagal membaca file gambar");
+        return;
+      }
+      setCropPosition({ x: 0, y: 0 });
+      setCropZoom(1);
+      setCroppedPixels(null);
+      setCropImageSrc(base64);
+    };
+    reader.onerror = () => {
+      setError("Gagal membaca file gambar");
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input agar file yang sama bisa dipilih ulang
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const confirmCropUpload = async () => {
+    if (!cropImageSrc || !croppedPixels) {
+      setError("Area crop belum siap, coba geser atau zoom gambar terlebih dahulu");
+      return;
+    }
+
+    setProcessingCrop(true);
     setUploading(true);
     try {
+      const blob = await getCroppedImageBlob(cropImageSrc, croppedPixels);
+      const croppedFile = new File([blob], `agenda-cover-${Date.now()}.jpg`, {
+        type: "image/jpeg",
+      });
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", croppedFile);
       fd.append("folder", "agendas");
+
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const json = await res.json();
       if (json.success && json.data?.url) {
         setForm((f) => ({ ...f, image: json.data.url }));
         setImagePreview(json.data.url);
+        setCropImageSrc(null);
       } else {
         setError(json.message || "Gagal mengupload gambar");
       }
     } catch {
       setError("Gagal mengupload gambar");
     } finally {
+      setProcessingCrop(false);
       setUploading(false);
-      // Reset input agar file yang sama bisa diupload ulang
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -1839,6 +1932,21 @@ function AgendaFormModal({
     if (!form.title.trim()) {
       setError("Nama kegiatan wajib diisi");
       return;
+    }
+    if (!useTimeEndText) {
+      if (!form.eventTime || !form.timeEnd) {
+        setError("Jam mulai dan jam selesai wajib diisi");
+        return;
+      }
+      const [startHour, startMinute] = form.eventTime.split(":").map(Number);
+      const [endHour, endMinute] = form.timeEnd.split(":").map(Number);
+      const startTotalMinutes = startHour * 60 + startMinute;
+      const endTotalMinutes = endHour * 60 + endMinute;
+
+      if (startTotalMinutes >= endTotalMinutes) {
+        setError("Jam mulai harus lebih awal dari jam selesai");
+        return;
+      }
     }
     if (participantOption === "Lainnya" && !participantCustom.trim()) {
       setError("Silakan jelaskan peserta kegiatan saat memilih 'Lainnya'");
@@ -1933,7 +2041,9 @@ function AgendaFormModal({
                   Gambar Cover
                 </label>
                 <div
-                  onClick={() => !uploading && fileInputRef.current?.click()}
+                  onClick={() =>
+                    !uploading && !processingCrop && fileInputRef.current?.click()
+                  }
                   className={`relative w-full rounded-xl border-2 border-dashed overflow-hidden cursor-pointer transition-colors bg-gray-50 flex items-center justify-center ${
                     uploading
                       ? "border-blue-300 cursor-wait"
@@ -1956,7 +2066,7 @@ function AgendaFormModal({
                         Klik untuk upload gambar
                       </p>
                       <p className="text-xs text-gray-300 mt-1">
-                        JPG, PNG, WEBP maks. 2MB
+                        JPG, PNG, WEBP • Crop rasio 16:7 (Upcoming Events)
                       </p>
                     </div>
                   )}
@@ -1974,16 +2084,25 @@ function AgendaFormModal({
                   onChange={handleImageUpload}
                 />
                 {imagePreview && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreview(null);
-                      setForm((f) => ({ ...f, image: "" }));
-                    }}
-                    className="mt-2 text-xs text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    Hapus gambar
-                  </button>
+                  <div className="mt-2 flex items-center gap-3 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setForm((f) => ({ ...f, image: "" }));
+                      }}
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      Hapus gambar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      Ganti & crop ulang
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2179,52 +2298,52 @@ function AgendaFormModal({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between py-2.5 px-4 border border-gray-100 rounded-xl bg-gray-50">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">
-                        Link Pendaftaran
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Tampilkan URL daftar agenda
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
+                <div className="flex items-center justify-between py-2.5 px-4 border border-gray-100 rounded-xl bg-gray-50">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      Link Pendaftaran
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Tampilkan URL daftar agenda
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({
+                        ...f,
+                        hasRegistration: !f.hasRegistration,
+                        registrationUrl: !f.hasRegistration
+                          ? f.registrationUrl
+                          : "",
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.hasRegistration ? "bg-blue-600" : "bg-gray-200"}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.hasRegistration ? "translate-x-6" : "translate-x-1"}`}
+                    />
+                  </button>
+                </div>
+
+                {form.hasRegistration && (
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-600">URL Pendaftaran</label>
+                    <input
+                      type="url"
+                      value={form.registrationUrl}
+                      onChange={(e) =>
                         setForm((f) => ({
                           ...f,
-                          hasRegistration: !f.hasRegistration,
-                          registrationUrl: !f.hasRegistration
-                            ? f.registrationUrl
-                            : "",
+                          registrationUrl: e.target.value,
                         }))
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.hasRegistration ? "bg-blue-600" : "bg-gray-200"}`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.hasRegistration ? "translate-x-6" : "translate-x-1"}`}
-                      />
-                    </button>
+                      placeholder="https://..."
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                  {form.hasRegistration && (
-                    <div className="space-y-1">
-                      <label className="text-xs text-gray-600">URL Pendaftaran</label>
-                      <input
-                        type="url"
-                        value={form.registrationUrl}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            registrationUrl: e.target.value,
-                          }))
-                        }
-                        placeholder="https://..."
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  )}
-                </div>
+                )}
+                {!form.hasRegistration && <div />}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -2322,6 +2441,90 @@ function AgendaFormModal({
                 </button>
               </div>
             </form>
+
+            {cropImageSrc && (
+              <div className="fixed inset-0 z-70">
+                <div
+                  className="absolute inset-0 bg-black/70"
+                  onClick={() => !processingCrop && setCropImageSrc(null)}
+                />
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          Sesuaikan gambar cover
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Rasio 16:7 agar pas di kartu Upcoming Events
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCropImageSrc(null)}
+                        disabled={processingCrop}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                      <div className="relative w-full bg-gray-900 rounded-xl overflow-hidden" style={{ aspectRatio: "16/7" }}>
+                        <Cropper
+                          image={cropImageSrc}
+                          crop={cropPosition}
+                          zoom={cropZoom}
+                          aspect={16 / 7}
+                          objectFit="horizontal-cover"
+                          showGrid={false}
+                          onCropChange={setCropPosition}
+                          onZoomChange={setCropZoom}
+                          onCropComplete={(_, croppedAreaPixels) =>
+                            setCroppedPixels(croppedAreaPixels)
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1.5">
+                          Zoom
+                        </label>
+                        <input
+                          type="range"
+                          min={1}
+                          max={3}
+                          step={0.1}
+                          value={cropZoom}
+                          onChange={(e) => setCropZoom(Number(e.target.value))}
+                          className="w-full accent-blue-600"
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setCropImageSrc(null)}
+                          disabled={processingCrop}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          type="button"
+                          onClick={confirmCropUpload}
+                          disabled={processingCrop}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {processingCrop && <Loader2 className="w-4 h-4 animate-spin" />}
+                          {processingCrop ? "Memproses..." : "Gunakan gambar ini"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

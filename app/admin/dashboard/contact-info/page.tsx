@@ -25,6 +25,8 @@ type ToastState = {
   message: string;
 };
 
+type SaveSection = "kontak" | "alamat_jam" | "sosial" | "izin";
+
 const urlKeys = [
   "social_instagram",
   "social_facebook",
@@ -98,6 +100,25 @@ const contactFields = {
   ],
 };
 
+const phoneKeys = new Set([
+  "contact_phone_main",
+  "contact_phone_alt",
+]);
+
+const whatsappKeys = new Set([
+  "contact_whatsapp_main",
+  "contact_whatsapp_alt",
+]);
+
+const sanitizePhoneOrWhatsapp = (value: string, allowParentheses = false) => {
+  if (!value) return "";
+  const hasLeadingPlus = value.trim().startsWith("+");
+  const sanitizedBody = allowParentheses
+    ? value.replace(/[^0-9()]/g, "")
+    : value.replace(/\D/g, "");
+  return hasLeadingPlus ? `+${sanitizedBody}` : sanitizedBody;
+};
+
 const humanizeSocialLabel = (key: string) => {
   const name = key
     .replace(/^social_/, "")
@@ -161,7 +182,7 @@ export default function ContactInfoPage() {
   const [removedSocialKeys, setRemovedSocialKeys] = useState<string[]>([]);
   const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [savingKey, setSavingKey] = useState<SaveSection | null>(null);
   const [toast, setToast] = useState<ToastState>({
     visible: false,
     type: "success",
@@ -203,6 +224,40 @@ export default function ContactInfoPage() {
     }
   }, []);
 
+  const refreshSettingKeys = useCallback(async (keys: string[]) => {
+    if (!keys.length) return;
+
+    try {
+      const res = await fetch("/api/settings", { cache: "no-store" });
+      const json = await res.json();
+      if (!json.success) return;
+
+      const map = (json.data as Setting[]).reduce<Record<string, string>>(
+        (acc, cur) => {
+          acc[cur.settingKey] = cur.settingValue ?? "";
+          return acc;
+        },
+        {},
+      );
+
+      setValues((prev) => {
+        const next = { ...prev };
+        keys.forEach((key) => {
+          next[key] = map[key] ?? "";
+        });
+        return next;
+      });
+
+      const hasSocialKey = keys.some((k) => k.startsWith("social_"));
+      if (hasSocialKey) {
+        setSocialFields(buildSocialFields(map));
+        setRemovedSocialKeys([]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSettings();
     return () => {
@@ -229,10 +284,11 @@ export default function ContactInfoPage() {
   const saveKeys = async (
     keys: string[],
     overrideValues?: Record<string, string>,
+    section?: SaveSection,
   ) => {
     if (!keys.length) return;
     const sourceValues = overrideValues ?? values;
-    setSavingKey(keys[0]);
+    setSavingKey(section ?? null);
     try {
       const allKeys = Array.from(new Set([...keys, ...removedSocialKeys]));
       await Promise.all(
@@ -253,7 +309,7 @@ export default function ContactInfoPage() {
         }),
       );
       triggerToast("success", "Berhasil disimpan");
-      fetchSettings();
+      await refreshSettingKeys(allKeys);
     } catch (err) {
       console.error(err);
       triggerToast("error", "Gagal menyimpan. Coba lagi.");
@@ -295,6 +351,7 @@ export default function ContactInfoPage() {
     await saveKeys(
       [...nextSocialFields.map((f) => f.key), ...removedSocialKeys],
       nextValues,
+      "sosial",
     );
   };
 
@@ -354,14 +411,35 @@ export default function ContactInfoPage() {
                       <input
                         type="text"
                         value={values[field.key] ?? ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          let nextValue = rawValue;
+
+                          if (phoneKeys.has(field.key)) {
+                            nextValue = sanitizePhoneOrWhatsapp(rawValue, true);
+                          } else if (whatsappKeys.has(field.key)) {
+                            nextValue = sanitizePhoneOrWhatsapp(rawValue, false);
+                          }
+
                           setValues((v) => ({
                             ...v,
-                            [field.key]: e.target.value,
-                          }))
-                        }
+                            [field.key]: nextValue,
+                          }));
+                        }}
                         className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0268ab]"
                         placeholder={field.label}
+                        inputMode={
+                          phoneKeys.has(field.key) || whatsappKeys.has(field.key)
+                            ? "tel"
+                            : undefined
+                        }
+                        pattern={
+                          phoneKeys.has(field.key)
+                            ? "^\\+?[0-9()]*$"
+                            : whatsappKeys.has(field.key)
+                              ? "^\\+?[0-9]*$"
+                              : undefined
+                        }
                         disabled={loading}
                       />
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -374,12 +452,12 @@ export default function ContactInfoPage() {
               <div className="text-right">
                 <button
                   onClick={() =>
-                    saveKeys(contactFields.kontak.map((f) => f.key))
+                    saveKeys(contactFields.kontak.map((f) => f.key), undefined, "kontak")
                   }
-                  disabled={loading || savingKey !== null}
+                  disabled={loading || savingKey === "kontak"}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#0268ab] text-white text-sm font-semibold rounded-lg hover:bg-[#014a8f] disabled:opacity-60"
                 >
-                  {savingKey ? (
+                  {savingKey === "kontak" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4" />
@@ -442,12 +520,12 @@ export default function ContactInfoPage() {
                     saveKeys([
                       "contact_address",
                       ...contactFields.jam.map((f) => f.key),
-                    ])
+                    ], undefined, "alamat_jam")
                   }
-                  disabled={loading || savingKey !== null}
+                  disabled={loading || savingKey === "alamat_jam"}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#0268ab] text-white text-sm font-semibold rounded-lg hover:bg-[#014a8f] disabled:opacity-60"
                 >
-                  {savingKey ? (
+                  {savingKey === "alamat_jam" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4" />
@@ -563,10 +641,10 @@ export default function ContactInfoPage() {
             <div className="text-right">
               <button
                 onClick={handleSaveSocials}
-                disabled={loading || savingKey !== null}
+                disabled={loading || savingKey === "sosial"}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-[#0268ab] text-white text-sm font-semibold rounded-lg hover:bg-[#014a8f] disabled:opacity-60"
               >
-                {savingKey ? (
+                {savingKey === "sosial" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />
@@ -627,11 +705,11 @@ export default function ContactInfoPage() {
             </div>
             <div className="text-right">
               <button
-                onClick={() => saveKeys(visibilityFields.map((f) => f.key))}
-                disabled={loading || savingKey !== null}
+                onClick={() => saveKeys(visibilityFields.map((f) => f.key), undefined, "izin")}
+                disabled={loading || savingKey === "izin"}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-[#0268ab] text-white text-sm font-semibold rounded-lg hover:bg-[#014a8f] disabled:opacity-60"
               >
-                {savingKey ? (
+                {savingKey === "izin" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />

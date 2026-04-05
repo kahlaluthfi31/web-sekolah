@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiPagination, handleError } from '@/lib/api-response'
+import { apiSuccess, apiPagination, apiError, handleError } from '@/lib/api-response'
 import { trackActivity } from '@/lib/activity-logger'
 
 export async function GET(request: NextRequest) {
@@ -46,6 +46,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const orderPosition = Math.max(1, Number(body.orderPosition) || 1)
+
+    const existing = await prisma.routineActivity.findFirst({
+      where: { orderPosition },
+      select: { id: true },
+    })
+    if (existing) {
+      return apiError('Urutan tampil sudah digunakan. Gunakan angka urutan yang berbeda.', 400)
+    }
+
     const data = await prisma.routineActivity.create({
       data: {
         name: body.name,
@@ -53,7 +63,7 @@ export async function POST(request: NextRequest) {
         time: body.time ?? null,
         description: body.description ?? null,
         icon: body.icon ?? null,
-        orderPosition: body.orderPosition ?? 0,
+        orderPosition,
         isActive: body.isActive ?? true,
       },
     })

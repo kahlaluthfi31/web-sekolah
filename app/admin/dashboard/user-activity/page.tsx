@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AuditTable from "./AuditTable";
 import type { AuditRow } from "./shared";
 
@@ -17,20 +18,51 @@ export default async function UserActivityPage({
 
   const q = Array.isArray(resolvedParams.q) ? resolvedParams.q[0] : resolvedParams.q;
   const actionFilter = Array.isArray(resolvedParams.action) ? resolvedParams.action[0] : resolvedParams.action;
+  const pageParam = Array.isArray(resolvedParams.page) ? resolvedParams.page[0] : resolvedParams.page;
+  const pageSize = 50;
+  const parsedPage = Number(pageParam ?? "1");
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? Math.floor(parsedPage) : 1;
 
-  const prismaAny = prisma as unknown as { activityLog: { findMany: (args: unknown) => Promise<AuditRow[]> } };
+  const whereClause = {
+    AND: [
+      q ? { OR: [{ adminEmail: { contains: q } }, { targetTable: { contains: q } }] } : {},
+      actionFilter ? { action: actionFilter as AuditRow["action"] } : {},
+    ],
+  };
+
+  const prismaAny = prisma as unknown as {
+    activityLog: {
+      findMany: (args: unknown) => Promise<AuditRow[]>;
+      count: (args: unknown) => Promise<number>;
+    };
+  };
+
+  const totalLogs = await prismaAny.activityLog.count({ where: whereClause });
+  const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+
   const logsRaw = await prismaAny.activityLog.findMany({
-    where: {
-      AND: [
-        q ? { OR: [{ adminEmail: { contains: q } }, { targetTable: { contains: q } }] } : {},
-        actionFilter ? { action: actionFilter as AuditRow["action"] } : {},
-      ],
-    },
+    where: whereClause,
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: pageSize,
+    skip: (safePage - 1) * pageSize,
   }) as unknown as (AuditRow & { createdAt: Date })[];
 
-  const logs = logsRaw.map(log => ({ ...log, createdAt: log.createdAt.toISOString() }))
+  const logs = logsRaw.map(log => ({ ...log, createdAt: log.createdAt.toISOString() }));
+
+  const hasPrevPage = safePage > 1;
+  const hasNextPage = safePage < totalPages;
+  const rangeStart = totalLogs === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const rangeEnd = totalLogs === 0 ? 0 : Math.min(safePage * pageSize, totalLogs);
+
+  const buildPageHref = (page: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (actionFilter) params.set("action", actionFilter);
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    return qs ? `?${qs}` : "?";
+  };
 
   return (
     <div className="space-y-6">
@@ -86,6 +118,50 @@ export default async function UserActivityPage({
             </thead>
             <AuditTable logs={logs} />
           </table>
+        </div>
+        <div className="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+          <p className="text-gray-600">
+            Menampilkan <span className="font-semibold">{rangeStart}</span> - <span className="font-semibold">{rangeEnd}</span> dari <span className="font-semibold">{totalLogs}</span> data
+          </p>
+          <div className="flex items-center gap-2">
+            {hasPrevPage ? (
+              <Link
+                href={buildPageHref(safePage - 1)}
+                aria-label="Halaman sebelumnya"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span
+                aria-label="Halaman sebelumnya"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </span>
+            )}
+
+            <span className="text-gray-500 px-1">
+              Halaman {safePage} / {totalPages}
+            </span>
+
+            {hasNextPage ? (
+              <Link
+                href={buildPageHref(safePage + 1)}
+                aria-label="Halaman berikutnya"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span
+                aria-label="Halaman berikutnya"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -9,15 +9,29 @@ export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params
     const body = await request.json()
+    const activityId = parseInt(id)
+    const orderPosition = Math.max(1, Number(body.orderPosition) || 1)
+
+    const existingOrder = await prisma.routineActivity.findFirst({
+      where: {
+        orderPosition,
+        id: { not: activityId },
+      },
+      select: { id: true },
+    })
+    if (existingOrder) {
+      return apiError('Urutan tampil sudah digunakan. Gunakan angka urutan yang berbeda.', 400)
+    }
+
     const data = await prisma.routineActivity.update({
-      where: { id: parseInt(id) },
+      where: { id: activityId },
       data: {
         name: body.name,
         days: body.days ?? null,
         time: body.time ?? null,
         description: body.description ?? null,
         icon: body.icon ?? null,
-        orderPosition: body.orderPosition ?? 0,
+        orderPosition,
         isActive: body.isActive ?? true,
       },
     })

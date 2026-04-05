@@ -350,7 +350,7 @@ function toUiEvent(item: AgendaApiItem, idx: number): UiEvent {
 
 const EventsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "ongoing" | "past">(
-    "upcoming",
+    "ongoing",
   );
   const [timelinePage, setTimelinePage] = useState(1);
   const [agendas, setAgendas] = useState<AgendaApiItem[]>([]);
@@ -530,16 +530,16 @@ const EventsPage: React.FC = () => {
     count: number;
   }> = [
     {
-      key: "upcoming",
-      label: "Mendatang",
-      hint: "Acara berikutnya",
-      count: upcomingEvents.length,
-    },
-    {
       key: "ongoing",
       label: "Berlangsung",
       hint: "Sedang berjalan",
       count: ongoingEvents.length,
+    },
+    {
+      key: "upcoming",
+      label: "Mendatang",
+      hint: "Acara berikutnya",
+      count: upcomingEvents.length,
     },
     {
       key: "past",
@@ -631,9 +631,9 @@ const EventsPage: React.FC = () => {
             {/* Filter Agenda */}
             <aside className="lg:col-span-4 xl:col-span-3">
               <div className="lg:sticky lg:top-24">
-                <div className="mb-3 text-[11px] font-semibold tracking-[0.2em] text-gray-400 uppercase">
+                {/* <div className="mb-3 text-[11px] font-semibold tracking-[0.2em] text-gray-400 uppercase">
                   Filter Agenda
-                </div>
+                </div> */}
                 <div className="space-y-1.5 border-l border-gray-200 pl-3">
                   {agendaTabs.map((tab) => {
                     const isActive = activeTab === tab.key;

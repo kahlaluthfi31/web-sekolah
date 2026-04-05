@@ -70,6 +70,8 @@ const ProgramKeahlian: React.FC = () => {
   const { setPage } = usePage()
   const [majors, setMajors] = useState<Major[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedMajorIds, setExpandedMajorIds] = useState<Set<number>>(new Set())
+  const DESCRIPTION_PREVIEW_CHARS = 85
 
   useEffect(() => {
     fetch('/api/majors/list')
@@ -109,15 +111,29 @@ const ProgramKeahlian: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-12">
             {majors.map((major) => {
               const IconComponent = getIcon(major.code, major.name)
+              const fullDescription = (major.description ?? '').trim()
+              const shouldShowToggle = fullDescription.length > DESCRIPTION_PREVIEW_CHARS
+              const isExpanded = expandedMajorIds.has(major.id)
+              const previewDescription = shouldShowToggle
+                ? `${fullDescription.slice(0, DESCRIPTION_PREVIEW_CHARS).trimEnd()}...`
+                : fullDescription
               return (
-                <button
+                <div
                   key={major.id}
-                  type="button"
                   onClick={() => {
                     sessionStorage.setItem('selected_major_id', String(major.id))
                     setPage('program-keahlian')
                   }}
-                  className="flex gap-4 group text-left"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      sessionStorage.setItem('selected_major_id', String(major.id))
+                      setPage('program-keahlian')
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className="flex gap-4 group text-left cursor-pointer"
                 >
 
                   {/* Logo / Icon */}
@@ -146,11 +162,28 @@ const ProgramKeahlian: React.FC = () => {
                       {major.name}
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      {major.description ?? ''}
+                      {isExpanded ? fullDescription : previewDescription}
                     </p>
+                    {shouldShowToggle && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedMajorIds((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(major.id)) next.delete(major.id)
+                            else next.add(major.id)
+                            return next
+                          })
+                        }}
+                        className="mt-2 text-xs font-semibold text-[#4b7ea6] hover:underline"
+                      >
+                        {isExpanded ? 'Sembunyikan' : 'Selengkapnya'}
+                      </button>
+                    )}
                   </div>
 
-                </button>
+                </div>
               )
             })}
           </div>

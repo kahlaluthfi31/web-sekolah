@@ -1,7 +1,9 @@
 'use client'
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Edit2, Trash2, Loader2, Link as LinkIcon, Building2, Search, Upload, X, MoreVertical, Eye } from 'lucide-react'
+import { Plus, Edit2, Trash2, Loader2, Link as LinkIcon, Search, Upload, X, MoreVertical, AlertTriangle } from 'lucide-react'
 import { useDropdownPosition } from '@/lib/useDropdownPosition'
 
 interface Partner {
@@ -29,6 +31,8 @@ export default function PartnersPage() {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Partner | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Partner | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const logoInputRef = useRef<HTMLInputElement | null>(null)
   const [form, setForm] = useState({
@@ -122,11 +126,21 @@ export default function PartnersPage() {
     setSaving(true)
     setError(null)
     try {
+      const normalizedOrder = Math.max(1, Number(form.orderPosition) || 1)
+      const duplicateInCurrentPage = data.some((item) =>
+        item.orderPosition === normalizedOrder && (!editing || item.id !== editing.id),
+      )
+      if (duplicateInCurrentPage) {
+        setError('Urutan tampil sudah dipakai mitra lain. Gunakan angka yang berbeda.')
+        setSaving(false)
+        return
+      }
+
       const payload = {
         name: form.name.trim(),
         logoUrl: form.logoUrl.trim() || null,
         websiteUrl: form.websiteUrl.trim() || null,
-        orderPosition: form.orderPosition,
+        orderPosition: normalizedOrder,
         isActive: form.isActive,
       }
       const url = editing ? '/api/partners/' + editing.id : '/api/partners'
@@ -151,19 +165,23 @@ export default function PartnersPage() {
     }
   }
 
-  const handleDelete = async (partner: Partner) => {
-    if (!confirm(`Hapus mitra "${partner.name}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      const res = await fetch('/api/partners/' + partner.id, { method: 'DELETE' })
+      const res = await fetch('/api/partners/' + deleteTarget.id, { method: 'DELETE' })
       const json = await res.json()
       if (!json.success) {
-        alert(json.message || 'Gagal menghapus data')
+        setError(json.message || 'Gagal menghapus data')
       } else {
+        setDeleteTarget(null)
         fetchData()
       }
     } catch (err) {
       console.error(err)
-      alert('Terjadi kesalahan saat menghapus')
+      setError('Terjadi kesalahan saat menghapus')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -198,7 +216,7 @@ export default function PartnersPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="min-h-[200px]">
+  <div className="min-h-50">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -272,7 +290,7 @@ export default function PartnersPage() {
                     <td className="px-4 py-3 text-right">
                       <ActionDropdown
                         onEdit={() => openEdit(partner)}
-                        onDelete={() => handleDelete(partner)}
+                        onDelete={() => setDeleteTarget(partner)}
                       />
                     </td>
                   </tr>
@@ -396,11 +414,12 @@ export default function PartnersPage() {
                   </label>
                   <input
                     type="number"
+                    min="1"
                     value={form.orderPosition}
                     onChange={e =>
                       setForm(f => ({
                         ...f,
-                        orderPosition: Number(e.target.value) || 0,
+                        orderPosition: Math.max(1, Number(e.target.value) || 1),
                       }))
                     }
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -457,6 +476,53 @@ export default function PartnersPage() {
           </div>
         </div>
       )}
+
+      {deleteTarget && (
+        <DeleteModal
+          title="Hapus Mitra"
+          name={deleteTarget.name}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+          deleting={deleting}
+        />
+      )}
+    </div>
+  )
+}
+
+function DeleteModal({ title, name, onConfirm, onCancel, deleting }: {
+  title: string; name: string; onConfirm: () => void; onCancel: () => void; deleting: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-60 overflow-hidden">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={!deleting ? onCancel : undefined} />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+          <div className="flex justify-center">
+            <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center">
+              <AlertTriangle className="w-7 h-7 text-red-600" />
+            </div>
+          </div>
+          <div className="text-center space-y-1.5">
+            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+            <p className="text-sm text-gray-500">
+              Yakin ingin menghapus <span className="font-semibold text-gray-700">{name}</span>?
+            </p>
+            <p className="text-xs text-gray-400">Tindakan ini tidak dapat dibatalkan.</p>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={onCancel} disabled={deleting}
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50">
+              Batal
+            </button>
+            <button onClick={onConfirm} disabled={deleting}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {deleting ? 'Menghapus...' : 'Ya, Hapus'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

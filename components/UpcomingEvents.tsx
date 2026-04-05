@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, CalendarDays, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 
 interface AgendaCategory {
   id: number
@@ -21,6 +22,8 @@ interface Agenda {
   organizer: string | null
   image: string | null
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'
+  hasRegistration: boolean
+  registrationUrl: string | null
   isPublished: boolean
   category: AgendaCategory | null
 }
@@ -181,6 +184,12 @@ const UpcomingEvents: React.FC = () => {
     return new Date(y, m - 1, d).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })
   })()
 
+  const navigateToAgendaTarget = (agenda: Agenda) => {
+    const registrationUrl = agenda.registrationUrl?.trim()
+    const targetUrl = agenda.hasRegistration && registrationUrl ? registrationUrl : '/agenda'
+    window.location.assign(targetUrl)
+  }
+
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -209,7 +218,19 @@ const UpcomingEvents: React.FC = () => {
             ) : (
               <>
                 {/* Featured event card */}
-                <div className="relative rounded-2xl overflow-hidden h-80 group cursor-pointer">
+                <div
+                  className="relative rounded-2xl overflow-hidden h-80 group cursor-pointer"
+                  onClick={() => navigateToAgendaTarget(featured)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigateToAgendaTarget(featured)
+                    }
+                  }}
+                  aria-label={`Buka detail agenda ${featured.title}`}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={featured.image || FALLBACK_IMAGE}
@@ -263,6 +284,16 @@ const UpcomingEvents: React.FC = () => {
                           className={`flex items-center gap-4 rounded-2xl p-4 cursor-pointer transition-all duration-200 ${
                             isCompleted ? 'bg-gray-50 hover:bg-gray-100' : 'bg-blue-50 hover:bg-blue-100'
                           }`}
+                          onClick={() => navigateToAgendaTarget(event)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              navigateToAgendaTarget(event)
+                            }
+                          }}
+                          aria-label={`Buka detail agenda ${event.title}`}
                         >
                           {/* Thumbnail */}
                           <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
@@ -426,10 +457,13 @@ const UpcomingEvents: React.FC = () => {
               </div>
 
               {/* See all */}
-              <button className="w-full mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-gray-900 hover:text-[#0268ab] transition-colors duration-200 border-t border-gray-100 pt-4">
+              <Link
+                href="/agenda"
+                className="w-full mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-gray-900 hover:text-[#0268ab] transition-colors duration-200 border-t border-gray-100 pt-4"
+              >
                 Lihat Semua Agenda
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
           </div>
 

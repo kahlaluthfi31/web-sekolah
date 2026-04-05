@@ -3,6 +3,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface NewsItem {
   id: number;
@@ -35,7 +36,7 @@ function formatTanggal(dateStr: string): string {
 
 function NewsCard({ item }: { item: NewsItem }) {
   return (
-    <div className="w-72 shrink-0 group cursor-pointer bg-white rounded-2xl overflow-hidden transition-all duration-300">
+    <article className="w-72 shrink-0 group cursor-pointer bg-white rounded-2xl overflow-hidden transition-all duration-300">
       <div className="aspect-video overflow-hidden relative">
         <Image
           src={item.featuredImage || PLACEHOLDER}
@@ -65,7 +66,7 @@ function NewsCard({ item }: { item: NewsItem }) {
           {item.excerpt ?? ""}
         </p>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -73,15 +74,10 @@ const RecentNews: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [translateX, setTranslateX] = useState(0);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const maxScrollRef = useRef(0);
-  const currentXRef = useRef(0);
-  const rafRef = useRef<number | null>(null);
-  const targetXRef = useRef(0);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollLeftRef = useRef(0);
 
   // Detect touch device
   useEffect(() => {
@@ -100,121 +96,45 @@ const RecentNews: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Hitung maxScroll setelah berita di-render
-  useEffect(() => {
-    const track = trackRef.current;
-    const section = sectionRef.current;
-    if (!track || !section || news.length === 0) return;
-    
-    const maxScroll = track.scrollWidth - section.clientWidth;
-    maxScrollRef.current = Math.max(0, maxScroll);
-    
-    console.log('Max scroll:', maxScrollRef.current, 'News length:', news.length);
-  }, [news, loading]);
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isTouchDevice || !trackRef.current) return;
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartXRef.current = e.clientX;
+    dragStartScrollLeftRef.current = trackRef.current.scrollLeft;
+  };
 
-  // Smooth lerp animation loop (only for non-touch devices)
-  useEffect(() => {
-    if (isTouchDevice) return; // Skip for touch devices
-
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-    const tick = () => {
-      const next = lerp(currentXRef.current, targetXRef.current, 0.1);
-      if (Math.abs(next - currentXRef.current) > 0.5) {
-        currentXRef.current = next;
-        setTranslateX(-next);
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
-        currentXRef.current = targetXRef.current;
-        setTranslateX(-targetXRef.current);
-        rafRef.current = null;
-      }
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      const max = maxScrollRef.current;
-      if (max <= 0) return;
-
-      // Pause auto-scroll when user interacts
-      setIsAutoScrolling(false);
-
-      const dirDown = e.deltaY > 0;
-
-      // Lepas scroll vertikal jika sudah di ujung
-      if ((dirDown && targetXRef.current >= max) || (!dirDown && targetXRef.current <= 0)) {
-        return;
-      }
-
-      e.preventDefault();
-
-      const step = e.deltaY * 1.2;
-      targetXRef.current = Math.min(max, Math.max(0, targetXRef.current + step));
-
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(tick);
-      }
-
-      // Resume auto-scroll after 5 seconds of inactivity
-      setTimeout(() => {
-        setIsAutoScrolling(true);
-      }, 5000);
-    };
-
-    const section = sectionRef.current;
-    if (!section) return;
-    section.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      section.removeEventListener("wheel", onWheel);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [news, loading, isTouchDevice]);
-
-  // Auto-scroll functionality
-  useEffect(() => {
-    if (isTouchDevice || !isAutoScrolling || isHovered) {
-      console.log('Auto-scroll paused:', { isTouchDevice, isAutoScrolling, isHovered });
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || isTouchDevice || !trackRef.current) return;
+    if (e.buttons === 0) {
+      setIsDragging(false);
       return;
     }
+    e.preventDefault();
+    const deltaX = e.clientX - dragStartXRef.current;
+    trackRef.current.scrollLeft = dragStartScrollLeftRef.current - deltaX;
+  };
 
-    console.log('Auto-scroll started');
+  const stopDragging = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+  };
 
-    const autoScrollInterval = setInterval(() => {
-      const max = maxScrollRef.current;
-      if (max <= 0) {
-        console.log('No scroll available, max:', max);
-        return;
-      }
+  useEffect(() => {
+    if (!isDragging) return;
 
-      // If reached the end, reset to start
-      if (targetXRef.current >= max) {
-        targetXRef.current = 0;
-        console.log('Reset to start');
-      } else {
-        // Scroll by one card width (approximately 300px including gap)
-        targetXRef.current = Math.min(max, targetXRef.current + 300);
-        console.log('Scrolling to:', targetXRef.current);
-      }
+    const handleRelease = () => {
+      setIsDragging(false);
+    };
 
-      // Direct update for auto-scroll (no animation loop needed)
-      currentXRef.current = targetXRef.current;
-      setTranslateX(-targetXRef.current);
-    }, 3000); // Auto-scroll every 3 seconds
+    window.addEventListener("mouseup", handleRelease);
+    window.addEventListener("blur", handleRelease);
 
     return () => {
-      clearInterval(autoScrollInterval);
-      console.log('Auto-scroll cleaned up');
+      window.removeEventListener("mouseup", handleRelease);
+      window.removeEventListener("blur", handleRelease);
     };
-  }, [isAutoScrolling, isHovered, isTouchDevice]);
-
-  // Resume auto-scroll when hover ends
-  useEffect(() => {
-    if (!isHovered) {
-      const timeout = setTimeout(() => {
-        setIsAutoScrolling(true);
-      }, 1000); // Resume 1 second after hover ends
-      return () => clearTimeout(timeout);
-    }
-  }, [isHovered]);
+  }, [isDragging]);
 
   return (
     <>
@@ -229,22 +149,22 @@ const RecentNews: React.FC = () => {
 
           {/* CTA row */}
           <div className="flex justify-end mb-6">
-            <button className="group inline-flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-[#0268ab] transition-colors duration-200">
+            <Link
+              href="/berita"
+              className="group inline-flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-[#0268ab] transition-colors duration-200"
+            >
               <span className="border-b border-gray-900 group-hover:border-[#0268ab] pb-0.5 transition-colors duration-200">
                 Lihat Semua
               </span>
-            </button>
+            </Link>
           </div>
         </div>
 
         {/* Slider wrapper */}
         <div
-          ref={sectionRef}
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
         >
-          <div className={`relative rounded-2xl ${isTouchDevice ? '' : 'overflow-hidden'}`}>
+          <div className="relative rounded-2xl overflow-hidden">
             {/* Fade masks - only show on non-touch devices */}
             {!isTouchDevice && (
               <>
@@ -277,17 +197,25 @@ const RecentNews: React.FC = () => {
                 className={`flex gap-5 py-2 ${
                   isTouchDevice 
                     ? 'overflow-x-auto scrollbar-hide snap-x snap-mandatory touch-pan-x' 
-                    : 'will-change-transform'
+                    : `overflow-x-auto scrollbar-hide ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`
                 }`}
-                style={!isTouchDevice ? { 
-  transform: `translateX(${translateX}px)`,
-  transition: 'transform 0.5s ease-in-out'
-} : undefined}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={stopDragging}
+                onMouseLeave={stopDragging}
               >
                 {news.map((item) => (
-                  <div key={item.id} className={isTouchDevice ? 'snap-start' : ''}>
+                  <Link
+                    key={item.id}
+                    href={`/berita/${item.slug}`}
+                    className={isTouchDevice ? 'snap-start' : ''}
+                    draggable={false}
+                    onClick={(e) => {
+                      if (isDragging) e.preventDefault();
+                    }}
+                  >
                     <NewsCard item={item} />
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

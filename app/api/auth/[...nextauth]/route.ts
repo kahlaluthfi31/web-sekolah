@@ -35,9 +35,17 @@ const providers = [
       const user = await prisma.user.findUnique({ where: { email } })
       if (!user) throw new Error('Email belum terdaftar. Silakan daftar atau login dengan Google.')
       if (user.status !== 'active') throw new Error('Akun belum aktif atau dinonaktifkan.')
+      if (user.role !== 'user') {
+        throw new Error('Akun admin/superadmin hanya dapat login melalui dashboard admin.')
+      }
 
       const valid = await bcrypt.compare(password, user.password)
       if (!valid) throw new Error('Email atau password salah')
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastSeenAt: new Date() },
+      })
 
       return {
         id: String(user.id),
@@ -103,9 +111,14 @@ const authConfig: NextAuthConfig = {
                 role: 'user',
                 status: 'active',
                 avatar: picture,
+                lastSeenAt: new Date(),
               },
             })
           } else {
+            if (existing.role !== 'user') {
+              return '/login?error=Gunakan_login_dashboard_admin'
+            }
+
             const ensureActive = existing.status !== 'active'
             await prisma.user.update({
               where: { id: existing.id },
@@ -139,6 +152,18 @@ const authConfig: NextAuthConfig = {
           token.sub = user.id
           token.role = (user as { role?: string }).role || token.role || 'user'
           token.email = user.email
+        }
+
+        const userId = Number(token.sub)
+        const now = Date.now()
+        const lastSeenSyncedAt = Number((token as { lastSeenSyncedAt?: number }).lastSeenSyncedAt || 0)
+
+        if (Number.isInteger(userId) && userId > 0 && now - lastSeenSyncedAt > 60_000) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: { lastSeenAt: new Date() },
+          })
+          ;(token as { lastSeenSyncedAt?: number }).lastSeenSyncedAt = now
         }
       } catch (err) {
         console.error('JWT callback error', err)

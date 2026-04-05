@@ -54,10 +54,29 @@ export async function PUT(request: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
-    const existing = await prisma.user.findUnique({ where: { id: parseInt(id) } })
+    const userId = parseInt(id)
+    const existing = await prisma.user.findUnique({ where: { id: userId } })
     if (!existing) return apiError('User not found', 404)
 
-    await prisma.user.delete({ where: { id: parseInt(id) } })
+    await prisma.$transaction(async (tx) => {
+      await tx.news.updateMany({ where: { authorId: userId }, data: { authorId: null } })
+      await tx.newsView.deleteMany({ where: { userId } })
+      await tx.newsShare.deleteMany({ where: { userId } })
+
+      await tx.commentLike.deleteMany({ where: { userId } })
+      await tx.commentLike.deleteMany({ where: { comment: { userId } } })
+      await tx.comment.updateMany({ where: { approvedById: userId }, data: { approvedById: null } })
+      await tx.comment.deleteMany({ where: { userId } })
+
+      await tx.userVerification.updateMany({ where: { verifiedById: userId }, data: { verifiedById: null } })
+      await tx.userVerification.deleteMany({ where: { userId } })
+
+      await tx.studentAchievement.updateMany({ where: { verifiedById: userId }, data: { verifiedById: null } })
+      await tx.alumniSubmission.updateMany({ where: { submittedById: userId }, data: { submittedById: null } })
+      await tx.alumniSubmission.updateMany({ where: { verifiedById: userId }, data: { verifiedById: null } })
+
+      await tx.user.delete({ where: { id: userId } })
+    })
 
     await trackActivity(_req, 'DELETE', 'users', existing, null)
     return apiSuccess(null, 'User deleted')

@@ -364,6 +364,19 @@ function SejarahTab() {
       setError("Semua field wajib diisi.");
       return;
     }
+    if (!Number.isInteger(form.sortOrder) || form.sortOrder < 1) {
+      setError("Urutan tampil harus berupa angka minimal 1.");
+      return;
+    }
+
+    const duplicateSortOrder = items.some(
+      (item) => item.sortOrder === form.sortOrder && item.id !== editingId,
+    );
+    if (duplicateSortOrder) {
+      setError("Urutan tampil tidak boleh sama. Gunakan angka lain.");
+      return;
+    }
+
     setSaving(true);
     try {
       const url = editingId
@@ -541,9 +554,15 @@ function SejarahTab() {
           />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">
-                {editingId ? "Edit Sejarah" : "Tambah Sejarah"}
-              </h2>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  {editingId ? "Edit Sejarah" : "Tambah Sejarah"}
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  Isi detail peristiwa sejarah sekolah secara lengkap dan
+                  tentukan urutan tampil yang unik.
+                </p>
+              </div>
               <button
                 onClick={closeModal}
                 className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
@@ -616,7 +635,8 @@ function SejarahTab() {
                   className="w-28 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition"
                 />
                 <p className="text-[11px] text-gray-400 mt-1">
-                  Otomatis terisi, bisa diubah manual.
+                  Otomatis terisi, bisa diubah manual. Nilai harus unik (tidak
+                  boleh sama).
                 </p>
               </div>
               <div className="flex gap-3 pt-2">
@@ -1749,7 +1769,7 @@ function PageHeaderTab() {
             {savingKey === "create" ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Plus className="w-4 h-4" />
+              <Save className="w-4 h-4" />
             )}{" "}
             Simpan Header
           </button>
@@ -2179,9 +2199,15 @@ function KeunggulanTab() {
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">
-                {editingId ? "Edit Keunggulan" : "Tambah Keunggulan"}
-              </h3>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">
+                  {editingId ? "Edit Keunggulan" : "Tambah Keunggulan"}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Lengkapi judul, deskripsi, dan pilih ikon yang paling sesuai
+                  untuk menampilkan keunggulan sekolah.
+                </p>
+              </div>
               <button
                 onClick={closeModal}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"

@@ -28,6 +28,13 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
     curriculum: 'Merdeka',
   })
 
+  const navigateToCampusVirtualTour = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('campus_scroll_target', 'virtual-tour')
+    }
+    onNavigate?.('campus')
+  }
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -192,17 +199,10 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                 <p className="text-white/80 text-sm font-medium">Akses Cepat</p>
                 <div className="flex flex-wrap gap-3">
                   <button 
-                    onClick={() => onNavigate?.('news')}
+                    onClick={() => onNavigate?.('events')}
                     className="group flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-lg text-sm font-medium border border-white/30 hover:bg-white/20 transition-all duration-300"
                   >
-                    Berita
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                  <button 
-                    onClick={() => onNavigate?.('campus')}
-                    className="group flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-lg text-sm font-medium border border-white/30 hover:bg-white/20 transition-all duration-300"
-                  >
-                    Virtual Tour
+                    Agenda
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                   <button 
@@ -213,10 +213,17 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                   <button 
-                    onClick={() => onNavigate?.('events')}
+                    onClick={() => onNavigate?.('news')}
                     className="group flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-lg text-sm font-medium border border-white/30 hover:bg-white/20 transition-all duration-300"
                   >
-                    Agenda
+                    Berita
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    onClick={navigateToCampusVirtualTour}
+                    className="group flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-lg text-sm font-medium border border-white/30 hover:bg-white/20 transition-all duration-300"
+                  >
+                    Virtual Tour
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -284,7 +291,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
       </div>
 
       {/* Scroll Indicator */}
-      <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-1000 delay-700 ${isLoaded ? 'translate-y-0' : 'translate-y-10'}`}>
+      <div className={`hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-1000 delay-700 ${isLoaded ? 'translate-y-0' : 'translate-y-10'}`}>
         <div className="flex flex-col items-center gap-2 text-white/60">
           <span className="text-xs uppercase tracking-widest">Scroll</span>
           <div className="w-6 h-10 rounded-full border-2 border-white/30 flex justify-center p-2">

@@ -183,7 +183,7 @@ function RegisterContent() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@contoh.com"
+                  placeholder="nama@gmail.com"
                   className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none"
                 />
               </div>

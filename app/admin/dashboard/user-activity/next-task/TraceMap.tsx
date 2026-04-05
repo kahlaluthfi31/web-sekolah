@@ -84,5 +84,21 @@ export default function TraceMap({ center, marker }: Props) {
     }
   }, [mounted, defaultCenter, marker, targetZoom])
 
-  return <div ref={containerRef} className="w-full h-full" />
+  return (
+    <>
+      <div
+        ref={containerRef}
+        className="trace-map-root relative isolate z-0 w-full h-full overflow-hidden"
+      />
+
+      <style jsx global>{`
+        .trace-map-root .leaflet-container,
+        .trace-map-root .leaflet-pane,
+        .trace-map-root .leaflet-top,
+        .trace-map-root .leaflet-bottom {
+          z-index: 0 !important;
+        }
+      `}</style>
+    </>
+  )
 }

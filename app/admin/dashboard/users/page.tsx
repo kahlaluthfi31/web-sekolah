@@ -25,9 +25,8 @@ interface Pagination { page: number; limit: number; total: number; totalPages: n
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-// "Online" = lastSeenAt within the last 5 minutes (for admins only)
+// "Online" = lastSeenAt within the last 5 minutes
 function isOnline(user: UserItem): boolean {
-  if (user.role === 'user') return false
   if (!user.lastSeenAt) return false
   return Date.now() - new Date(user.lastSeenAt).getTime() < 5 * 60 * 1000
 }
@@ -639,14 +638,12 @@ export default function UsersPage() {
                             <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
-                            {/* Online dot — only for admin/superadmin */}
-                            {user.role !== 'user' && (
-                              <span
-                                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                                  online ? 'bg-green-500' : 'bg-gray-300'
-                                }`}
-                              />
-                            )}
+                            {/* Online dot */}
+                            <span
+                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                                online ? 'bg-green-500' : 'bg-gray-300'
+                              }`}
+                            />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{user.name}</p>
@@ -662,18 +659,14 @@ export default function UsersPage() {
                         </span>
                       </td>
 
-                      {/* Online status — admin only */}
+                      {/* Online status */}
                       <td className="px-6 py-4">
-                        {user.role === 'user' ? (
-                          <span className="text-xs text-gray-300">—</span>
-                        ) : (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
-                            online ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500' : 'bg-gray-400'}`} />
-                            {online ? 'Online' : 'Offline'}
-                          </span>
-                        )}
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                          online ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500' : 'bg-gray-400'}`} />
+                          {online ? 'Online' : 'Offline'}
+                        </span>
                       </td>
 
                       {/* Account status */}

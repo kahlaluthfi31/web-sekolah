@@ -400,8 +400,10 @@ export function TeachersTab() {
   const [deleteItem, setDeleteItem] = useState<Teacher | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [photoZipFile, setPhotoZipFile] = useState<File | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
+  const zipInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/positions?all=true')
@@ -446,7 +448,7 @@ export function TeachersTab() {
 
   const downloadTemplate = async () => {
     const XLSX = await import('xlsx')
-    const headers = ['nama_guru', 'nip', 'email', 'phone', 'jabatan', 'pendidikan', 'status', 'join_date', 'order_position', 'is_active', 'subjects']
+  const headers = ['nama_guru', 'nip', 'email', 'phone', 'jabatan', 'pendidikan', 'status', 'join_date', 'order_position', 'is_active', 'subjects', 'foto_file']
     const rows = [
       {
         nama_guru: 'Contoh Guru 1',
@@ -459,7 +461,8 @@ export function TeachersTab() {
         join_date: '2020-07-01',
         order_position: 1,
         is_active: 'TRUE',
-        subjects: 'BK, Konseling',
+  subjects: 'BK, Konseling',
+        foto_file: 'guru1.jpg',
       },
       {
         nama_guru: 'Contoh Guru 2',
@@ -472,13 +475,51 @@ export function TeachersTab() {
         join_date: '2018-01-10',
         order_position: 2,
         is_active: 'TRUE',
-        subjects: 'Matematika',
+  subjects: 'Matematika',
+        foto_file: 'guru2.png',
       },
     ]
-  const sheet = XLSX.utils.json_to_sheet(rows, { header: headers })
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, sheet, 'Template')
-  const arrayBuf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+    const sheet = XLSX.utils.json_to_sheet(rows, { header: headers })
+    const notes = [
+      ['PANDUAN IMPORT DATA GURU'],
+      [''],
+      ['KOLOM', 'WAJIB', 'FORMAT / CONTOH', 'KETERANGAN'],
+  ['nama_guru', 'YA', 'Budi Santoso', 'Nama lengkap guru/staf. Wajib diisi sesuai form tambah data guru.'],
+  ['nip', 'YA', '19870610 201903 1 001', 'Wajib diisi sesuai form tambah data guru. Disarankan format teks agar 0 di awal tidak hilang.'],
+  ['email', 'YA', 'guru@sekolah.sch.id', 'Wajib diisi sesuai form tambah data guru. Gunakan format email valid.'],
+  ['phone', 'YA', '081234567890', 'Wajib diisi sesuai form tambah data guru. Gunakan nomor aktif.'],
+  ['jabatan', 'YA', 'Guru BK / Wakil Kepala Sekolah', 'Wajib diisi sesuai form tambah data guru.'],
+  ['pendidikan', 'YA', 'S1 / S2 / S3', 'Wajib diisi sesuai form tambah data guru.'],
+  ['status', 'YA', 'ACTIVE / RETIRED / RESIGNED / TRANSFERRED', 'Wajib diisi sesuai form tambah data guru. Agar tampil di Struktur Sekolah, gunakan status ACTIVE.'],
+  ['join_date', 'YA', '2020-07-01', 'Wajib diisi sesuai form tambah data guru. Format tanggal disarankan YYYY-MM-DD.'],
+      ['order_position', 'TIDAK', '1', 'Urutan tampil. Jika kosong otomatis 0.'],
+  ['is_active', 'TIDAK', 'TRUE / FALSE', 'TRUE = ditampilkan di website. FALSE = disembunyikan. Untuk tampil di Struktur Sekolah: is_active harus TRUE dan status harus ACTIVE.'],
+      ['subjects', 'TIDAK', 'BK, Konseling', 'Mapel/kompetensi bisa dipisah koma.'],
+  ['foto_file', 'YA', 'guru1.jpg', 'Wajib diisi untuk menyesuaikan form tambah data guru (foto wajib). Isi nama file foto dari ZIP.'],
+      [''],
+      ['PANDUAN FOTO_FILE + ZIP'],
+      ['1.', '', '', 'Isi kolom foto_file dengan nama file + ekstensi (contoh: guru1.jpg).'],
+      ['2.', '', '', 'Siapkan satu file .zip berisi foto-foto tersebut (boleh di dalam folder, nama file tetap harus sama).'],
+      ['3.', '', '', 'Klik tombol "Pilih ZIP Foto" lalu pilih file ZIP sebelum klik "Import Excel".'],
+      ['4.', '', '', 'Pencocokan nama file tidak sensitif huruf besar/kecil, tapi ejaan harus sama.'],
+      ['5.', '', '', 'Format gambar yang didukung di ZIP: .jpg .jpeg .png .webp .gif .bmp.'],
+      ['6.', '', '', 'Jika nama di foto_file tidak ditemukan di ZIP, data guru tetap terimport tetapi foto akan kosong.'],
+    ]
+    const notesSheet = XLSX.utils.aoa_to_sheet(notes)
+
+    sheet['!cols'] = [
+      { wch: 24 }, { wch: 22 }, { wch: 28 }, { wch: 18 }, { wch: 24 },
+      { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
+  { wch: 20 }, { wch: 20 },
+    ]
+    notesSheet['!cols'] = [
+      { wch: 18 }, { wch: 10 }, { wch: 34 }, { wch: 78 },
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, sheet, 'Template')
+    XLSX.utils.book_append_sheet(wb, notesSheet, 'Catatan')
+    const arrayBuf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
     const blob = new Blob([arrayBuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -489,12 +530,77 @@ export function TeachersTab() {
   }
 
   const handleImport = () => {
+    if (!photoZipFile) {
+      setToast({ type: 'error', message: 'Pilih ZIP Foto terlebih dahulu sebelum import Excel.' })
+      return
+    }
     importInputRef.current?.click()
+  }
+
+  const normalizeFileName = (name: string) =>
+    name
+      .split(/[\\/]/)
+      .pop()
+      ?.trim()
+      .toLowerCase() || ''
+
+  const uploadPhotosFromZip = async (zipFile: File, requestedFileNames: string[]) => {
+    const JSZipModule = await import('jszip')
+    const JSZip = JSZipModule.default
+    const zip = await JSZip.loadAsync(await zipFile.arrayBuffer())
+
+    const imageEntries = Object.values(zip.files).filter(
+      (entry) => !entry.dir && /\.(png|jpe?g|webp|gif|bmp)$/i.test(entry.name),
+    )
+
+    const entryMap = new Map<string, (typeof imageEntries)[number]>()
+    imageEntries.forEach((entry) => {
+      entryMap.set(normalizeFileName(entry.name), entry)
+    })
+
+    const requestedUnique = Array.from(
+      new Set(requestedFileNames.map((f) => normalizeFileName(f)).filter(Boolean)),
+    )
+
+    const uploadedUrlMap = new Map<string, string>()
+    const missingFiles: string[] = []
+    const failedUploads: string[] = []
+
+    for (const normalizedName of requestedUnique) {
+      const entry = entryMap.get(normalizedName)
+      if (!entry) {
+        missingFiles.push(normalizedName)
+        continue
+      }
+
+      try {
+        const blob = await entry.async('blob')
+        const file = new File([blob], normalizedName, {
+          type: blob.type || 'image/jpeg',
+        })
+        const fd = new FormData()
+        fd.append('file', file)
+
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (json.success) {
+          const url = json.data?.url ?? json.url
+          if (url) uploadedUrlMap.set(normalizedName, url)
+          else failedUploads.push(normalizedName)
+        } else {
+          failedUploads.push(normalizedName)
+        }
+      } catch {
+        failedUploads.push(normalizedName)
+      }
+    }
+
+    return { uploadedUrlMap, missingFiles, failedUploads }
   }
 
   const parseAndImport = async (file: File) => {
     setImporting(true)
-  setToast(null)
+    setToast(null)
     try {
       const XLSX = await import('xlsx')
       const data = await file.arrayBuffer()
@@ -502,15 +608,30 @@ export function TeachersTab() {
       const sheet = wb.Sheets[wb.SheetNames[0]]
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
 
+      const requestedPhotoFiles = rows
+        .map((row) => String(row.foto_file || row.photo_file || '').trim())
+        .filter(Boolean)
+
+      const zipResult = photoZipFile && requestedPhotoFiles.length
+        ? await uploadPhotosFromZip(photoZipFile, requestedPhotoFiles)
+        : null
+
       const mapped = rows.map((row) => {
         const status = String(row.status || 'ACTIVE').toUpperCase()
         const isActiveRaw = row.is_active
+        const photoFileName = String(row.foto_file || row.photo_file || '').trim()
+        const photoRaw = row.foto_url || row.photo || row.foto
+        const photo = photoRaw ? String(photoRaw).trim() : ''
+        const photoFromZip = photoFileName && zipResult
+          ? zipResult.uploadedUrlMap.get(normalizeFileName(photoFileName))
+          : null
         const isActive = isActiveRaw === '' || isActiveRaw === undefined ? undefined : String(isActiveRaw).toLowerCase() !== 'false'
         return {
           name: String(row.nama_guru || '').trim(),
           nip: row.nip ? String(row.nip).trim() : null,
           email: row.email ? String(row.email).trim() : null,
           phone: row.phone ? String(row.phone).trim() : null,
+          photo: photo || photoFromZip || null,
           position: row.jabatan ? String(row.jabatan).trim() : 'Guru',
           education: row.pendidikan ? String(row.pendidikan).trim() : null,
           status,
@@ -531,7 +652,18 @@ export function TeachersTab() {
       const json = await res.json()
       if (!json.success) throw new Error(json.message || 'Gagal import')
 
-      setToast({ type: 'success', message: 'Import data guru berhasil' })
+      const photoAttached = mapped.filter((m) => !!m.photo).length
+      const warningParts: string[] = []
+      if (zipResult?.missingFiles.length) warningParts.push(`file foto tidak ditemukan: ${zipResult.missingFiles.length}`)
+      if (zipResult?.failedUploads.length) warningParts.push(`upload foto gagal: ${zipResult.failedUploads.length}`)
+
+      setToast({
+        type: warningParts.length ? 'error' : 'success',
+        message: warningParts.length
+          ? `Import data guru berhasil, namun ${warningParts.join(', ')}.`
+          : `Import data guru berhasil ditambahkan sebanyak ${photoAttached} data beserta foto.`,
+      })
+      setPhotoZipFile(null)
       fetchData()
     } catch (err) {
       setToast({ type: 'error', message: err instanceof Error ? err.message : 'Gagal import' })
@@ -571,7 +703,7 @@ export function TeachersTab() {
   return (
     <>
       {toast && (
-        <div className="fixed top-4 right-4 z-50 flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border bg-white/95 backdrop-blur-md min-w-[240px] max-w-sm">
+  <div className="fixed top-4 right-4 z-50 flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border bg-white/95 backdrop-blur-md min-w-60 max-w-sm">
           <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
             {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
           </div>
@@ -585,6 +717,9 @@ export function TeachersTab() {
         <div>
           <h2 className="text-xl font-bold text-gray-900">Guru &amp; Staff</h2>
           <p className="text-sm text-gray-500">Kelola data guru dan staf sekolah</p>
+          {/* <p className="text-xs text-gray-400 mt-1">
+            Untuk foto massal : isi kolom <span className="font-mono">foto_file</span> di Excel dengan nama file foto y lalu pilih file ZIP berisi foto.
+          </p> */}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -596,9 +731,31 @@ export function TeachersTab() {
           </button>
           <button
             type="button"
-            onClick={handleImport}
+            onClick={() => zipInputRef.current?.click()}
             disabled={importing}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-all shadow-sm disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-200 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-60"
+          >
+            <UploadCloud className="w-4 h-4" />
+            {photoZipFile ? `Ganti ZIP Foto (${photoZipFile.name})` : 'Pilih ZIP Foto'}
+            {photoZipFile && (
+              <span
+                role="button"
+                aria-label="Hapus ZIP"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPhotoZipFile(null)
+                }}
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleImport}
+            disabled={importing || !photoZipFile}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <UploadCloud className="w-4 h-4" /> {importing ? 'Mengimpor...' : 'Import Excel'}
           </button>
@@ -654,6 +811,17 @@ export function TeachersTab() {
         ref={importInputRef}
         className="hidden"
         onChange={onImportChange}
+      />
+      <input
+        type="file"
+        accept=".zip"
+        ref={zipInputRef}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null
+          setPhotoZipFile(file)
+          e.target.value = ''
+        }}
       />
       <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {loading ? (
@@ -828,11 +996,18 @@ function TeacherFormModal({
   const validateField = (name: string, value: string) => {
     const errs = { ...fieldErrors }
     if (name === 'name') { if (!value.trim()) errs.name = 'Nama wajib diisi'; else delete errs.name }
+    if (name === 'nip') { if (!value.trim()) errs.nip = 'NIP wajib diisi'; else delete errs.nip }
     if (name === 'email') {
-      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errs.email = 'Format email tidak valid'
+      if (!value.trim()) errs.email = 'Email wajib diisi'
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errs.email = 'Format email tidak valid'
       else delete errs.email
     }
+    if (name === 'phone') { if (!value.trim()) errs.phone = 'No. Telepon wajib diisi'; else delete errs.phone }
     if (name === 'position') { if (!value) errs.position = 'Jabatan wajib dipilih'; else delete errs.position }
+    if (name === 'education') { if (!value) errs.education = 'Pendidikan wajib dipilih'; else delete errs.education }
+    if (name === 'joinDate') { if (!value) errs.joinDate = 'Tanggal masuk wajib diisi'; else delete errs.joinDate }
+    if (name === 'status') { if (!value) errs.status = 'Status wajib dipilih'; else delete errs.status }
+    if (name === 'photo') { if (!value.trim()) errs.photo = 'Foto wajib diunggah'; else delete errs.photo }
     setFieldErrors(errs)
   }
 
@@ -864,8 +1039,15 @@ function TeacherFormModal({
     e.preventDefault()
     const errs: Record<string, string> = {}
     if (!form.name.trim()) errs.name = 'Nama wajib diisi'
+    if (!form.nip.trim()) errs.nip = 'NIP wajib diisi'
     if (!form.position) errs.position = 'Jabatan wajib dipilih'
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Format email tidak valid'
+    if (!form.email.trim()) errs.email = 'Email wajib diisi'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Format email tidak valid'
+    if (!form.phone.trim()) errs.phone = 'No. Telepon wajib diisi'
+    if (!form.education) errs.education = 'Pendidikan wajib dipilih'
+    if (!form.joinDate) errs.joinDate = 'Tanggal masuk wajib diisi'
+    if (!form.status) errs.status = 'Status wajib dipilih'
+    if (!form.photo.trim()) errs.photo = 'Foto wajib diunggah'
     if (Object.keys(errs).length > 0) { setFieldErrors(errs); return }
     setSaving(true); setError('')
     try {
@@ -904,24 +1086,26 @@ function TeacherFormModal({
             {error && <div className="mx-6 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>}
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="flex justify-center pb-2">
-                <PhotoUpload currentPhoto={form.photo} name={form.name} onUploaded={url => setForm(f => ({ ...f, photo: url }))} />
+                <PhotoUpload currentPhoto={form.photo} name={form.name} onUploaded={url => setField('photo', url)} />
               </div>
+              {fieldErrors.photo && <p className="-mt-3 text-center text-xs text-red-500">{fieldErrors.photo}</p>}
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap <span className="text-red-500">*</span></label>
-                  <input type="text" value={form.name} onChange={e => setField('name', e.target.value)}
+                  <input type="text" value={form.name} onChange={e => setField('name', e.target.value)} required
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                     placeholder="Contoh: Budi Santoso, S.Pd." />
                   {fieldErrors.name && <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">NIP</label>
-                  <input type="text" inputMode="numeric" value={form.nip} onChange={e => setField('nip', e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nomor Induk Pegawai" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">NIP <span className="text-red-500">*</span></label>
+                  <input type="text" inputMode="numeric" value={form.nip} onChange={e => setField('nip', e.target.value.replace(/\D/g, ''))} required
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.nip ? 'border-red-300 bg-red-50' : 'border-gray-200'}`} placeholder="Nomor Induk Pegawai" />
+                  {fieldErrors.nip && <p className="text-xs text-red-500 mt-1">{fieldErrors.nip}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Jabatan <span className="text-red-500">*</span></label>
-                  <select value={form.position} onChange={e => setField('position', e.target.value)}
+                  <select value={form.position} onChange={e => setField('position', e.target.value)} required
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.position ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
                     <option value="">-- Pilih Jabatan --</option>
                     {availablePositions.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
@@ -929,37 +1113,41 @@ function TeacherFormModal({
                   {fieldErrors.position && <p className="text-xs text-red-500 mt-1">{fieldErrors.position}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                  <input type="text" value={form.email} onChange={e => setField('email', e.target.value)}
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email <span className="text-red-500">*</span></label>
+                  <input type="email" value={form.email} onChange={e => setField('email', e.target.value)} required
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                     placeholder="contoh@email.com" />
                   {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">No. Telepon</label>
-                  <input type="text" inputMode="numeric" value={form.phone}
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">No. Telepon <span className="text-red-500">*</span></label>
+                  <input type="text" inputMode="numeric" value={form.phone} required
                     onChange={e => { let v = e.target.value.replace(/\D/g, ''); if (v.length > 0 && !v.startsWith('0')) v = '0' + v; setField('phone', v) }}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="08xxxxxxxxxx" />
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200'}`} placeholder="08xxxxxxxxxx" />
+                  {fieldErrors.phone && <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Pendidikan</label>
-                  <select value={form.education} onChange={e => setField('education', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Pendidikan <span className="text-red-500">*</span></label>
+                  <select value={form.education} onChange={e => setField('education', e.target.value)} required
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.education ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
                     <option value="">-- Pilih Pendidikan --</option>
                     {EDUCATION_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
+                  {fieldErrors.education && <p className="text-xs text-red-500 mt-1">{fieldErrors.education}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Masuk</label>
-                  <input type="date" value={form.joinDate} onChange={e => setField('joinDate', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Masuk <span className="text-red-500">*</span></label>
+                  <input type="date" value={form.joinDate} onChange={e => setField('joinDate', e.target.value)} required
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.joinDate ? 'border-red-300 bg-red-50' : 'border-gray-200'}`} />
+                  {fieldErrors.joinDate && <p className="text-xs text-red-500 mt-1">{fieldErrors.joinDate}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
-                  <select value={form.status} onChange={e => setField('status', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Status <span className="text-red-500">*</span></label>
+                  <select value={form.status} onChange={e => setField('status', e.target.value)} required
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.status ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
                     {Object.entries(STATUS_MAP).map(([v, s]) => <option key={v} value={v}>{s.label}</option>)}
                   </select>
+                  {fieldErrors.status && <p className="text-xs text-red-500 mt-1">{fieldErrors.status}</p>}
                 </div>
                 <div className="col-span-2">
                   <div className="flex items-center gap-3 pt-1">
@@ -1318,16 +1506,23 @@ function WakepsekHistoryTab({
 
 // ─── Bidang Sub-Tab (Kelola Bidang Wakepsek) ──────────────────────────────────
 function BidangTab({
-  bidangList, onBidangChange,
+  bidangList, onBidangChange, openCreateSignal,
 }: {
   bidangList: WakilBidang[]
   onBidangChange: () => void
+  openCreateSignal: number
 }) {
   const [showForm, setShowForm] = useState(false)
   const [editItem, setEditItem] = useState<WakilBidang | null>(null)
   const [deleteItem, setDeleteItem] = useState<WakilBidang | null>(null)
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (openCreateSignal === 0) return
+    setEditItem(null)
+    setShowForm(true)
+  }, [openCreateSignal])
 
   const handleDelete = async () => {
     if (!deleteItem) return; setDeleting(true); setDeleteError('')
@@ -1341,16 +1536,6 @@ function BidangTab({
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">Kelola bidang yang tersedia untuk Wakil Kepala Sekolah.</p>
-        </div>
-        <button onClick={() => { setEditItem(null); setShowForm(true) }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm shrink-0">
-          <Plus className="w-4 h-4" /> Tambah Bidang
-        </button>
-      </div>
-
       <div className="bg-white rounded-2xl border border-gray-100 overflow-visible">
         {bidangList.length === 0 ? (
           <div className="text-center py-20">
@@ -1455,7 +1640,7 @@ function BidangFormModal({
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 overflow-y-auto">
-        <div className="flex min-h-full items-start justify-center p-4 py-10">
+        <div className="flex min-h-full items-center justify-center p-4 py-8">
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -1473,7 +1658,7 @@ function BidangFormModal({
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Bidang <span className="text-red-500">*</span></label>
                 <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Contoh: Kurikulum" required />
+                  placeholder="Contoh : Kurikulum" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Urutan Tampil</label>
@@ -1514,6 +1699,7 @@ export function HistoryTab({
   onSubTabChange?: (tab: 'kepsek' | 'wakepsek' | 'bidang') => void
 }) {
   const [subTab, setSubTab] = useState<'kepsek' | 'wakepsek' | 'bidang'>(defaultSubTab)
+  const [openBidangCreateSignal, setOpenBidangCreateSignal] = useState(0)
 
   const handleSubTabChange = useCallback((tab: 'kepsek' | 'wakepsek' | 'bidang') => {
     setSubTab(tab)
@@ -1560,17 +1746,28 @@ export function HistoryTab({
 
   return (
     <div className="space-y-5">
-      {/* Sub-tab pills */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
-        {SUB_TABS.map(({ key, label, icon: Icon }) => (
+      {/* Sub-tab pills + actions */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+          {SUB_TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => handleSubTabChange(key)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <Icon className="w-4 h-4" /> {label}
+            </button>
+          ))}
+        </div>
+
+        {subTab === 'bidang' && (
           <button
-            key={key}
-            onClick={() => handleSubTabChange(key)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+            onClick={() => setOpenBidangCreateSignal((prev) => prev + 1)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm shrink-0 self-end sm:self-auto"
           >
-            <Icon className="w-4 h-4" /> {label}
+            <Plus className="w-4 h-4" /> Tambah Bidang
           </button>
-        ))}
+        )}
       </div>
 
       {subTab === 'kepsek' && (
@@ -1580,7 +1777,11 @@ export function HistoryTab({
         <WakepsekHistoryTab teacherList={teacherList} allData={allData} bidangList={bidangList} onDataChange={refreshAllData} />
       )}
       {subTab === 'bidang' && (
-        <BidangTab bidangList={bidangList} onBidangChange={refreshBidang} />
+        <BidangTab
+          bidangList={bidangList}
+          onBidangChange={refreshBidang}
+          openCreateSignal={openBidangCreateSignal}
+        />
       )}
     </div>
   )

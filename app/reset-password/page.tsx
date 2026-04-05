@@ -71,12 +71,12 @@ function ResetPasswordContent() {
       <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col lg:flex-row">
         <div className="relative hidden lg:flex lg:w-1/2 bg-[#2F9BE9] items-center justify-center">
           <div className="absolute inset-0 bg-white/5" />
-          <div className="relative w-full h-full min-h-155 flex items-center justify-center p-10">
+          <div className="relative w-full h-full min-h-155">
             <Image
-              src="/assets/login-illustration.svg"
+              src="/images/web/image_vector.jpg"
               alt="Reset password illustration"
               fill
-              className="object-contain drop-shadow-lg"
+              className="object-cover object-center"
               sizes="(min-width: 1024px) 50vw, 100vw"
               priority
             />
@@ -110,7 +110,7 @@ function ResetPasswordContent() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@contoh.com"
+                  placeholder="nama@gmail.com"
                   className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none"
                   required
                 />

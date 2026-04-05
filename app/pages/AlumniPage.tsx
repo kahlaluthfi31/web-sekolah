@@ -88,6 +88,9 @@ const CTA_DEFAULTS = {
 const FALLBACK_IMAGE_UNOPTIMIZED =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMDAgMTgwSDUwMFYyNzBIMzAwVjE4MFoiIGZpbGw9IiNEMUQ1REIiLz4KPHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMjAwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSAyNUgxMjVWNDVINzVWMjVaIiBmaWxsPSIjRDFENUVCIi8+Cjwvc3ZnPgo8L3N2Zz4K";
 
+const TESTIMONIAL_AVATAR_FALLBACK =
+  "https://media.istockphoto.com/vectors/user-member-vector-icon-for-ui-user-interface-or-profile-face-avatar-vector-id1130884625?k=6&m=1130884625&s=170667a&w=0&h=b4ICEL-2imqnsT-m2tYGxZdxlgD1yKxmoDA-PmPc2-A=";
+
 // Helper functions
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "-";
@@ -144,6 +147,20 @@ function sortAgendas(list: Agenda[]): Agenda[] {
     }
     return tsB - tsA;
   });
+}
+
+function normalizeAlumniPhoto(photo?: string | null): string | null {
+  if (!photo) return null;
+  const trimmed = photo.trim();
+  if (!trimmed) return null;
+  if (trimmed === "null" || trimmed === "undefined") return null;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+    return trimmed;
+  }
+
+  const withoutPublicPrefix = trimmed.replace(/^\/?public\//, "");
+  const normalizedPath = withoutPublicPrefix.replace(/^\.?\/?/, "");
+  return normalizedPath ? `/${normalizedPath}` : null;
 }
 
 const AlumniPage: React.FC = () => {
@@ -784,46 +801,58 @@ const AlumniPage: React.FC = () => {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {testimonials.map((alumni) => (
-                  <div
-                    key={alumni.id}
-                    className="group bg-white rounded-2xl p-6 flex flex-col items-center text-center border border-transparent hover:border-[#0268ab] transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative overflow-hidden"
-                  >
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-gray-100 mb-4 shrink-0">
-                      <Image
-                        src={alumni.photo || FALLBACK_IMAGE_UNOPTIMIZED}
-                        alt={alumni.alumniName}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                        loading="lazy"
-                        unoptimized={!alumni.photo}
-                      />
-                    </div>
+                  (() => {
+                    const normalizedPhoto = normalizeAlumniPhoto(alumni.photo);
+                    const photoSrc = normalizedPhoto || TESTIMONIAL_AVATAR_FALLBACK;
 
-                    <h4 className="text-sm font-bold text-gray-900">{alumni.alumniName}</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {alumni.currentOccupation || alumni.major || "Alumni"}
-                    </p>
-                    {alumni.company && (
-                      <p className="text-xs text-gray-400">{alumni.company}</p>
-                    )}
+                    return (
+                      <div
+                        key={alumni.id}
+                        className="group bg-white rounded-2xl p-6 flex flex-col items-center text-center border border-transparent hover:border-[#0268ab] transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative overflow-hidden"
+                      >
+                        <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-gray-100 mb-4 shrink-0">
+                          <Image
+                            src={photoSrc}
+                            alt={alumni.alumniName}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                            loading="lazy"
+                            unoptimized
+                            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                              const target = e.currentTarget;
+                              if (target.src === TESTIMONIAL_AVATAR_FALLBACK) return;
+                              target.src = TESTIMONIAL_AVATAR_FALLBACK;
+                            }}
+                          />
+                        </div>
 
-                    <span className="text-3xl leading-none text-[#0268ab]/30 font-serif self-start mb-1">
-                      &ldquo;
-                    </span>
+                        <h4 className="text-sm font-bold text-gray-900">{alumni.alumniName}</h4>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {alumni.currentOccupation || alumni.major || "Alumni"}
+                        </p>
+                        {alumni.company && (
+                          <p className="text-xs text-gray-400">{alumni.company}</p>
+                        )}
 
-                    {alumni.story && (
-                      <p className="text-sm text-gray-600 leading-relaxed flex-1 px-1 line-clamp-5">{alumni.story}</p>
-                    )}
+                        <span className="text-3xl leading-none text-[#0268ab]/30 font-serif self-start mb-1">
+                          &ldquo;
+                        </span>
 
-                    <span className="text-3xl leading-none text-[#0268ab]/30 font-serif self-end mt-1">
-                      &rdquo;
-                    </span>
+                        {alumni.story && (
+                          <p className="text-sm text-gray-600 leading-relaxed flex-1 px-1 line-clamp-5">{alumni.story}</p>
+                        )}
 
-                    {alumni.graduationYear && (
-                      <p className="mt-3 text-[11px] text-gray-400">Lulusan {alumni.graduationYear}</p>
-                    )}
-                  </div>
+                        <span className="text-3xl leading-none text-[#0268ab]/30 font-serif self-end mt-1">
+                          &rdquo;
+                        </span>
+
+                        {alumni.graduationYear && (
+                          <p className="mt-3 text-[11px] text-gray-400">Lulusan {alumni.graduationYear}</p>
+                        )}
+                      </div>
+                    );
+                  })()
                 ))}
               </div>
 

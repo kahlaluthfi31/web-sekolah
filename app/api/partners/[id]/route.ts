@@ -19,16 +19,30 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params
-    const existing = await prisma.partner.findUnique({ where: { id: parseInt(id) } })
+    const partnerId = parseInt(id)
+    const existing = await prisma.partner.findUnique({ where: { id: partnerId } })
     if (!existing) return apiError('Not found', 404)
     const body = await request.json()
+    const orderPosition = Math.max(1, Number(body.orderPosition) || 1)
+
+    const duplicate = await prisma.partner.findFirst({
+      where: {
+        orderPosition,
+        id: { not: partnerId },
+      },
+      select: { id: true },
+    })
+    if (duplicate) {
+      return apiError('Urutan mitra sudah digunakan. Gunakan angka urutan yang berbeda.', 400)
+    }
+
     const data = await prisma.partner.update({
-      where: { id: parseInt(id) },
+      where: { id: partnerId },
       data: {
         name: body.name,
         logoUrl: body.logoUrl || null,
         websiteUrl: body.websiteUrl || null,
-        orderPosition: body.orderPosition ?? 0,
+        orderPosition,
         isActive: body.isActive ?? true,
       },
     })

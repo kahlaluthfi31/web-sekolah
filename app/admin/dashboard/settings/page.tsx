@@ -37,6 +37,11 @@ type PopupItem = {
   buttonType: "external" | "internal";
 };
 
+type PopupItemFormError = {
+  image?: string;
+  title?: string;
+};
+
 type NavLinkItem = {
   id: string;
   label: string;
@@ -59,6 +64,19 @@ const INTERNAL_PAGE_OPTIONS = [
   { value: "events", label: "Berita & Agenda" },
   { value: "students-life", label: "Kehidupan Siswa" },
   { value: "admissions", label: "PPDB" },
+  { value: "contact", label: "Kontak" },
+];
+
+const POPUP_INTERNAL_PAGE_OPTIONS = [
+  { value: "home", label: "Beranda" },
+  { value: "about-us", label: "Profil Sekolah" },
+  { value: "faculty", label: "Struktur Sekolah" },
+  { value: "campus", label: "Sarana Prasarana" },
+  { value: "program-keahlian", label: "Program Keahlian" },
+  { value: "events", label: "Agenda" },
+  { value: "news", label: "Berita" },
+  { value: "students-life", label: "Siswa" },
+  { value: "alumni", label: "Alumni" },
   { value: "contact", label: "Kontak" },
 ];
 
@@ -153,6 +171,9 @@ export default function SettingsPage() {
   const [popupItems, setPopupItems] = useState<PopupItem[]>([]);
   const [popupUploadingMap, setPopupUploadingMap] = useState<
     Record<string, boolean>
+  >({});
+  const [popupFormErrors, setPopupFormErrors] = useState<
+    Record<string, PopupItemFormError>
   >({});
   const [navSections, setNavSections] = useState<NavSection[]>([]);
   const [navSaving, setNavSaving] = useState(false);
@@ -268,6 +289,7 @@ export default function SettingsPage() {
     }
 
     setPopupItems(parsedItems);
+    setPopupFormErrors({});
   }, [settings, makeId]);
 
   // Get value for a setting key
@@ -354,15 +376,15 @@ export default function SettingsPage() {
             enabled: (section as NavSection).enabled !== false,
             links: Array.isArray((section as NavSection).links)
               ? (section as NavSection).links.map((l) => ({
-                  id: (l as NavLinkItem).id || makeId(),
-                  label: (l as NavLinkItem).label || "Tautan",
-                  url: (l as NavLinkItem).url || "",
-                  type:
-                    (l as NavLinkItem).type === "external"
-                      ? "external"
-                      : "internal",
-                  enabled: (l as NavLinkItem).enabled !== false,
-                }))
+                id: (l as NavLinkItem).id || makeId(),
+                label: (l as NavLinkItem).label || "Tautan",
+                url: (l as NavLinkItem).url || "",
+                type:
+                  (l as NavLinkItem).type === "external"
+                    ? "external"
+                    : "internal",
+                enabled: (l as NavLinkItem).enabled !== false,
+              }))
               : [],
           }));
           setNavSections(
@@ -392,11 +414,11 @@ export default function SettingsPage() {
       prev.map((section) =>
         section.id === sectionId
           ? {
-              ...section,
-              links: section.links.map((l) =>
-                l.id === linkId ? { ...l, ...changes } : l,
-              ),
-            }
+            ...section,
+            links: section.links.map((l) =>
+              l.id === linkId ? { ...l, ...changes } : l,
+            ),
+          }
           : section,
       ),
     );
@@ -433,18 +455,18 @@ export default function SettingsPage() {
       prev.map((section) =>
         section.id === sectionId
           ? {
-              ...section,
-              links: [
-                ...section.links,
-                {
-                  id: makeId(),
-                  label: "Tautan Baru",
-                  url: "https://",
-                  type: "external",
-                  enabled: true,
-                },
-              ],
-            }
+            ...section,
+            links: [
+              ...section.links,
+              {
+                id: makeId(),
+                label: "Tautan Baru",
+                url: "https://",
+                type: "external",
+                enabled: true,
+              },
+            ],
+          }
           : section,
       ),
     );
@@ -455,12 +477,12 @@ export default function SettingsPage() {
       prev.map((section) =>
         section.id === sectionId
           ? {
-              ...section,
-              links:
-                section.links.length <= 1
-                  ? section.links
-                  : section.links.filter((l) => l.id !== linkId),
-            }
+            ...section,
+            links:
+              section.links.length <= 1
+                ? section.links
+                : section.links.filter((l) => l.id !== linkId),
+          }
           : section,
       ),
     );
@@ -621,6 +643,42 @@ export default function SettingsPage() {
     setPopupItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...changes } : item)),
     );
+
+    if ("image" in changes || "title" in changes) {
+      setPopupFormErrors((prev) => {
+        const current = prev[id];
+        if (!current) return prev;
+
+        const nextError: PopupItemFormError = { ...current };
+
+        if (
+          "image" in changes &&
+          typeof changes.image === "string" &&
+          changes.image.trim()
+        ) {
+          delete nextError.image;
+        }
+
+        if (
+          "title" in changes &&
+          typeof changes.title === "string" &&
+          changes.title.trim()
+        ) {
+          delete nextError.title;
+        }
+
+        if (!nextError.image && !nextError.title) {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        }
+
+        return {
+          ...prev,
+          [id]: nextError,
+        };
+      });
+    }
   };
 
   const addPopupItem = () => {
@@ -641,6 +699,35 @@ export default function SettingsPage() {
     setPopupItems((prev) =>
       prev.length <= 1 ? prev : prev.filter((p) => p.id !== id),
     );
+    setPopupFormErrors((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const validatePopupItems = (items: PopupItem[]) => {
+    const nextErrors: Record<string, PopupItemFormError> = {};
+
+    items.forEach((item) => {
+      const itemError: PopupItemFormError = {};
+
+      if (!item.image.trim()) {
+        itemError.image = "Gambar popup wajib diisi.";
+      }
+
+      if (!item.title.trim()) {
+        itemError.title = "Judul popup wajib diisi.";
+      }
+
+      if (itemError.image || itemError.title) {
+        nextErrors[item.id] = itemError;
+      }
+    });
+
+    setPopupFormErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   // Upload gambar popup per item
@@ -668,22 +755,40 @@ export default function SettingsPage() {
 
   // Simpan semua setting popup sekaligus
   const saveAllPopup = async () => {
-    const items = popupItems.length
+    const items: PopupItem[] = popupItems.length
       ? popupItems
       : [
-          {
-            id: makeId(),
-            image: "",
-            title: "",
-            buttonLabel: "Cek Selengkapnya",
-            buttonUrl: "",
-            buttonType: "external",
-          },
-        ];
+        {
+          id: makeId(),
+          image: "",
+          title: "",
+          buttonLabel: "Cek Selengkapnya",
+          buttonUrl: "",
+          buttonType: "external",
+        },
+      ];
 
-    const first = items[0];
+    if (!validatePopupItems(items)) {
+      alert(
+        "Mohon isi semua field wajib pada Popup Pengumuman (Gambar Popup dan Judul).",
+      );
+      return;
+    }
+
+    const normalizedItems = items.map((p) => {
+      const hasButtonUrl = p.buttonUrl.trim().length > 0;
+      const nextButtonLabel = p.buttonLabel.trim() || (hasButtonUrl ? "Selengkapnya" : "");
+      return {
+        ...p,
+        buttonLabel: nextButtonLabel,
+      };
+    });
+
+    setPopupItems(normalizedItems);
+
+    const first = normalizedItems[0];
     const serialized = JSON.stringify(
-      items.map((p) => ({
+      normalizedItems.map((p) => ({
         id: p.id,
         image: p.image,
         title: p.title,
@@ -857,11 +962,10 @@ export default function SettingsPage() {
               Upload video baru
             </label>
             <label
-              className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 px-4 text-sm cursor-pointer transition ${
-                heroVideoUploading
+              className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 px-4 text-sm cursor-pointer transition ${heroVideoUploading
                   ? "border-gray-200 text-gray-400 bg-gray-50"
                   : "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600"
-              }`}
+                }`}
             >
               <input
                 type="file"
@@ -893,11 +997,10 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleSaveHeroVideo}
                 disabled={heroVideoSaving || heroVideoUploading}
-                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${
-                  heroVideoSaving || heroVideoUploading
+                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition ${heroVideoSaving || heroVideoUploading
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                     : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                }`}
+                  }`}
               >
                 {heroVideoSaving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1234,9 +1337,8 @@ export default function SettingsPage() {
             <button
               onClick={handleSaveNavSections}
               disabled={navSaving}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg text-white transition-all ${
-                navSaving ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-              } disabled:opacity-60`}
+              className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg text-white transition-all ${navSaving ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+                } disabled:opacity-60`}
             >
               {navSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1276,12 +1378,11 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div
-          className={`px-6 py-6 space-y-5 transition-opacity ${popupActive ? "opacity-100" : "opacity-40 pointer-events-none"}`}
-        >
+        <div className={`px-6 py-6 space-y-5 transition-opacity ${popupActive ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
           <div className="space-y-4">
             {popupItems.map((item, idx) => {
               const uploading = popupUploadingMap[item.id];
+              const itemErrors = popupFormErrors[item.id];
               return (
                 <div
                   key={item.id}
@@ -1312,14 +1413,15 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div className="space-y-3">
                       <label className="block text-xs font-semibold text-gray-600">
-                        Gambar Popup (JPG/PNG/WEBP)
+                        Gambar Popup (JPG/PNG/WEBP) <span className="text-red-500">*</span>
                       </label>
                       <label
-                        className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 px-4 text-sm cursor-pointer transition h-48 ${
-                          uploading
+                        className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 px-4 text-sm cursor-pointer transition h-48 ${uploading
                             ? "border-gray-200 text-gray-400 bg-gray-50"
-                            : "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600"
-                        }`}
+                            : itemErrors?.image
+                              ? "border-red-300 text-red-500 bg-red-50/40"
+                              : "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600"
+                          }`}
                       >
                         <input
                           type="file"
@@ -1375,12 +1477,15 @@ export default function SettingsPage() {
                           className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition"
                         />
                       </div>
+                      {itemErrors?.image && (
+                        <p className="text-xs text-red-600">{itemErrors.image}</p>
+                      )}
                     </div>
 
                     <div className="space-y-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                          Judul (opsional — tampil jika tidak ada gambar)
+                          Judul <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -1389,8 +1494,14 @@ export default function SettingsPage() {
                             updatePopupItem(item.id, { title: e.target.value })
                           }
                           placeholder="cth: Informasi Penting!"
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition"
+                          className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 transition ${itemErrors?.title
+                              ? "border-red-300 focus:ring-red-200 focus:border-red-400"
+                              : "border-gray-200 focus:ring-[#0092DD]/30 focus:border-[#0092DD]"
+                            }`}
                         />
+                        {itemErrors?.title && (
+                          <p className="text-xs text-red-600 mt-1.5">{itemErrors.title}</p>
+                        )}
                       </div>
 
                       <div>
@@ -1414,17 +1525,42 @@ export default function SettingsPage() {
                         <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                           URL Tujuan
                         </label>
-                        <input
-                          type="text"
-                          value={item.buttonUrl}
-                          onChange={(e) =>
-                            updatePopupItem(item.id, {
-                              buttonUrl: e.target.value,
-                            })
-                          }
-                          placeholder="https://... atau news"
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition"
-                        />
+                        {item.buttonType === "internal" ? (
+                          <select
+                            value={
+                              POPUP_INTERNAL_PAGE_OPTIONS.some(
+                                (opt) => opt.value === item.buttonUrl,
+                              )
+                                ? item.buttonUrl
+                                : ""
+                            }
+                            onChange={(e) =>
+                              updatePopupItem(item.id, {
+                                buttonUrl: e.target.value,
+                              })
+                            }
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition bg-white"
+                          >
+                            <option value="">Pilih menu navbar...</option>
+                            {POPUP_INTERNAL_PAGE_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={item.buttonUrl}
+                            onChange={(e) =>
+                              updatePopupItem(item.id, {
+                                buttonUrl: e.target.value,
+                              })
+                            }
+                            placeholder="https://..."
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0092DD]/30 focus:border-[#0092DD] transition"
+                          />
+                        )}
                       </div>
 
                       <div>
@@ -1448,6 +1584,11 @@ export default function SettingsPage() {
                             onClick={() =>
                               updatePopupItem(item.id, {
                                 buttonType: "internal",
+                                buttonUrl: POPUP_INTERNAL_PAGE_OPTIONS.some(
+                                  (opt) => opt.value === item.buttonUrl,
+                                )
+                                  ? item.buttonUrl
+                                  : "",
                               })
                             }
                             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${item.buttonType === "internal" ? "border-[#0092DD] bg-[#0092DD]/10 text-[#0092DD]" : "border-gray-200 text-gray-400 hover:border-gray-300"}`}
@@ -1457,7 +1598,7 @@ export default function SettingsPage() {
                         </div>
                         <p className="text-[10px] text-gray-400 mt-1.5">
                           {item.buttonType === "internal"
-                            ? "Isi URL dengan nama page: news, about-us, dll."
+                            ? "Pilih halaman dari menu navbar sebagai tujuan tombol."
                             : "Buka URL di tab baru (link eksternal)."}
                         </p>
                       </div>
@@ -1481,11 +1622,10 @@ export default function SettingsPage() {
             <button
               onClick={saveAllPopup}
               disabled={savingPopup}
-              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                popupSaved
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${popupSaved
                   ? "bg-green-500 text-white"
                   : "bg-[#0092DD] hover:bg-[#0077BB] text-white"
-              } disabled:opacity-60`}
+                } disabled:opacity-60`}
             >
               {savingPopup ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1590,14 +1730,12 @@ function SettingRow({
               setLocalValue(newVal);
               onSave(newVal);
             }}
-            className={`relative inline-flex h-7 w-12 rounded-full transition-colors ${
-              localValue === "true" ? "bg-blue-600" : "bg-gray-200"
-            }`}
+            className={`relative inline-flex h-7 w-12 rounded-full transition-colors ${localValue === "true" ? "bg-blue-600" : "bg-gray-200"
+              }`}
           >
             <span
-              className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform mt-1 ${
-                localValue === "true" ? "translate-x-6 ml-0.5" : "translate-x-1"
-              }`}
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform mt-1 ${localValue === "true" ? "translate-x-6 ml-0.5" : "translate-x-1"
+                }`}
             />
           </button>
         )}
@@ -1619,11 +1757,10 @@ function SettingRow({
           </div>
 
           <label
-            className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-4 px-4 text-sm cursor-pointer transition ${
-              uploading
+            className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-4 px-4 text-sm cursor-pointer transition ${uploading
                 ? "border-gray-200 text-gray-400 bg-gray-50"
                 : "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50 text-blue-600"
-            }`}
+              }`}
           >
             <input
               type="file"

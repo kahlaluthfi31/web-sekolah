@@ -13,7 +13,6 @@ import {
   TrendingUp,
   Newspaper,
   FileText,
-  Clock,
 } from "lucide-react";
 
 import { usePageHeader } from "@/lib/usePageHeader";
@@ -289,7 +288,7 @@ const NewsPage: React.FC = () => {
 
   const latestNews = sortedNews.slice(0, 5); // tampilkan max 5 berita terbaru saja
 
-  const allNews = sortedNews;
+  const allNews = useMemo(() => sortedNews.slice(0, PAGE_SIZE), [sortedNews]);
 
   const trendingNews: NewsItem[] = [];
 
@@ -777,7 +776,6 @@ const NewsPage: React.FC = () => {
           </section>
 
           {/* All News Grid Section */}
-
           <section className="py-12 lg:py-16 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {/* Section Header */}
@@ -790,7 +788,7 @@ const NewsPage: React.FC = () => {
                 <span className="text-xs text-gray-400">02 / 02</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-20">
                 {loading
                   ? Array.from({ length: PAGE_SIZE }).map((_, idx) => (
                       <div
