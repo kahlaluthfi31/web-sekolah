@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
+const MAX_PASSWORD_LENGTH = 30
+
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json()
@@ -16,6 +18,13 @@ export async function POST(request: NextRequest) {
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, message: 'Password minimal 6 karakter' },
+        { status: 400 }
+      )
+    }
+
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      return NextResponse.json(
+        { success: false, message: `Password maksimal ${MAX_PASSWORD_LENGTH} karakter` },
         { status: 400 }
       )
     }

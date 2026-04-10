@@ -1,20 +1,13 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
+
+const SOCIAL_LINKS = {
+  instagram: 'https://www.instagram.com/smkn1ciamis',
+  tiktok: 'https://www.tiktok.com/@smkn1ciamis',
+};
 
 const SocialFeedsHorizontal: React.FC = () => {
-  useEffect(() => {
-    // Load Elfsight script if not already loaded
-    const scriptId = 'elfsight-platform';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://elfsightcdn.com/platform.js';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  }, []);
-
   return (
     <section className="py-16 bg-gray-50 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,18 +17,38 @@ const SocialFeedsHorizontal: React.FC = () => {
           
           {/* Instagram Feed */}
           <div className="w-full">
-            <div 
-              className="elfsight-app-24942526-708c-4173-9c49-83d440cb96f5" 
-              data-elfsight-app-lazy
-            />
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Instagram</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Widget feed dinonaktifkan sementara karena limit provider tercapai.
+              </p>
+              <a
+                href={SOCIAL_LINKS.instagram}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-lg bg-[#E1306C] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                Buka Instagram
+              </a>
+            </div>
           </div>
 
           {/* TikTok Feed */}
           <div className="w-full">
-            <div 
-              className="elfsight-app-b32e4e66-7fdd-4148-aaae-cf0c5f30bf39" 
-              data-elfsight-app-lazy
-            />
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">TikTok</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Widget feed dinonaktifkan sementara karena limit provider tercapai.
+              </p>
+              <a
+                href={SOCIAL_LINKS.tiktok}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                Buka TikTok
+              </a>
+            </div>
           </div>
 
         </div>

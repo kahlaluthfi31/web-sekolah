@@ -7,6 +7,8 @@ import { useSearchParams } from 'next/navigation'
 import { Mail, Lock, User, Loader2 } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
+const MAX_PASSWORD_LENGTH = 30
+
 function RegisterContent() {
   const searchParams = useSearchParams()
   const [name, setName] = useState('')
@@ -37,6 +39,13 @@ function RegisterContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (password.length > MAX_PASSWORD_LENGTH || confirmPassword.length > MAX_PASSWORD_LENGTH) {
+      setStatus('error')
+      setMessage(`Password maksimal ${MAX_PASSWORD_LENGTH} karakter`)
+      return
+    }
+
     if (password !== confirmPassword) {
       setStatus('error')
       setMessage('Konfirmasi password tidak cocok')
@@ -198,6 +207,7 @@ function RegisterContent() {
                   required
                   value={password}
                   minLength={6}
+                  maxLength={MAX_PASSWORD_LENGTH}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none"
@@ -214,6 +224,7 @@ function RegisterContent() {
                   required
                   value={confirmPassword}
                   minLength={6}
+                  maxLength={MAX_PASSWORD_LENGTH}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none"

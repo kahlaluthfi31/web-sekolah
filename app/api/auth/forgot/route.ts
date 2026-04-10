@@ -14,22 +14,25 @@ function generateSixDigitCode() {
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json()
+    const normalizedEmail = String(email || '').trim().toLowerCase()
 
-    if (!email) {
+    if (!normalizedEmail) {
       return NextResponse.json(
         { success: false, message: 'Email wajib diisi' },
         { status: 400 }
       )
     }
 
-    const user = await prisma.user.findUnique({ where: { email } })
-
-    // Always respond success to avoid email enumeration
-  const genericMessage = 'Jika email terdaftar, kode reset password sudah dikirim.'
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
 
     if (!user) {
-      return NextResponse.json({ success: true, message: genericMessage })
+      return NextResponse.json(
+        { success: false, message: 'Email tidak terdaftar' },
+        { status: 404 }
+      )
     }
+
+    const successMessage = 'Kode reset password sudah dikirim ke email Anda.'
 
   const code = generateSixDigitCode()
   const tokenHash = makeHash(code)
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: genericMessage,
+      message: successMessage,
       emailSent,
       // kembalikan kode hanya saat development untuk memudahkan testing
       ...(process.env.NODE_ENV !== 'production' ? { code } : {}),
