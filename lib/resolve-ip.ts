@@ -338,20 +338,20 @@ export async function getClientIp(): Promise<string> {
   const forwardedFor = headersList.get('x-forwarded-for')
   if (forwardedFor) {
     const firstIp = forwardedFor.split(',')[0]?.trim()
-    if (firstIp) return firstIp
+    if (firstIp) return firstIp.replace('::ffff:', '')
   }
 
   // x-real-ip (set by Nginx: proxy_set_header X-Real-IP $remote_addr)
   const realIp = headersList.get('x-real-ip')
-  if (realIp) return realIp.trim()
+  if (realIp) return realIp.trim().replace('::ffff:', '')
 
   // cf-connecting-ip (Cloudflare)
   const cfIp = headersList.get('cf-connecting-ip')
-  if (cfIp) return cfIp.trim()
+  if (cfIp) return cfIp.trim().replace('::ffff:', '')
 
   // true-client-ip (Akamai / some CDNs)
   const trueClientIp = headersList.get('true-client-ip')
-  if (trueClientIp) return trueClientIp.trim()
+  if (trueClientIp) return trueClientIp.trim().replace('::ffff:', '')
 
   return '127.0.0.1'
 }
