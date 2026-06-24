@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['bcryptjs'],
+  // Trust reverse proxy headers (X-Forwarded-For, X-Real-IP, etc.)
+  // Required when running behind Nginx/Apache/load balancer so that
+  // request.ip returns the real client IP instead of 127.0.0.1
+  trustProxy: true,
   typescript: {
     ignoreBuildErrors: false,
   },

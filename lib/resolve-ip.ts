@@ -128,14 +128,10 @@ function isTrustedProxy(ip: string, trustedList: string[]): boolean {
 
 /**
  * Pick the first public (non-private, non-trusted-proxy) IP from a list.
- * Falls back to the first entry if all are private.
+ * Returns null if no public IP is found (caller should try other sources).
  */
 function pickPublicIp(candidates: string[], trustedProxies: string[]): string | null {
   if (candidates.length === 0) return null
-
-  // Walk right-to-left: the rightmost non-trusted entry is typically
-  // the one added by the last proxy that saw the real client.
-  // But many setups put the real client IP first.  We try both.
 
   // First: try to find a public IP that's not a trusted proxy
   const publicIp = candidates.find(
@@ -151,8 +147,9 @@ function pickPublicIp(candidates: string[], trustedProxies: string[]): string | 
     }
   }
 
-  // Fallback: return first non-unknown candidate
-  return candidates.find((ip) => ip.toLowerCase() !== 'unknown') ?? candidates[0]
+  // Return null if no public IP found — do NOT fall back to a private IP
+  // (127.0.0.1 from x-forwarded-for is the proxy itself, not the client)
+  return null
 }
 
 // --------------- Main export ---------------
@@ -175,7 +172,21 @@ function pickPublicIp(candidates: string[], trustedProxies: string[]): string | 
 export async function resolveClientIp(request: NextRequest): Promise<string> {
   const trustedProxies = getTrustedProxies()
 
-  // 1) CDN-specific single-IP headers (highest trust)
+  // --- Debug: log all proxy-related headers (once per request) ---
+  const debugIp = process.env.DEBUG_IP === 'true' || process.env.NODE_ENV !== 'production'
+  if (debugIp) {
+    const hdrs: Record<string, string | null> = {}
+    for (const key of [
+      'x-forwarded-for', 'x-real-ip', 'x-client-ip',
+      'cf-connecting-ip', 'true-client-ip', 'forwarded',
+      'x-forwarded-proto', 'x-forwarded-host',
+    ]) {
+      hdrs[key] = request.headers.get(key)
+    }
+    console.log('[resolve-ip] headers:', JSON.stringify(hdrs))
+  }
+
+  // 1) CDN-specific single-IP headers (highest trust — always accurate)
   const cfConnecting = normalizeIp(request.headers.get('cf-connecting-ip'))
   const trueClientIp = normalizeIp(request.headers.get('true-client-ip'))
   const xRealIp = normalizeIp(request.headers.get('x-real-ip'))
@@ -187,25 +198,42 @@ export async function resolveClientIp(request: NextRequest): Promise<string> {
   // 3) x-forwarded-for (with trusted-proxy filtering)
   const xffIps = parseXForwardedFor(request.headers.get('x-forwarded-for'))
 
-  // 4) Runtime / socket fallbacks
-  const runtimeIp = normalizeIp((request as unknown as { ip?: string }).ip)
+  // 4) Next.js request.ip — reliable when trustProxy: true is set in next.config
+  //    With trustProxy, Next.js parses x-forwarded-for itself and returns the
+  //    first public IP.  This is often the MOST accurate source.
+  const nextJsIp = normalizeIp((request as unknown as { ip?: string }).ip)
+
+  // 5) socket.remoteAddress — last resort (always the proxy's IP in production)
   const socketIp = normalizeIp(
     (request as unknown as { socket?: { remoteAddress?: string } }).socket?.remoteAddress
   )
 
-  // Build ordered candidate list
-  const singleCandidates = [cfConnecting, trueClientIp, xRealIp, xClientIp].filter(Boolean) as string[]
-  const listCandidates = [...forwardedIps, ...xffIps]
-  const fallbackCandidates = [runtimeIp, socketIp].filter(Boolean) as string[]
+  if (debugIp) {
+    console.log('[resolve-ip] candidates:', JSON.stringify({
+      cfConnecting, trueClientIp, xRealIp, xClientIp,
+      forwardedIps, xffIps, nextJsIp, socketIp,
+    }))
+  }
 
-  // Priority: CDN single headers > forwarded lists > runtime fallbacks
+  // Build ordered candidate groups
+  const cdnCandidates = [cfConnecting, trueClientIp, xRealIp, xClientIp].filter(Boolean) as string[]
+  const listCandidates = [...forwardedIps, ...xffIps]
+  const runtimeCandidates = [nextJsIp].filter(Boolean) as string[]
+  const socketCandidates = [socketIp].filter(Boolean) as string[]
+
+  // Resolution order:
+  //   CDN headers (always trust) > forwarded lists (skip private) >
+  //   request.ip (trustProxy-aware) > socket fallback
   let ip: string =
-    singleCandidates.find((c) => !isPrivateIp(c)) ||
+    cdnCandidates.find((c) => !isPrivateIp(c)) ||
     pickPublicIp(listCandidates, trustedProxies) ||
-    fallbackCandidates.find((c) => !isPrivateIp(c)) ||
-    singleCandidates[0] ||
+    runtimeCandidates.find((c) => !isPrivateIp(c)) ||
+    socketCandidates.find((c) => !isPrivateIp(c)) ||
+    // Last resort: any candidate at all (better than 'unknown')
+    cdnCandidates[0] ||
+    runtimeCandidates[0] ||
     listCandidates[0] ||
-    fallbackCandidates[0] ||
+    socketCandidates[0] ||
     'unknown'
 
   // Dev-only: if still private/unknown, try to get the machine's public IP
@@ -219,6 +247,10 @@ export async function resolveClientIp(request: NextRequest): Promise<string> {
     } catch (err) {
       console.warn('[resolve-ip] Failed to fetch public IP for localhost', err)
     }
+  }
+
+  if (debugIp) {
+    console.log('[resolve-ip] resolved IP:', ip)
   }
 
   return ip
