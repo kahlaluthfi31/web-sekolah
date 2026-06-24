@@ -1,15 +1,11 @@
 import { NextRequest } from 'next/server'
+import { headers } from 'next/headers'
 
 /**
  * Shared IP resolution & geo-lookup helpers.
  *
- * Handles common reverse-proxy / CDN / load-balancer setups where the
- * raw socket address is 127.0.0.1 and the real client IP lives in
- * one of several forwarding headers.
- *
- * Set TRUSTED_PROXIES env (comma-separated CIDRs or exact IPs) if your
- * proxy chain adds its own addresses to x-forwarded-for and you need
- * to skip them when picking the client IP.
+ * Uses `headers()` from next/headers to reliably read proxy headers
+ * (x-forwarded-for, x-real-ip) set by Nginx / reverse proxy.
  */
 
 // --------------- IP helpers ---------------
@@ -302,6 +298,76 @@ export async function lookupGeo(ip: string | null) {
 export async function extractClientInfo(request: NextRequest) {
   const ip = await resolveClientIp(request)
   const userAgent = request.headers.get('user-agent') || 'unknown'
+
+  const device = (() => {
+    if (!userAgent || userAgent === 'unknown') return null
+    if (/mobile/i.test(userAgent)) return 'Mobile'
+    if (/tablet/i.test(userAgent)) return 'Tablet'
+    if (/windows/i.test(userAgent)) return 'Windows'
+    if (/macintosh|mac os x/i.test(userAgent)) return 'Mac'
+    if (/linux/i.test(userAgent)) return 'Linux'
+    return userAgent.slice(0, 120)
+  })()
+
+  return { ip, userAgent, device }
+}
+
+// --------------- headers()-based IP resolution ---------------
+
+/**
+ * Get the real client IP using `headers()` from next/headers.
+ *
+ * This is the recommended approach for Next.js App Router when running
+ * behind a reverse proxy (Nginx, Apache, etc.). The proxy sets
+ * `x-forwarded-for` or `x-real-ip` headers with the original client IP.
+ *
+ * Works in Route Handlers, Server Actions, and Server Components.
+ *
+ * Priority:
+ *   1. x-forwarded-for (first entry = original client)
+ *   2. x-real-ip (Nginx default)
+ *   3. cf-connecting-ip (Cloudflare)
+ *   4. true-client-ip (Akamai / some CDNs)
+ *   5. Fallback to '127.0.0.1'
+ */
+export async function getClientIp(): Promise<string> {
+  const headersList = await headers()
+
+  // x-forwarded-for may contain multiple IPs: "client, proxy1, proxy2"
+  // The first entry is the original client IP
+  const forwardedFor = headersList.get('x-forwarded-for')
+  if (forwardedFor) {
+    const firstIp = forwardedFor.split(',')[0]?.trim()
+    if (firstIp) return firstIp
+  }
+
+  // x-real-ip (set by Nginx: proxy_set_header X-Real-IP $remote_addr)
+  const realIp = headersList.get('x-real-ip')
+  if (realIp) return realIp.trim()
+
+  // cf-connecting-ip (Cloudflare)
+  const cfIp = headersList.get('cf-connecting-ip')
+  if (cfIp) return cfIp.trim()
+
+  // true-client-ip (Akamai / some CDNs)
+  const trueClientIp = headersList.get('true-client-ip')
+  if (trueClientIp) return trueClientIp.trim()
+
+  return '127.0.0.1'
+}
+
+/**
+ * Get IP + user-agent + device info using headers() from next/headers.
+ * Simpler alternative to extractClientInfo() that doesn't need a NextRequest.
+ */
+export async function getClientInfo(): Promise<{
+  ip: string
+  userAgent: string
+  device: string | null
+}> {
+  const headersList = await headers()
+  const ip = await getClientIp()
+  const userAgent = headersList.get('user-agent') || 'unknown'
 
   const device = (() => {
     if (!userAgent || userAgent === 'unknown') return null

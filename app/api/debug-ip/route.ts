@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { resolveClientIp, isPrivateIp, normalizeIp } from '@/lib/resolve-ip'
+import { getClientIp, isPrivateIp, normalizeIp } from '@/lib/resolve-ip'
 
 /**
  * Debug endpoint: GET /api/debug-ip
@@ -31,15 +31,16 @@ export async function GET(request: NextRequest) {
   const socketIp = normalizeIp(
     (request as unknown as { socket?: { remoteAddress?: string } }).socket?.remoteAddress
   )
-  const resolvedIp = await resolveClientIp(request)
+  // This uses headers() from next/headers — the reliable way behind Nginx
+  const resolvedIp = await getClientIp()
 
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     nodeEnv: process.env.NODE_ENV,
-    trustProxyConfig: true,
     resolvedIp,
     resolvedIpIsPrivate: isPrivateIp(resolvedIp),
     sources: {
+      headersBased: resolvedIp,
       nextJsRequestIp: nextJsIp,
       socketRemoteAddress: socketIp,
     },
@@ -50,10 +51,7 @@ export async function GET(request: NextRequest) {
         ? 'ALL sources return private IP. The reverse proxy (Nginx/Apache) is NOT forwarding the real client IP. ' +
           'Check your proxy config for: proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; ' +
           'and proxy_set_header X-Real-IP $remote_addr;'
-        : 'IP resolved successfully.',
-      nextJsIpIsPrivate: isPrivateIp(nextJsIp)
-        ? 'request.ip is private — trustProxy may not be enabled or proxy is not setting X-Forwarded-For'
-        : 'request.ip has the real client IP (trustProxy is working)',
+        : 'IP resolved successfully via headers() from next/headers.',
     },
   })
 }

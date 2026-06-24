@@ -1,7 +1,7 @@
 import { prisma } from './prisma'
 import { NextRequest } from 'next/server'
 import type { Prisma } from '@prisma/client'
-import { resolveClientIp, lookupGeo } from './resolve-ip'
+import { getClientIp, lookupGeo } from './resolve-ip'
 
 export type AuditAction = 'CREATE' | 'EDIT' | 'DELETE'
 
@@ -14,7 +14,7 @@ export async function recordActivityLog({
   oldData,
   newData,
 }: {
-  request: NextRequest
+  request?: NextRequest
   adminEmail: string
   userId?: number
   action: AuditAction
@@ -40,7 +40,7 @@ export async function recordActivityLog({
     }
 
     if (!ip) {
-      ip = await resolveClientIp(request)
+      ip = await getClientIp()
     }
 
     if (latitude === null || longitude === null) {

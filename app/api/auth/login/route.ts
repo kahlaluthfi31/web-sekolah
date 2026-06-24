@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loginUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { extractClientInfo, lookupGeo } from '@/lib/resolve-ip'
+import { getClientInfo, lookupGeo } from '@/lib/resolve-ip'
 
 type ClientInfo = {
   userAgent?: string
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Catat aktivitas login (khusus admin & superadmin)
     if (loggedInUser && (loggedInUser.role === 'admin' || loggedInUser.role === 'superadmin')) {
-    const { ip, userAgent: serverUA, device: serverDevice } = await extractClientInfo(request)
+    const { ip, userAgent: serverUA, device: serverDevice } = await getClientInfo()
 
       const userAgent = clientInfo?.userAgent || serverUA
       const device = clientInfo
